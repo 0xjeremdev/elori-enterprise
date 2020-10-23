@@ -1,0 +1,25 @@
+# register
+curl -X POST \
+  http://127.0.0.1:8000/api/v1/register/ -H 'content-type: application/json' \
+  -d '{
+  "email": "user@example.com",
+  "state_resident": true,
+  "first_name": "string",
+  "last_name": "string",
+  "password": "string"
+}'
+
+# Verify email
+curl -X GET "http://127.0.0.1:8000/api/v1/email-verify/?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNjAxMzI2MjU4LCJqdGkiOiJlNTM5ZGEyNzFiYTE0ZGJlYmQwYjdlYjk4NDc4YmQzZCIsInVzZXJfaWQiOjE0fQ.dTJBQQ0d1TPT3rjvKdl-8cNlcuv79GdM2RKt-iSJWmo" -H "accept: application/json"
+
+#Login user
+curl -X POST "http://127.0.0.1:8000/api/v1/login/" -H "accept: application/json" -H "Content-Type: application/json" -d "{ \"email\": \"user@example.com\", \"password\": \"string\"}"
+
+#logout user
+curl -X POST "http://127.0.0.1:8000/api/v1/logout/" -H "accept: application/json" -H "Content-Type: application/json" -d "{ \"refresh\": \"string\"}"
+
+# token
+curl -X POST "http://127.0.0.1:8000/api/v1/token/" -H "accept: application/json" -H "Content-Type: application/json" -d "{ \"email\": \"string\", \"password\": \"string\"}"
+
+#refresh token
+curl -X POST "http://127.0.0.1:8000/api/v1/token/refresh/" -H "accept: application/json" -H "Content-Type: application/json" -d "{ \"refresh\": \"string\"}"

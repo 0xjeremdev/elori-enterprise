@@ -1,0 +1,9 @@
+{% autoescape off %}
+Hello {{ user_full_name }}
+A sign in attempt requires further verification because we did not recognize your device.
+    To complete the sign in, enter the verification code on the unrecognized device.
+
+    Verification code: {{ verification_code }}
+
+Thank you.
+{% endautoescape %}
