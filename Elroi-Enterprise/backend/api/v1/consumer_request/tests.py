@@ -13,23 +13,15 @@ class ConsumerRequestsTest(APITestCase):
     def setUp(self):
         """ create an account for tests """
         self.user = Account.objects.create_front_user(
-            state_resident=True,
-            first_name="Test",
-            last_name="Last",
             email="test@test.com",
-            password='password',
-            account_type=0)
+            password='password')
         self.user.is_active = True
         self.user.is_verified = True
         self.user.save()
         refresh = RefreshToken.for_user(self.user)
         self.enterprise_user = Account.objects.create_front_user(
-            state_resident=True,
-            first_name="Test",
-            last_name="Enterprise",
             email="enterprise@email.com",
-            password="secret",
-            account_type=1
+            password="secret"
         )
 
         self.token = refresh.access_token
@@ -130,12 +122,9 @@ class ConsumerRequestProgressTest(APITestCase):
     def setUp(self):
         """ create an account for tests """
         self.user = Account.objects.create_front_user(
-            state_resident=True,
-            first_name="Test",
-            last_name="Last",
             email="test@test.com",
-            password='password',
-            account_type=0)
+            password='password'
+        )
         self.user.is_active = True
         self.user.is_verified = True
         self.user.save()
@@ -191,12 +180,9 @@ class CustomerRequestMadeTest(APITestCase):
     def setUp(self):
         """ create an account for tests """
         self.user = Account.objects.create_front_user(
-            state_resident=True,
-            first_name="Test",
-            last_name="Last",
             email="test@test.com",
-            password='password',
-            account_type=0)
+            password='password'
+        )
         self.user.is_active = True
         self.user.is_verified = True
         self.user.save()

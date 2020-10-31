@@ -1,12 +1,20 @@
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
 
 from api.v1.consumer_request.models import ConsumerRequest
-from api.v1.enterprise.models import UserGuide, CustomerConfiguration, EnterpriseConfigurationModel
+from api.v1.enterprise.models import UserGuideModel, CustomerConfiguration, EnterpriseConfigurationModel, \
+    UserGuideUploads
 
 
 class UserGuideSerializer(serializers.ModelSerializer):
     class Meta:
-        model = UserGuide
+        model = UserGuideModel
+        fields = '__all__'
+
+
+class FileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserGuideUploads
         fields = '__all__'
 
 

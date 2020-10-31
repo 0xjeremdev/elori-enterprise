@@ -33,6 +33,7 @@ INSTALLED_APPS = [
     'api.v1.accounts',
     'api.v1.enterprise',
     'api.v1.consumer_request',
+    'api.v1.elroi_admin',
     'frontend.home',
     'django_otp',
     'django_otp.plugins.otp_totp',
@@ -123,10 +124,7 @@ REQUEST_TYPES = (
     (1, 'Modify'),
     (2, 'Delete'),
 )
-ACCOUNT_TYPES = (
-    (0, 'Consumer'),
-    (1, 'Enterprise'),
-)
+
 REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 10,
@@ -206,6 +204,8 @@ STATICFILES_DIRS = [
 ]
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+UPLOAD_FOLDER = os.path.join(BASE_DIR, 'media/requests_docs')
 
 FRONTEND_URL = 'http://localhost:3000'
 

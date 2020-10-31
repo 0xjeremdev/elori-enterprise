@@ -1,6 +1,7 @@
 .vscode
 .env
 venv/*
+media/*
 __ pycache __
 __pycache__
 __pycache__/

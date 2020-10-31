@@ -1,6 +1,11 @@
 import os
+import re
+import string
+import time
 
 import jwt
+import json
+import random
 from django.conf import settings
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.contrib.sites.shortcuts import get_current_site
@@ -16,59 +21,146 @@ from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.parsers import MultiPartParser, FormParser, FileUploadParser
 
-from .models import Account
+from .models import Account, Customer, Enterprise
 from .renderers import UserRenderer
 from .serializers import (
     RegisterSerializer, LoginSerializer, EmailVerificationSerializer, LogoutSerializer,
-    PasswordResetSerializer, PasswordCofirmationSerializer, EmailValidationCodeSerializer, VerificationCodeSerializer
+    PasswordResetSerializer, PasswordCofirmationSerializer, EmailValidationCodeSerializer, VerificationCodeSerializer,
+    UserSerializer, CustomerSerializer, RegisterEnterpriseSerializer
 )
 # Register API class
 from .utlis import SendUserEmail
+from ..consumer_request.models import ConsumerRequest
+from ..consumer_request.serializers import ConsumerRequestSerializer
+from ..enterprise.models import EnterpriseConfigurationModel
+from ..enterprise.serializers import EnterpriseConfigurationSerializer
 
 
 class CustomRedirect(HttpResponsePermanentRedirect):
     allowed_schemes = [os.environ.get('APP_SCHEME'), 'http', 'https']
 
+def generate_random_email():
+    letters = string.ascii_lowercase[:12]
+    first_part = ''.join(random.choice(letters) for i in range(10))
+    second_part = ''.join(random.choice(letters) for i in range(6))
+    return f'{first_part}_{time.time()}@{second_part}.elroi.user'
 
-class RegisterAPI(GenericAPIView):
-    serializer_class = RegisterSerializer
+class RegisterCustomer(GenericAPIView):
+    serializer_class = CustomerSerializer
+    renderer_classes = (UserRenderer,)
+    parser_classes = (MultiPartParser, FormParser, FileUploadParser, )
+
+    def get(self, request, elroi_id,  *args, **kwargs):
+        try:
+            enterprise = Enterprise.objects.get(elroi_id__exact=elroi_id)
+            try:
+                enterprise_configuration = EnterpriseConfigurationModel.objects.get(enterprise_id=enterprise.id)
+                return Response(EnterpriseConfigurationSerializer(enterprise_configuration).data,
+                                status=status.HTTP_200_OK)
+            except EnterpriseConfigurationModel.DoesNotExist:
+                return Response({"error": "Enterprise was not found"}, status=status.HTTP_404_NOT_FOUND)
+        except Enterprise.DoesNotExist:
+            return Response({"error": "Page was not found"}, status=status.HTTP_404_NOT_FOUND)
+
+    def post(self, request, elroi_id, *args, **kwargs):
+        try:
+            enterprise = Enterprise.objects.get(elroi_id__exact=elroi_id)
+            try:
+                enterprise_configuration = EnterpriseConfigurationModel.objects.get(enterprise_id=enterprise.id)
+                c_dict = json.loads(json.dumps(enterprise_configuration.additional_configuration))
+                db_obj = {
+                    "email": generate_random_email(), "first_name": "", "last_name": "",
+                    "state_resident": "", "additional_fields": {"input": []}
+                    }
+                for item in c_dict['input']:
+                    if item['type'] == 'email':
+                        db_obj['email'] = request.data.get(item['name'])
+                    elif 'email' in item['name']:
+                        db_obj['email'] = request.data.get(item['name'])
+
+                    if item['type'] == 'file':
+                        file = request.FILES[item['name']]
+                        open(os.path.join(settings.UPLOAD_FOLDER, file.name), 'wb').write(file.file.read())
+                        db_obj['file'] = file.name
+                        file_uploaded = {
+                            "type": "file",
+                            "name": item['name'],
+                            "label": item['label'],
+                            "value": file.name
+                        }
+                        db_obj['additional_fields']['input'].append(file_uploaded)
+                    else:
+                        if item['name'] == 'first_name':
+                            db_obj['first_name'] = request.data.get(item['name'])
+                        if item['name'] == 'last_name':
+                            db_obj['last_name'] = request.data.get(item['name'])
+
+                        if "resident" in item['name']:
+                            is_resident = request.data.get(item['name'])
+                            if is_resident.lower() == 'yes':
+                                state_resident = True
+                            else:
+                                state_resident = False
+                            db_obj['state_resident'] = state_resident
+                        request_data = {
+                            "type": item['type'],
+                            "name": item['name'],
+                            "label": item['label'],
+                            "value": request.data.get(item['name'])}
+                        db_obj['additional_fields']['input'].append(request_data)
+                customer = Customer.objects.create(**db_obj)
+                db_req_obj = {
+                    "enterprise_id": enterprise.id,
+                    "customer_id": customer.id,
+                    "request_form": db_obj["additional_fields"]
+                }
+                customer_request = ConsumerRequest.objects.create(**db_req_obj)
+                return Response(ConsumerRequestSerializer(customer_request).data, status=status.HTTP_201_CREATED)
+            except EnterpriseConfigurationModel.DoesNotExist:
+                return Response({"error": "Enterprise was not found"}, status=status.HTTP_404_NOT_FOUND)
+
+            return Response({}, status=status.HTTP_200_OK)
+        except Enterprise.DoesNotExist:
+            return Response({"error": "Page was not found"}, status=status.HTTP_404_NOT_FOUND)
+
+class RegisterEnterprise(GenericAPIView):
+    serializer_class = RegisterEnterpriseSerializer
     renderer_classes = (UserRenderer,)
 
     def post(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
+        serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
             serializer.save()
-            user_data = serializer.data
-            user = Account.objects.get(email__iexact=user_data['email'])
-            token = RefreshToken.for_user(user).access_token
+            enterprise_data = serializer.data
+            account = Account.objects.get(email__iexact=enterprise_data['email'])
+            enterprise = account.enterprise
+            token = RefreshToken.for_user(account).access_token
             activate_url = f'{settings.FRONTEND_URL}/email-confirm/{str(token)}'
             message_body = render_to_string(
                 'email/activate_account.html',
-                {'user': user, 'url': activate_url}
+                {'user': account, 'url': activate_url}
             )
             email_data = {
                 'email_body': message_body,
-                'to_email': user.email,
+                'to_email': account.email,
                 'email_subject': 'Activate your account'
             }
             SendUserEmail.send_email(email_data)
             return Response({
                 'user': {
-                    'elroi_id': user.elroi_id,
-                    'email': user.email,
-                    'first_name': user.first_name,
-                    'last_name': user.last_name,
-                    'full_name': user.full_name(),
-                    'two_fa_valid': user.is_2fa_on(),
-                    'account_type': user.account_type,
-                    'profile': user.profile(),
-                    'state_resident': user.state_resident,
+                    'elroi_id': enterprise.elroi_id,
+                    'email': enterprise.email,
+                    'name': enterprise.name,
+                    'web': enterprise.web,
+                    'two_fa_valid': account.is_2fa_on(),
+                    'profile': enterprise.profile(),
                 },
-                'token': user.tokens()
+                'token': account.tokens()
             }, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class VerifyEmailAPI(APIView):
     serializer_class = EmailVerificationSerializer
@@ -102,15 +194,32 @@ class VerifyEmailAPI(APIView):
 class LoginAPI(GenericAPIView):
     serializer_class = LoginSerializer
 
-    def post(self, request):
+    def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
         status_response = status.HTTP_200_OK
         user_data = serializer.data
+
         if not user_data['two_fa_valid']:
             status_response = status.HTTP_206_PARTIAL_CONTENT
+        user = Account.objects.get(email__iexact=user_data['email'])
+        if hasattr(user, 'customer'):
+            account = user.customer
+        elif hasattr(user, 'enterprise'):
+            account = user.enterprise
+        else:
+            account = user
 
-        return Response(user_data, status=status_response)
+        res_data = {
+            'elroi_id': account.elroi_id,
+            'email': account.email,
+            'full_name': account.full_name(),
+            'two_fa_valid': user.is_2fa_on(),
+            'profile': account.profile(),
+            'tokens': user.tokens()
+        }
+
+        return Response(res_data, status=status_response)
 
 
 # log out current user

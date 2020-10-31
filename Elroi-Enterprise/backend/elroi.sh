@@ -2,7 +2,7 @@
 
 case "$1" in 
 start)
-   /home/guru/WorkSpace/Elroi/target/run.sh &
+   /home/daniel/Elroi-Enterprise-Repo/Elroi-Enterprise/backend/run.sh &
    echo $!>/var/run/hit.pid
    ;;
 stop)

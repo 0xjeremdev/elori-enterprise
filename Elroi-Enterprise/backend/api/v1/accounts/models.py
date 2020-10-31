@@ -8,17 +8,14 @@ from django.db import models
 from django.db.models.signals import post_save
 from phonenumber_field.modelfields import PhoneNumberField
 from rest_framework_simplejwt.tokens import RefreshToken
+from django.contrib.postgres.fields import JSONField
 
 
 class CustomAccountManager(BaseUserManager):
-    def create_front_user(self, state_resident, first_name, last_name, email, password, account_type):
+    def create_front_user(self, email, password):
         user = self.model(
-            username=self.normalize_email(email),
-            state_resident=state_resident,
             email=self.normalize_email(email),
-            first_name=first_name,
-            last_name=last_name,
-            account_type=account_type,
+            username=self.normalize_email(email),
             is_active=True,
         )
         user.set_password(password)
@@ -56,20 +53,9 @@ class CustomAccountManager(BaseUserManager):
 
 
 class Account(AbstractUser):
-    elroi_id = models.CharField(max_length=9, blank=True, null=True, db_index=True)
     email = models.EmailField(verbose_name="Email", max_length=60, unique=True)
-    username = models.CharField(max_length=30, unique=True)
-    first_name = models.CharField(max_length=40, null=True)
-    last_name = models.CharField(max_length=40, null=True)
-    state_resident = models.BooleanField(default=False)
-    auth_phone = PhoneNumberField(null=True, blank=True, unique=True)
-    auth_id = models.CharField(max_length=12, blank=True)
     verification_code = models.IntegerField(blank=True, null=True, default=0)
     otp_verified = models.BooleanField(default=False)
-    account_type = models.IntegerField(choices=settings.ACCOUNT_TYPES, default=1)
-    trial_start = models.DateTimeField(blank=True, null=True)
-    trial_end = models.DateTimeField(blank=True, null=True)
-    current_plan_end = models.DateTimeField(blank=True, null=True)
     is_admin = models.BooleanField(default=False)
     is_active = models.BooleanField(default=False)
     is_verified = models.BooleanField(default=False)
@@ -85,12 +71,15 @@ class Account(AbstractUser):
 
     objects = CustomAccountManager()
 
-    def get_auth_phone(self):
-        try:
-            auth_phone = phonenumbers.parse(str(self.auth_phone), None)
-        except phonenumbers.NumberParseException as e:
-            return None
-        return auth_phone
+    @property
+    def elroi_id(self):
+        return 'Account'
+
+    def full_name(self):
+        return 'Account'
+
+    def profile(self):
+        return 'Account'
 
     def is_2fa_on(self):
         if self.verification_code is not None and self.otp_verified:
@@ -99,7 +88,7 @@ class Account(AbstractUser):
             return False
 
     def __str__(self):
-        return self.first_name + ' ' + self.last_name
+        return self.email
 
     def has_perm(self, perm, obj=None):
         return self.is_admin
@@ -118,11 +107,81 @@ class Account(AbstractUser):
     def full_name(self):
         return f'{self.first_name} {self.last_name}'
 
-    """ get profile """
+
+""" customers table """
+class Customer(models.Model):
+    user = models.OneToOneField(Account, related_name='customer', on_delete=models.CASCADE, null=True, blank=True)
+    elroi_id = models.CharField(max_length=9, db_index=True, unique=True, null=True, blank=True)
+    file = models.FileField(blank=True, null=True)
+    email = models.EmailField(verbose_name="Email", max_length=60, unique=True, null=True, blank=True)
+    first_name = models.CharField(max_length=40, null=True)
+    last_name = models.CharField(max_length=40, null=True)
+    state_resident = models.BooleanField(default=False)
+    additional_fields = JSONField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.elroi_id
+
     def profile(self):
-        return settings.ACCOUNT_TYPES[self.account_type][1]
+        return "Customer"
+
+    def full_name(self):
+        return f'{self.first_name} {self.last_name}'
+
+    class Meta:
+        db_table = 'customers'
+
+""" method used to update elroi_id when new user is created """
+def update_customer_elroi_id(sender, instance, created, **kwargs):
+    if created:
+        token = generate_id(prefix='C')
+        elroi_id = check_unique_customer_elroi_id(token)
+        instance.elroi_id = elroi_id
+        instance.save()
+
+""" check and generate unique elroi_id"""
+def check_unique_customer_elroi_id(elroi_id):
+    try:
+        Customer.objects.get(elroi_id__exact=elroi_id)
+        elroi_id = generate_id(prefix='C')
+        return check_unique_customer_elroi_id(elroi_id)
+    except Customer.DoesNotExist:
+        return elroi_id
+
+
+"""call signal to update elroi id when account is created"""
+post_save.connect(update_customer_elroi_id, sender=Customer)
+
+""" enterprises table """
+class Enterprise(models.Model):
+    user = models.OneToOneField(Account, related_name='enterprise', on_delete=models.CASCADE, blank=True, null=True)
+    email = models.EmailField(max_length=80, unique=True)
+    elroi_id = models.CharField(max_length=9, db_index=True, unique=True, blank=True, null=True)
+    name = models.CharField(max_length=255, blank=True, null=True)
+    web = models.CharField(max_length=255,blank=True, null=True)
+    trial_start = models.DateTimeField(blank=True, null=True)
+    trial_end = models.DateTimeField(blank=True, null=True)
+    current_plan_end = models.DateTimeField(blank=True, null=True)
+    is_active = models.BooleanField(default=True)
+    turn_off_date = models.DateTimeField(blank=True, null=True)
+    allow_email_data = models.BooleanField(default=True)
+    allow_api_call = models.BooleanField(default=True)
+    payment = JSONField(null=True, blank=True)
+    updated_by = models.ForeignKey(Account, related_name='updated_by', on_delete=models.CASCADE, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.elroi_id
+
+    def profile(self):
+        return "Enterprise"
+
+    def full_name(self):
+        return self.name
 
     """ get current subscription type """
+
     def current_subscription(self):
         if self.trial_end <= datetime.now():
             return 'trial'
@@ -132,33 +191,29 @@ class Account(AbstractUser):
 
         return 'expired'
 
+    class Meta:
+        db_table = 'enterprises'
 
-""" method used to update elroi_id when new user is created """
-def update_user_elroi_id(sender, instance, created, **kwargs):
+""" update elroi id for enterprises"""
+def update_enterprise_elroi_id(sender, instance, created, **kwargs):
     if created:
-        token = secrets.token_hex(3).upper()
-        account_type = 'C'
-        if instance.account_type == 1:
-            account_type = 'E'
-        instance.elroi_id = f'{account_type}-{token}'
+        token = generate_id(prefix='E')
+        elroi_id = check_unique_enterprise_elroi_id(token)
+        instance.elroi_id = elroi_id
         instance.save()
 
+""" check if elroi_id doesn't exists already """
+def check_unique_enterprise_elroi_id(check_id):
+    try:
+        Enterprise.objects.get(elroi_id__exact=check_id)
+        elroi_id = generate_id('E')
+        return check_unique_enterprise_elroi_id(elroi_id)
+    except Enterprise.DoesNotExist:
+        return check_id
 
-""" check and generate unique elroi_id"""
-def check_unique_elroi_id(elroi_id):
-    user = Account.objects.get(elroi_id__exact=elroi_id)
-    account_type = elroi_id[0]
-    if user.exists():
-        elroi_id = generate_id(account_type)
-        check_unique_elroi_id(elroi_id)
-    return elroi_id
-
+post_save.connect(update_enterprise_elroi_id, sender=Enterprise)
 
 """generate random id ( characters+ digits)"""
-def generate_id(account_type='C'):
+def generate_id(prefix='C'):
     token = secrets.token_hex(3).upper()
-    return f'{account_type}-{token}'
-
-
-"""call signal to update elroi id when account is created"""
-post_save.connect(update_user_elroi_id, sender=Account)
+    return f'{prefix}-{token}'

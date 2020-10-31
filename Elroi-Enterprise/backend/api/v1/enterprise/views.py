@@ -3,24 +3,62 @@ from typing import re
 from django.template.loader import render_to_string
 from rest_framework import mixins, permissions, status
 from rest_framework.generics import GenericAPIView
+from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from api.v1.accounts.permissions import HasEnterpriseViewPermission
 from api.v1.accounts.utlis import SendUserEmail
+from api.v1.analytics.mixins import ObjectViewMixin
 from api.v1.consumer_request.models import ConsumerRequest
-from api.v1.enterprise.models import UserGuide, CustomerConfiguration, EnterpriseConfigurationModel
-from api.v1.enterprise.serializers import UserGuideSerializer, CustomerConfigurationSerializer, \
-    CustomerSummarizeSerializer, RequestTrackerSerializer, EnterpriseConfigurationSerializer
+from api.v1.enterprise.models import UserGuideModel, CustomerConfiguration, EnterpriseConfigurationModel
+from api.v1.enterprise.serializers import (
+    UserGuideSerializer, CustomerConfigurationSerializer,
+    CustomerSummarizeSerializer, RequestTrackerSerializer,
+    EnterpriseConfigurationSerializer, FileSerializer
+)
 
 
-class UserGuide(mixins.ListModelMixin, GenericAPIView):
-    queryset = UserGuide.objects.all()
+class UserGuide(mixins.ListModelMixin, mixins.CreateModelMixin, GenericAPIView):
+    """ user guide """
+    queryset = UserGuideModel.objects.all()
     serializer_class = UserGuideSerializer
-    permission_classes = (permissions.IsAuthenticated, HasEnterpriseViewPermission)
+    permission_classes = (permissions.IsAuthenticated,)
 
     def get(self, request, *args, **kwargs):
+        if request.GET.get('enterprise_id'):
+            self.queryset = UserGuideModel.objects.filter(owner__id=request.GET.get('enterprise_id')).prefetch_related('uploads')
+        else:
+            self.queryset = UserGuideModel.objects.filter(owner=request.user).prefetch_related('uploads')
         return self.list(request, *args, **kwargs)
+
+    """ overwrite list method to assign the list of uploaded files based on guide id """
+    def list(self, request, *args, **kwargs):
+        response = super(UserGuide, self).list(request,*args, **kwargs)
+        uploads = []
+        for upload_file in self.queryset:
+            files = [str(guide_file.file) for guide_file in upload_file.uploads.filter(user_guide=upload_file.pk)]
+            uploads.extend(files)
+        response.data['uploads'] = uploads
+        return response
+
+    def post(self, request, *args, **kwargs):
+        if not request.data.get('owner'):
+            request.data['owner'] = request.user.id
+        return self.create(request, *args, **kwargs)
+
+class UserGuideUpload(APIView):
+    """ Upload file for specific guide id"""
+    permission_classes = (permissions.IsAuthenticated,)
+    parser_classes = (MultiPartParser, FormParser)
+
+    def post(self, request, *args, **kwargs):
+        file_serializer = FileSerializer(data=request.data)
+        if file_serializer.is_valid():
+            file_serializer.save()
+            return Response(file_serializer.data, status=status.HTTP_201_CREATED)
+        else:
+            return Response(file_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class CustomerConfiguration(mixins.ListModelMixin,
@@ -37,7 +75,7 @@ class CustomerConfiguration(mixins.ListModelMixin,
 
     # create new configuration
     def post(self, request, *args, **kwargs):
-        if request.user and request.user.account_type == 1:
+        if request.user and hasattr(request.user, 'enterprise'):
             return self.create(request, *args, **kwargs)
         return Response({
             'error': 'You are not allowed to continue',
@@ -107,7 +145,7 @@ class ExtendedVsNewRequests(APIView):
     def get(self, request, *args, **kwargs):
         user_id = request.user.id
         try:
-            enterprise_db = ConsumerRequest.objects.filter(enterprise__id=user_id, enterprise__account_type=1)
+            enterprise_db = ConsumerRequest.objects.filter(enterprise__id=user_id)
             if enterprise_db.exists():
                 total_requsts = enterprise_db.count()
                 extended = enterprise_db.filter(extend_requested=1).count()
@@ -155,8 +193,7 @@ class EnterpriseConfiguration(
 
     # create new configuration
     def post(self, request, *args, **kwargs):
-        return self.create(request, *args, **kwargs)
-        if request.user and request.user.account_type == 1:
+        if request.user and hasattr(request.user, 'enterprise'):
             return self.create(request, *args, **kwargs)
         return Response({
             'error': 'You are not allowed to continue',

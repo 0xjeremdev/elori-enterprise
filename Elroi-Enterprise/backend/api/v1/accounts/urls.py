@@ -2,12 +2,14 @@ from django.urls import path
 from rest_framework_simplejwt.views import TokenRefreshView, TokenObtainPairView
 
 from .views import (
-    RegisterAPI, LoginAPI, VerifyEmailAPI, LogoutAPI,
-    PasswordResetAPI, PasswordConfirmationAPI, SendValidationCodeAPI, VerificationCodeConfirmAPI
+    LoginAPI, VerifyEmailAPI, LogoutAPI,
+    PasswordResetAPI, PasswordConfirmationAPI, SendValidationCodeAPI, VerificationCodeConfirmAPI, RegisterCustomer,
+    RegisterEnterprise
 )
 
 urlpatterns = [
-    path('register/', RegisterAPI.as_view(), name="register_api"),
+    path('register/customer/<elroi_id>', RegisterCustomer.as_view(), name="register_customer"),
+    path('register/enterprise/', RegisterEnterprise.as_view(), name="register_enterprise"),
     path('login/', LoginAPI.as_view(), name="login_api"),
     path('logout/', LogoutAPI.as_view(), name="logout_api"),
     path('email-verify/', VerifyEmailAPI.as_view(), name='email_verify'),

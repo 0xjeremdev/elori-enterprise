@@ -2,6 +2,7 @@ import pyotp
 from django.conf import settings
 from django.contrib.auth import authenticate
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
+from django.db import IntegrityError
 from django.utils.encoding import force_str
 from django.utils.http import urlsafe_base64_decode
 from rest_framework import serializers, status
@@ -11,14 +12,13 @@ from rest_framework.validators import UniqueValidator
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 
-from api.v1.accounts.models import Account
+from api.v1.accounts.models import Account, Customer, Enterprise
 
 
 def generate_auth_code():
     totp = pyotp.TOTP('base32secret3232')
     auth_code = totp.now()
     return auth_code
-
 
 # Register Serializer, used when new account is created
 class RegisterSerializer(serializers.ModelSerializer):
@@ -65,11 +65,11 @@ class LoginSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(min_length=6, max_length=80, required=True)
     password = serializers.CharField(min_length=8, write_only=True)
     two_fa_valid = serializers.BooleanField(read_only=True, required=False)
-    account_type = serializers.IntegerField(read_only=True, required=False)
+    username = serializers.CharField(required=False)
 
     class Meta:
         model = Account
-        fields = ('elroi_id', 'email', 'full_name', 'password', 'two_fa_valid', 'account_type', 'profile', 'tokens')
+        fields = ('email', 'two_fa_valid', 'tokens', 'password', 'username')
 
     def validate(self, data):
         email = data.get('email', '')
@@ -83,16 +83,61 @@ class LoginSerializer(serializers.ModelSerializer):
             raise AuthenticationFailed('Account is not verified.')
 
         return {
-            'elroi_id': user.elroi_id,
             'email': user.email,
-            'full_name': user.full_name(),
             'two_fa_valid': user.is_2fa_on(),
-            'account_type': user.account_type,
-            'profile': user.profile(),
             'tokens': user.tokens(),
         }
 
+class CustomerSerializer(serializers.ModelSerializer):
+    email = serializers.EmailField(min_length=6, max_length=80, required=True,
+                                   validators=[UniqueValidator(queryset=Customer.objects.all())])
+    first_name = serializers.CharField(required=True)
+    last_name = serializers.CharField(required=True)
+    state_resident = serializers.BooleanField(required=True)
+    two_fa_valid = serializers.BooleanField(read_only=True, required=False)
+    password = serializers.CharField(min_length=8, write_only=True)
+    elroi_id = serializers.CharField(required=False)
+    file = serializers.FileField()
 
+    class Meta:
+        model = Customer
+        fields = '__all__'
+        extra_kwargs = {'password': {'write_only': True}}
+
+    def create(self, validated_data):
+        try:
+            user = Account.objects.create_front_user(validated_data['email'], validated_data['password'])
+            del validated_data['password']
+            customer = Customer.objects.create(user=user, **validated_data)
+            return customer
+        except IntegrityError as e:
+            raise ValidationError('This email is already registered in our database.', code=status.HTTP_400_BAD_REQUEST)
+
+""" register enterprise class serializer """
+class RegisterEnterpriseSerializer(serializers.ModelSerializer):
+    email = serializers.EmailField(min_length=6, max_length=80, required=True,
+                                   validators=[UniqueValidator(queryset=Customer.objects.all())])
+    name = serializers.CharField(min_length=3, max_length=255, required=True)
+    web = serializers.URLField(required=False)
+    two_fa_valid = serializers.BooleanField(read_only=True, required=False)
+    password = serializers.CharField(min_length=8, write_only=True)
+    elroi_id = serializers.CharField(required=False)
+
+    class Meta:
+        model = Enterprise
+        fields = '__all__'
+        extra_kwargs = {'password': {'write_only': True}}
+
+    def create(self, validated_data):
+        try:
+            user = Account.objects.create_front_user(validated_data['email'], validated_data['password'])
+            del validated_data['password']
+            enterprise = Enterprise.objects.create(user=user, **validated_data)
+            return enterprise
+        except IntegrityError as e:
+            raise ValidationError('This email is already registered in our database.', code=status.HTTP_400_BAD_REQUEST)
+
+""" user serializer class """
 class UserSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(required=True)
     state_resident = serializers.BooleanField()
@@ -117,7 +162,6 @@ class UserSerializer(serializers.ModelSerializer):
 
         instance.save()
         return instance
-
 
 class EmailVerificationSerializer(serializers.ModelSerializer):
     token = serializers.CharField(max_length=555)

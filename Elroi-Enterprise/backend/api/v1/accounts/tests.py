@@ -16,8 +16,7 @@ class AccountsTest(APITestCase):
     def setUp(self):
         """ create customer user from start """
         self.user_customer = Account.objects.create_front_user(
-            state_resident=True, first_name="Test", last_name="user",
-            email="test@user.com", password="password", account_type=0
+            email="test@user.com", password="password"
         )
         """ generate token used to authorize requests """
         refresh = RefreshToken.for_user(self.user_customer)
@@ -29,20 +28,17 @@ class AccountsTest(APITestCase):
             "last_name": "Test",
             "email": "customer@email.com",
             "password": "password_customer",
-            "account_type": 0
         }
 
         self.post_data_enterprise = {
-            "state_resident": True,
-            "first_name": "Enterprise",
-            "last_name": "Test",
+            "name": "Enterprise",
             "email": "enterprise@email.com",
             "password": "password_enterprise",
-            "account_type": 1
         }
 
         """ list of urls used for tests """
-        self.create_url = reverse('register_api')
+        self.register_customer = reverse('register_customer')
+        self.register_enterprise = reverse('register_enterprise')
         self.login_url = reverse('login_api')
 
     def api_authentication(self):
@@ -51,7 +47,7 @@ class AccountsTest(APITestCase):
 
     def test_create_customer_user(self):
         """ send the post request to register url to create customer profile and get the response """
-        response = self.client.post(self.create_url, self.post_data_customer, format='json')
+        response = self.client.post(self.register_customer, self.post_data_customer, format='json')
 
         """Response code is 201 that means account was created"""
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -73,7 +69,7 @@ class AccountsTest(APITestCase):
 
     def test_create_enterprise_user(self):
         """ make the request to register url to create enterprise profile and get response """
-        response = self.client.post(self.create_url, self.post_data_enterprise, format='json')
+        response = self.client.post(self.register_enterprise, self.post_data_enterprise, format='json')
 
         """Response code is 201 that means account was created"""
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -101,10 +97,9 @@ class AccountsTest(APITestCase):
             "last_name": "Test",
             "email": "customer@email.com",
             "password": "123456",
-            "account_type": 0
         }
         """ send data and getting response from register url with wrong password size"""
-        response = self.client.post(self.create_url, data, format='json')
+        response = self.client.post(self.register_customer, data, format='json')
 
         """ check if the response code is 400 as expecting in case of short password"""
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
@@ -117,10 +112,9 @@ class AccountsTest(APITestCase):
             "last_name": "Test",
             "email": "customer@email.com",
             "password": "",
-            "account_type": 0
         }
         """ send data and getting response from register url with empty password"""
-        response = self.client.post(self.create_url, data, format='json')
+        response = self.client.post(self.register_customer, data, format='json')
         """ check if the response code is 400 as expecting in case of empty password"""
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
@@ -132,10 +126,9 @@ class AccountsTest(APITestCase):
             "last_name": "Test",
             "email": "",
             "password": "password_secret",
-            "account_type": 0
         }
         """ send data and receive response from register url with no email provided """
-        response = self.client.post(self.create_url, data, format='json')
+        response = self.client.post(self.register_customer, data, format='json')
         """ check returned response to be 400 as expected in case of no email provided """
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
@@ -147,10 +140,9 @@ class AccountsTest(APITestCase):
             "last_name": "user",
             "email": "test@user.com",
             "password": "password",
-            "account_type": 0
         }
         """ send data and receive response from register url with already registered email"""
-        response = self.client.post(self.create_url, data, format='json')
+        response = self.client.post(self.register_customer, data, format='json')
         """ check returned status code 400 as provided in case of validation existing email"""
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
@@ -162,10 +154,9 @@ class AccountsTest(APITestCase):
             "last_name": "Test",
             "email": "emailaddress",
             "password": "password_secret",
-            "account_type": 0
         }
         """ send data and receive response from registration"""
-        response = self.client.post(self.create_url, data, format='json')
+        response = self.client.post(self.register_customer, data, format='json')
         """ check returned status and compare with 400 as shoujld be in case of invalid email"""
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
