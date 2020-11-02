@@ -13,13 +13,13 @@ from api.v1.elroi_admin.serializers import EnterpriseTrialSerializer, Enterprise
 
 
 class EnterpriseTrialConfigApi(mixins.ListModelMixin, mixins.UpdateModelMixin, GenericAPIView):
-    serializer_class = EnterpriseTrialSerializer
-    permission_classes = (permissions.IsAdminUser,)
-    queryset = AdminEnterpriseConfig.objects.all()
     """
     Configuration for trial packages for enterprise
     - set up the number of days for trial period
     """
+    serializer_class = EnterpriseTrialSerializer
+    permission_classes = (permissions.IsAdminUser,)
+    queryset = AdminEnterpriseConfig.objects.all()
 
     def get(self, request, *args, **kwargs):
         return self.list(request, *args, **kwargs)
@@ -40,12 +40,12 @@ class EnterpriseTrialConfigApi(mixins.ListModelMixin, mixins.UpdateModelMixin, G
 
 
 class EnterpriseMaintenanceApi(mixins.UpdateModelMixin, GenericAPIView):
-    serializer_class = EnterpriseMaintenanceSerializer
-    permission_classes = (permissions.IsAdminUser,)
-    queryset = Enterprise.objects.all()
     """ Used to manage the status of the enterprise
         - put the enterprise profile offline
         """
+    serializer_class = EnterpriseMaintenanceSerializer
+    permission_classes = (permissions.IsAdminUser,)
+    queryset = Enterprise.objects.all()
 
     def put(self, request, *args, **kwargs):
         try:
