@@ -5,10 +5,11 @@ from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
 
 from api.v1.accounts.models import Enterprise, Customer
+from api.v1.analytics.models import ActivityLog
 from api.v1.consumer_request.models import ConsumerRequest
 from api.v1.elroi_admin.models import AdminEnterpriseConfig
 from api.v1.elroi_admin.serializers import EnterpriseTrialSerializer, EnterpriseMaintenanceSerializer, \
-    EnterprisePaymentSerializer, EnterpriseCustomersSerializer
+    EnterprisePaymentSerializer, EnterpriseCustomersSerializer, EnterpriseActivitySerializer
 
 
 class EnterpriseTrialConfigApi(mixins.ListModelMixin, mixins.UpdateModelMixin, GenericAPIView):
@@ -140,10 +141,18 @@ class EnterpriseApi(mixins.ListModelMixin, mixins.CreateModelMixin, mixins.Updat
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class EnterpriseActivityApi(GenericAPIView):
+class EnterpriseActivityApi(mixins.ListModelMixin, GenericAPIView):
     """
     Display user's activity log
     """
+    serializer_class = EnterpriseActivitySerializer
+    permission_classes = (permissions.IsAdminUser,)
+    queryset = ActivityLog.objects.all()
 
     def get(self, request, *args, **kwargs):
-        pass
+        user = request.user
+        if hasattr(user, 'enterprise'):
+            self.queryset = ActivityLog.objects.filter(elroi_id__exact=user.enterprise.elroi_id)
+            return self.list(request, *args, **kwargs)
+        else:
+            return Response({"error": "No logs were found for this enterprise"}, status=status.HTTP_400_BAD_REQUEST)

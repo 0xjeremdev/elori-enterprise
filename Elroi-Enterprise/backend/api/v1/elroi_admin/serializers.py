@@ -2,6 +2,7 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
 from api.v1.accounts.models import Enterprise
+from api.v1.analytics.models import ActivityLog
 from api.v1.consumer_request.models import ConsumerRequest
 from api.v1.elroi_admin.models import AdminEnterpriseConfig
 
@@ -59,3 +60,8 @@ class EnterpriseCustomersSerializer(serializers.ModelSerializer):
         model = Enterprise
         fields = ('elroi_id', 'unique_customers', 'total_requests', 'name')
         read_only_fields = ['elroi_id']
+
+class EnterpriseActivitySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ActivityLog
+        fields = '__all__'

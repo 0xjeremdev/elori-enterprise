@@ -34,6 +34,7 @@ INSTALLED_APPS = [
     'api.v1.enterprise',
     'api.v1.consumer_request',
     'api.v1.elroi_admin',
+    'api.v1.analytics',
     'frontend.home',
     'django_otp',
     'django_otp.plugins.otp_totp',
@@ -108,7 +109,7 @@ DATABASES = {
         'USER': 'postgres',
         'PASSWORD': 'postgres',
         'HOST': 'localhost',
-        'PORT': '5433',
+        'PORT': '5432',
     }
 }
 STATUSES = (

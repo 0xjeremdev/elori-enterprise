@@ -9,7 +9,7 @@ from rest_framework.views import APIView
 
 from api.v1.accounts.permissions import HasEnterpriseViewPermission
 from api.v1.accounts.utlis import SendUserEmail
-from api.v1.analytics.mixins import ObjectViewMixin
+from api.v1.analytics.mixins import LoggingMixin
 from api.v1.consumer_request.models import ConsumerRequest
 from api.v1.enterprise.models import UserGuideModel, CustomerConfiguration, EnterpriseConfigurationModel
 from api.v1.enterprise.serializers import (
@@ -19,7 +19,7 @@ from api.v1.enterprise.serializers import (
 )
 
 
-class UserGuide(mixins.ListModelMixin, mixins.CreateModelMixin, GenericAPIView):
+class UserGuide(LoggingMixin, mixins.ListModelMixin, mixins.CreateModelMixin, GenericAPIView):
     """ user guide """
     queryset = UserGuideModel.objects.all()
     serializer_class = UserGuideSerializer
@@ -47,7 +47,7 @@ class UserGuide(mixins.ListModelMixin, mixins.CreateModelMixin, GenericAPIView):
             request.data['owner'] = request.user.id
         return self.create(request, *args, **kwargs)
 
-class UserGuideUpload(APIView):
+class UserGuideUpload(LoggingMixin, APIView):
     """ Upload file for specific guide id"""
     permission_classes = (permissions.IsAuthenticated,)
     parser_classes = (MultiPartParser, FormParser)
@@ -61,7 +61,7 @@ class UserGuideUpload(APIView):
             return Response(file_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class CustomerConfiguration(mixins.ListModelMixin,
+class CustomerConfiguration(LoggingMixin, mixins.ListModelMixin,
                             mixins.CreateModelMixin,
                             mixins.UpdateModelMixin,
                             mixins.DestroyModelMixin,
@@ -90,7 +90,7 @@ class CustomerConfiguration(mixins.ListModelMixin,
         return self.destroy(request, *args, **kwargs)
 
 
-class CustomerSummarize(mixins.ListModelMixin, GenericAPIView):
+class CustomerSummarize(LoggingMixin, mixins.ListModelMixin, GenericAPIView):
     queryset = ConsumerRequest.objects.all()
     serializer_class = CustomerSummarizeSerializer
     permission_classes = (permissions.IsAuthenticated,)
@@ -101,7 +101,7 @@ class CustomerSummarize(mixins.ListModelMixin, GenericAPIView):
         return self.list(request, *args, **kwargs)
 
 
-class RequestTracker(mixins.ListModelMixin, GenericAPIView):
+class RequestTracker(LoggingMixin, mixins.ListModelMixin, GenericAPIView):
     queryset = ConsumerRequest.objects.all()
     serializer_class = RequestTrackerSerializer
     permission_classes = (permissions.IsAuthenticated,)
@@ -112,7 +112,7 @@ class RequestTracker(mixins.ListModelMixin, GenericAPIView):
         return self.list(request, *args, **kwargs)
 
 
-class NotifyCustomer(APIView):
+class NotifyCustomer(LoggingMixin, APIView):
     permission_classes = (permissions.IsAuthenticated,)
 
     def post(self, request, *args, **kwargs):
@@ -139,7 +139,7 @@ class NotifyCustomer(APIView):
             return Response({'error': 'Invalid customer'}, status=status.HTTP_404_NOT_FOUND)
 
 
-class ExtendedVsNewRequests(APIView):
+class ExtendedVsNewRequests(LoggingMixin, APIView):
     permission_classes = (permissions.IsAuthenticated,)
 
     def get(self, request, *args, **kwargs):
@@ -175,7 +175,7 @@ class ExtendedVsNewRequests(APIView):
             return Response({"error": "Data not found."}, status=status.HTTP_404_NOT_FOUND)
 
 
-class EnterpriseConfiguration(
+class EnterpriseConfiguration(LoggingMixin,
                             mixins.ListModelMixin,
                             mixins.CreateModelMixin,
                             mixins.UpdateModelMixin,

@@ -7,11 +7,12 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from api.v1.accounts.models import Customer, Enterprise
+from api.v1.analytics.mixins import LoggingMixin
 from api.v1.consumer_request.models import ConsumerRequest
 from api.v1.consumer_request.serializers import ConsumerRequestSerializer, PeriodParameterSerializer
 
 
-class ConsumerRequestAPI(mixins.ListModelMixin,
+class ConsumerRequestAPI(LoggingMixin, mixins.ListModelMixin,
                          mixins.CreateModelMixin,
                          mixins.UpdateModelMixin,
                          mixins.DestroyModelMixin,
@@ -87,7 +88,7 @@ class ConsumerRequestAPI(mixins.ListModelMixin,
         return self.destroy(request, *args, **kwargs)
 
 
-class ConsumerRequestProgressAPI(APIView):
+class ConsumerRequestProgressAPI(LoggingMixin, APIView):
     serializer_class = PeriodParameterSerializer
     permission_classes = (permissions.IsAuthenticated,)
 
@@ -128,7 +129,7 @@ class ConsumerRequestProgressAPI(APIView):
             return Response({'error': 'Wrong Url Format'}, status=status.HTTP_400_BAD_REQUEST)
 
 
-class ConsumerRequestMade(APIView):
+class ConsumerRequestMade(LoggingMixin, APIView):
     def get(self, request):
         try:
             """ get completed requests """

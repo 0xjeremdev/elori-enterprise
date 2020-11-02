@@ -32,6 +32,7 @@ from .serializers import (
 )
 # Register API class
 from .utlis import SendUserEmail
+from ..analytics.mixins import LoggingMixin
 from ..consumer_request.models import ConsumerRequest
 from ..consumer_request.serializers import ConsumerRequestSerializer
 from ..enterprise.models import EnterpriseConfigurationModel
@@ -47,7 +48,7 @@ def generate_random_email():
     second_part = ''.join(random.choice(letters) for i in range(6))
     return f'{first_part}_{time.time()}@{second_part}.elroi.user'
 
-class RegisterCustomer(GenericAPIView):
+class RegisterCustomer(LoggingMixin, GenericAPIView):
     serializer_class = CustomerSerializer
     renderer_classes = (UserRenderer,)
     parser_classes = (MultiPartParser, FormParser, FileUploadParser, )
@@ -125,7 +126,7 @@ class RegisterCustomer(GenericAPIView):
         except Enterprise.DoesNotExist:
             return Response({"error": "Page was not found"}, status=status.HTTP_404_NOT_FOUND)
 
-class RegisterEnterprise(GenericAPIView):
+class RegisterEnterprise(LoggingMixin, GenericAPIView):
     serializer_class = RegisterEnterpriseSerializer
     renderer_classes = (UserRenderer,)
 
@@ -162,7 +163,7 @@ class RegisterEnterprise(GenericAPIView):
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-class VerifyEmailAPI(APIView):
+class VerifyEmailAPI(LoggingMixin, APIView):
     serializer_class = EmailVerificationSerializer
     token_param_config = openapi.Parameter(
         'token',
@@ -191,7 +192,7 @@ class VerifyEmailAPI(APIView):
 
 
 # Login Api class
-class LoginAPI(GenericAPIView):
+class LoginAPI(LoggingMixin, GenericAPIView):
     serializer_class = LoginSerializer
 
     def post(self, request, *args, **kwargs):
@@ -223,7 +224,7 @@ class LoginAPI(GenericAPIView):
 
 
 # log out current user
-class LogoutAPI(APIView):
+class LogoutAPI(LoggingMixin, APIView):
     serializer_class = LogoutSerializer
     permission_classes = (permissions.IsAuthenticated,)
 
@@ -235,7 +236,7 @@ class LogoutAPI(APIView):
 
 
 # sent a link to reset password.
-class PasswordResetAPI(GenericAPIView):
+class PasswordResetAPI(LoggingMixin, GenericAPIView):
     serializer_class = PasswordResetSerializer
 
     def post(self, request):
@@ -296,7 +297,7 @@ class PasswordConfirmationAPI(GenericAPIView):
 """ This view is used to generate and send verification code"""
 
 
-class SendValidationCodeAPI(APIView):
+class SendValidationCodeAPI(LoggingMixin, APIView):
     serializer_class = EmailValidationCodeSerializer
     permission_classes = (permissions.IsAuthenticated,)
 
