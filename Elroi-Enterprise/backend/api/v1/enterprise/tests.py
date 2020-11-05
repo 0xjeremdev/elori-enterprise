@@ -54,7 +54,7 @@ class UserGuideTestCase(APITestCase):
         self.user.save()
         url = reverse('user_guide_upload')
         file_to_upload = self.generate_file_to_upload()
-        guide = UserGuideModel.objects.create(title="Test guide", content="Test guide content", owner=self.user)
+        guide = UserGuideModel.objects.create(title="Test guide", content="Test guide content")
         data = {"user_guide": guide.id, "name": "testing file upload", "file": file_to_upload}
         response = self.client.post(url, data, format='multipart')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -66,7 +66,7 @@ class UserGuideTestCase(APITestCase):
         self.user.groups.add(self.group)
         self.user.save()
         url = reverse('user_guide_upload')
-        guide = UserGuideModel.objects.create(title="Test guide", content="Test guide content", owner=self.user)
+        guide = UserGuideModel.objects.create(title="Test guide", content="Test guide content")
         data = {"user_guide": guide.id, "name": "testing file upload", "file": ''}
         response = self.client.post(url, data, format='multipart')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)

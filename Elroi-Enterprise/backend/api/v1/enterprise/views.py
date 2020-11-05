@@ -32,7 +32,7 @@ class UserGuide(LoggingMixin, mixins.ListModelMixin, mixins.CreateModelMixin, Ge
         if request.GET.get('enterprise_id'):
             self.queryset = UserGuideModel.objects.filter(owner__id=request.GET.get('enterprise_id')).prefetch_related('uploads')
         else:
-            self.queryset = UserGuideModel.objects.filter(owner=request.user).prefetch_related('uploads')
+            self.queryset = UserGuideModel.objects.filter(created_by=request.user).prefetch_related('uploads')
         return self.list(request, *args, **kwargs)
 
     """ overwrite list method to assign the list of uploaded files based on guide id """
@@ -46,8 +46,6 @@ class UserGuide(LoggingMixin, mixins.ListModelMixin, mixins.CreateModelMixin, Ge
         return response
 
     def post(self, request, *args, **kwargs):
-        if not request.data.get('owner'):
-            request.data['owner'] = request.user.id
         return self.create(request, *args, **kwargs)
 
 class UserGuideUpload(LoggingMixin, APIView):

@@ -6,6 +6,7 @@ from api.v1.analytics.models import ActivityLog
 from api.v1.assessment.models import Questionnaire
 from api.v1.consumer_request.models import ConsumerRequest
 from api.v1.elroi_admin.models import AdminEnterpriseConfig
+from api.v1.enterprise.models import UserGuideUploads, UserGuideModel
 
 
 class EnterpriseTrialSerializer(serializers.ModelSerializer):
@@ -70,4 +71,14 @@ class EnterpriseActivitySerializer(serializers.ModelSerializer):
 class QuestionnaireApiSerializer(serializers.ModelSerializer):
     class Meta:
         model = Questionnaire
+        fields = '__all__'
+
+class UserGuideUploadApiSerializer(serializers.ModelSerializer):
+    elroi_id = serializers.CharField(max_length=255, required=False)
+    title = serializers.CharField(max_length=255, required=False)
+    content = serializers.CharField(required=False)
+    created_by = serializers.HiddenField(default=serializers.CurrentUserDefault())
+
+    class Meta:
+        model = UserGuideModel
         fields = '__all__'

@@ -1,7 +1,9 @@
 import json
+from datetime import timedelta, date
 
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User, Group
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.urls import reverse
 from rest_framework.authtoken.models import Token
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -64,12 +66,73 @@ class ElroiAdminTest(APITestCase):
 
     def test_enterprise_customers(self):
         url = reverse('admin_enterprise_customers')
-        pass
+        user = authenticate(email=self.email, password=self.password)
+        refresh = RefreshToken.for_user(user)
+        token = refresh.access_token
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {str(token)}")
+        response = self.client.get(url, HTTP_ACCEPT='application/json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_enterprise_maintenance(self):
         url = reverse('admin_enterprise_maintenance')
-        pass
+        user = authenticate(email=self.email, password=self.password)
+        refresh = RefreshToken.for_user(user)
+        token = refresh.access_token
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {str(token)}")
+        end_date = date.today() + timedelta(days=10)
 
-    def test_enterprise_trial_config(self):
+        data = {
+            "elroi_id": self.enterprise.elroi_id,
+            "is_active": False,
+            "turn_off_date": end_date.strftime('%Y-%m-%d %H:%M:%S')
+        }
+        response = self.client.put(url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_get_enterprise_trial_config(self):
         url = reverse('admin_enterprise_trial_config')
-        pass
+        user = authenticate(email=self.email, password=self.password)
+        refresh = RefreshToken.for_user(user)
+        token = refresh.access_token
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {str(token)}")
+        response = self.client.get(url, HTTP_ACCEPT='application/json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_post_enterprise_trial_config(self):
+        url = reverse('admin_enterprise_trial_config')
+        user = authenticate(email=self.email, password=self.password)
+        refresh = RefreshToken.for_user(user)
+        token = refresh.access_token
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {str(token)}")
+        data = {
+            "name": "trial config test",
+            "key": "key test",
+            "value": "value test"
+        }
+        response = self.client.post(url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+    def test_user_guide_upload(self):
+        url = reverse('admin_upload_user_guide')
+        user = authenticate(email=self.email, password=self.password)
+        refresh = RefreshToken.for_user(user)
+        token = refresh.access_token
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {str(token)}")
+        file_to_upload = SimpleUploadedFile("file.txt", b"abc", content_type="text/plain")
+        data = {
+            "enterprise": self.enterprise,
+            "title": "test",
+            "content": "test content",
+            "file": file_to_upload
+        }
+        response = self.client.post(url, data, format='multipart')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_get_user_guide_uploaded(self):
+        url = reverse('admin_upload_user_guide')
+        user = authenticate(email=self.email, password=self.password)
+        refresh = RefreshToken.for_user(user)
+        token = refresh.access_token
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {str(token)}")
+        response = self.client.get(url, HTTP_ACCEPT='application/json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)

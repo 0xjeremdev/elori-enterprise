@@ -110,7 +110,7 @@ DATABASES = {
         'USER': 'postgres',
         'PASSWORD': 'postgres',
         'HOST': 'localhost',
-        'PORT': '5432',
+        'PORT': '5433',
     }
 }
 STATUSES = (
@@ -208,6 +208,7 @@ STATICFILES_DIRS = [
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 UPLOAD_FOLDER = os.path.join(BASE_DIR, 'media/requests_docs')
+UPLOAD_USER_GUIDE_FOLDER = os.path.join(BASE_DIR, 'media/user_guide')
 
 FRONTEND_URL = 'http://localhost:3000'
 

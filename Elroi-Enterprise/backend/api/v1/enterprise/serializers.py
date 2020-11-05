@@ -1,3 +1,5 @@
+import os
+
 from rest_framework import serializers
 
 from api.v1.consumer_request.models import ConsumerRequest
@@ -12,9 +14,13 @@ class UserGuideSerializer(serializers.ModelSerializer):
 
 
 class FileSerializer(serializers.ModelSerializer):
+    file = serializers.FileField(read_only=True)
+    name = serializers.CharField(max_length=255, read_only=True)
+    size = serializers.IntegerField(read_only=True)
+
     class Meta:
         model = UserGuideUploads
-        fields = '__all__'
+        fields = ['file', 'name', 'size']
 
 
 class CustomerConfigurationSerializer(serializers.ModelSerializer):
