@@ -58,26 +58,35 @@ class ConsumerRequestAPI(LoggingMixin, mixins.ListModelMixin,
 
     def create(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data)
-        enterprise = Enterprise.objects.get(pk=request.data.get('enterprise'))
-        if serializer.is_valid():
-            try:
-                customer = Customer.objects.get(email__iexact=request.data.get('email'))
-            except Customer.DoesNotExist:
-                customer = Customer.objects.create(
-                    email=request.data.get('email'),
-                    first_name=request.data.get('first_name'),
-                    last_name=request.data.get('last_name')
+        try:
+            enterprise = Enterprise.objects.get(elroi_id=request.data.get('elroi_id'))
+            if serializer.is_valid():
+                try:
+                    customer = Customer.objects.get(email__iexact=request.data.get('email'))
+                except Customer.DoesNotExist:
+                    customer = Customer.objects.create(
+                        email=request.data.get('email'),
+                        first_name=request.data.get('first_name'),
+                        last_name=request.data.get('last_name')
+                    )
+                customer_request = ConsumerRequest.objects.create(
+                    elroi_id=request.data.get('elroi_id'),
+                    customer=customer,
+                    enterprise=enterprise,
+                    description=request.data.get('description'),
+                    request_type=request.data.get('request_type'),
+                    status=request.data.get('status')
                 )
-            customer_request = ConsumerRequest.objects.create(
-                customer=customer,
-                enterprise=enterprise,
-                description=request.data.get('description'),
-                request_type=request.data.get('request_type'),
-                status=request.data.get('status')
+                return Response(ConsumerRequestSerializer(customer_request).data, status=status.HTTP_201_CREATED)
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Enterprise.DoesNotExist:
+            return Response(
+                {
+                    "error": "Enterprise with that elroi, was not found."
+                },
+                status=status.HTTP_400_BAD_REQUEST
             )
-            return Response(ConsumerRequestSerializer(customer_request).data, status=status.HTTP_201_CREATED)
-        else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     # update consumer request
     def put(self, request, *args, **kwargs):

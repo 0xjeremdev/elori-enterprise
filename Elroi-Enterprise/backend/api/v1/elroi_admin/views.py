@@ -6,10 +6,12 @@ from rest_framework.response import Response
 
 from api.v1.accounts.models import Enterprise, Customer
 from api.v1.analytics.models import ActivityLog
+from api.v1.assessment.models import Questionnaire, Assessment, AssessmentResults
+from api.v1.assessment.serializers import AssessmentSerializer, AssessmentResultSerializer
 from api.v1.consumer_request.models import ConsumerRequest
 from api.v1.elroi_admin.models import AdminEnterpriseConfig
 from api.v1.elroi_admin.serializers import EnterpriseTrialSerializer, EnterpriseMaintenanceSerializer, \
-    EnterprisePaymentSerializer, EnterpriseCustomersSerializer, EnterpriseActivitySerializer
+    EnterprisePaymentSerializer, EnterpriseCustomersSerializer, EnterpriseActivitySerializer, QuestionnaireApiSerializer
 
 
 class EnterpriseTrialConfigApi(mixins.ListModelMixin, mixins.UpdateModelMixin, GenericAPIView):
@@ -156,3 +158,67 @@ class EnterpriseActivityApi(mixins.ListModelMixin, GenericAPIView):
             return self.list(request, *args, **kwargs)
         else:
             return Response({"error": "No logs were found for this enterprise"}, status=status.HTTP_400_BAD_REQUEST)
+
+class QuestionnaireApi(mixins.ListModelMixin, mixins.CreateModelMixin, GenericAPIView):
+    """
+    Use questionnaire to determine type of assessments
+    """
+    serializer_class = QuestionnaireApiSerializer
+    permission_classes = (permissions.IsAdminUser,)
+    queryset = Questionnaire.objects.all()
+
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        return self.create(request, *args, **kwargs)
+
+class AssessmentApi(mixins.ListModelMixin,
+                    mixins.CreateModelMixin,
+                    mixins.DestroyModelMixin,
+                    mixins.UpdateModelMixin,
+                    GenericAPIView):
+    """
+    Assessment for administration, can create, update, delete and configure
+    assessment to be displayed for enterprise or user
+    """
+    serializer_class = AssessmentSerializer
+    permission_classes = (permissions.IsAdminUser,)
+    queryset = Assessment.objects.all()
+
+    def get(self, request, *args, **kwargs):
+        self.queryset = Assessment.objects.filter(created_by=request.user)
+        return self.list(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        return self.create(request, *args, **kwargs)
+
+    def put(self, request, *args, **kwargs):
+        return self.update(request, *args, **kwargs)
+
+    def delete(self, request, *args, **kwargs):
+        return self.delete(request, *args, **kwargs)
+
+class AssessmentResultApi(mixins.ListModelMixin, GenericAPIView):
+    """
+    Assessment's results
+    """
+    serializer_class = AssessmentResultSerializer
+    permission_classes = (permissions.IsAdminUser, )
+    queryset = AssessmentResults.objects.all()
+
+    def get(self, request, *args, **kwargs):
+        try:
+            self.queryset = AssessmentResults.objects.filter(
+                assessment_id=request.data.get('id'),
+                assessment__created_by=request.user.id
+            )
+            return self.list(request, *args, **kwargs)
+
+        except AssessmentResults.DoesNotExist:
+            return Response(
+                {
+                    "error": "Assessment was not found"
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )

@@ -1,14 +1,11 @@
 import secrets
 from datetime import datetime
 
-import phonenumbers
-from django.conf import settings
 from django.contrib.auth.models import (BaseUserManager, AbstractUser)
+from django.contrib.postgres.fields import JSONField
 from django.db import models
 from django.db.models.signals import post_save
-from phonenumber_field.modelfields import PhoneNumberField
 from rest_framework_simplejwt.tokens import RefreshToken
-from django.contrib.postgres.fields import JSONField
 
 
 class CustomAccountManager(BaseUserManager):
@@ -104,11 +101,14 @@ class Account(AbstractUser):
         }
 
     """ get user's full name"""
+
     def full_name(self):
         return f'{self.first_name} {self.last_name}'
 
 
 """ customers table """
+
+
 class Customer(models.Model):
     user = models.OneToOneField(Account, related_name='customer', on_delete=models.CASCADE, null=True, blank=True)
     elroi_id = models.CharField(max_length=9, db_index=True, unique=True, null=True, blank=True)
@@ -117,7 +117,7 @@ class Customer(models.Model):
     first_name = models.CharField(max_length=40, null=True)
     last_name = models.CharField(max_length=40, null=True)
     state_resident = models.BooleanField(default=False)
-    additional_fields = JSONField()
+    additional_fields = JSONField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -132,7 +132,10 @@ class Customer(models.Model):
     class Meta:
         db_table = 'customers'
 
+
 """ method used to update elroi_id when new user is created """
+
+
 def update_customer_elroi_id(sender, instance, created, **kwargs):
     if created:
         token = generate_id(prefix='C')
@@ -140,7 +143,10 @@ def update_customer_elroi_id(sender, instance, created, **kwargs):
         instance.elroi_id = elroi_id
         instance.save()
 
+
 """ check and generate unique elroi_id"""
+
+
 def check_unique_customer_elroi_id(elroi_id):
     try:
         Customer.objects.get(elroi_id__exact=elroi_id)
@@ -154,12 +160,16 @@ def check_unique_customer_elroi_id(elroi_id):
 post_save.connect(update_customer_elroi_id, sender=Customer)
 
 """ enterprises table """
+
+
 class Enterprise(models.Model):
     user = models.OneToOneField(Account, related_name='enterprise', on_delete=models.CASCADE, blank=True, null=True)
     email = models.EmailField(max_length=80, unique=True)
     elroi_id = models.CharField(max_length=9, db_index=True, unique=True, blank=True, null=True)
     name = models.CharField(max_length=255, blank=True, null=True)
-    web = models.CharField(max_length=255,blank=True, null=True)
+    first_name = models.CharField(max_length=40, null=True)
+    last_name = models.CharField(max_length=40, null=True)
+    web = models.CharField(max_length=255, blank=True, null=True)
     trial_start = models.DateTimeField(blank=True, null=True)
     trial_end = models.DateTimeField(blank=True, null=True)
     current_plan_end = models.DateTimeField(blank=True, null=True)
@@ -178,7 +188,7 @@ class Enterprise(models.Model):
         return "Enterprise"
 
     def full_name(self):
-        return self.name
+        return f'{self.first_name} {self.last_name}'
 
     """ get current subscription type """
 
@@ -193,8 +203,12 @@ class Enterprise(models.Model):
 
     class Meta:
         db_table = 'enterprises'
+        ordering = ['-created_at']
+
 
 """ update elroi id for enterprises"""
+
+
 def update_enterprise_elroi_id(sender, instance, created, **kwargs):
     if created:
         token = generate_id(prefix='E')
@@ -202,7 +216,10 @@ def update_enterprise_elroi_id(sender, instance, created, **kwargs):
         instance.elroi_id = elroi_id
         instance.save()
 
+
 """ check if elroi_id doesn't exists already """
+
+
 def check_unique_enterprise_elroi_id(check_id):
     try:
         Enterprise.objects.get(elroi_id__exact=check_id)
@@ -211,9 +228,12 @@ def check_unique_enterprise_elroi_id(check_id):
     except Enterprise.DoesNotExist:
         return check_id
 
+
 post_save.connect(update_enterprise_elroi_id, sender=Enterprise)
 
 """generate random id ( characters+ digits)"""
+
+
 def generate_id(prefix='C'):
     token = secrets.token_hex(3).upper()
     return f'{prefix}-{token}'

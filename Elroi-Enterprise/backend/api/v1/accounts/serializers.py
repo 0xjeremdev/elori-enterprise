@@ -65,11 +65,11 @@ class LoginSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(min_length=6, max_length=80, required=True)
     password = serializers.CharField(min_length=8, write_only=True)
     two_fa_valid = serializers.BooleanField(read_only=True, required=False)
-    username = serializers.CharField(required=False)
+    enterprise_id = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Account
-        fields = ('email', 'two_fa_valid', 'tokens', 'password', 'username')
+        fields = ('email', 'two_fa_valid', 'tokens', 'password', 'enterprise_id')
 
     def validate(self, data):
         email = data.get('email', '')
@@ -116,8 +116,10 @@ class CustomerSerializer(serializers.ModelSerializer):
 """ register enterprise class serializer """
 class RegisterEnterpriseSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(min_length=6, max_length=80, required=True,
-                                   validators=[UniqueValidator(queryset=Customer.objects.all())])
+                                   validators=[UniqueValidator(queryset=Enterprise.objects.all())])
     name = serializers.CharField(min_length=3, max_length=255, required=True)
+    first_name = serializers.CharField(required=True)
+    last_name = serializers.CharField(required=True)
     web = serializers.URLField(required=False)
     two_fa_valid = serializers.BooleanField(read_only=True, required=False)
     password = serializers.CharField(min_length=8, write_only=True)

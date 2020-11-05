@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     'api.v1.consumer_request',
     'api.v1.elroi_admin',
     'api.v1.analytics',
+    'api.v1.assessment',
     'frontend.home',
     'django_otp',
     'django_otp.plugins.otp_totp',

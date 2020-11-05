@@ -4,7 +4,7 @@ from rest_framework_simplejwt.views import TokenRefreshView, TokenObtainPairView
 from .views import (
     LoginAPI, VerifyEmailAPI, LogoutAPI,
     PasswordResetAPI, PasswordConfirmationAPI, SendValidationCodeAPI, VerificationCodeConfirmAPI, RegisterCustomer,
-    RegisterEnterprise
+    RegisterEnterprise, AssessmentSharedLink
 )
 
 urlpatterns = [
@@ -16,6 +16,7 @@ urlpatterns = [
     path('password-reset/', PasswordResetAPI.as_view(), name='password_reset'),
     path('password-confirmation/<uidb64>/<token>', PasswordConfirmationAPI.as_view(),
          name='password_reset_confirmation'),
+    path('view-assessment/<token>', AssessmentSharedLink.as_view(), name='view_shared_assessment'),
     path('verification-code', SendValidationCodeAPI.as_view(), name='verification_code'),
     path('validate-verification-code', VerificationCodeConfirmAPI.as_view(), name='validate_verification_code'),
 

@@ -1,16 +1,14 @@
-import json
-from django.contrib.auth.models import User, Group
+from django.contrib.auth.models import Group
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.urls import reverse
-from rest_framework.authtoken.models import Token
-from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework.test import APITestCase
 from rest_framework import status
+from rest_framework.test import APITestCase
+from rest_framework_simplejwt.tokens import RefreshToken
 
-from api.v1.accounts.models import Account
+from api.v1.accounts.models import Account, Enterprise, Customer
 from api.v1.consumer_request.models import ConsumerRequest
 from api.v1.enterprise.models import UserGuideModel
-from api.v1.enterprise.serializers import UserGuideSerializer
-from django.core.files.uploadedfile import SimpleUploadedFile
+
 
 class UserGuideTestCase(APITestCase):
     def setUp(self):
@@ -86,8 +84,22 @@ class CustomerConfigurationTest(APITestCase):
         self.user.is_verified = 1
         self.user.save()
         refresh = RefreshToken.for_user(self.user)
-        self.customer = Account.objects.create_front_user(
-            email="test2@test.com", password='password')
+        self.enterprise = Enterprise.objects.create(
+            user=self.user,
+            email='test_enterprise@mail.com',
+            name="Test Company",
+            first_name="Demo",
+            last_name="Enterprise",
+            web="http://enterprise.com",
+        )
+        self.consumer = Customer.objects.create(
+            user=self.user,
+            email="customer@email.com",
+            first_name="Customer",
+            last_name="D.",
+            state_resident=True,
+        )
+
         self.token = refresh.access_token
         self.api_authentication()
 
@@ -111,7 +123,7 @@ class CustomerConfigurationTest(APITestCase):
                   "elem1": "value elem 1",
                   "elem2": "value elem 2"
               },
-              "author": self.user.id
+              "author": self.enterprise.id
             }
         response = self.client.post(url, data, format='json')
         """ check if title element exists in json response """
@@ -121,10 +133,10 @@ class CustomerConfigurationTest(APITestCase):
         """ check if author element exists in json response """
         self.assertIn('author', response.data)
         """ check if response returns status code 401 """
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
     def test_create_customer_configuration_user_not_enterprise(self):
-        refresh = RefreshToken.for_user(self.customer)
+        refresh = RefreshToken.for_user(self.user)
         token = refresh.access_token
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {str(token)}")
 
@@ -135,11 +147,11 @@ class CustomerConfigurationTest(APITestCase):
                 "elem1": "value elem 1",
                 "elem2": "value elem 2"
             },
-            "author": self.customer.id
+            "author": self.enterprise.id
         }
         response = self.client.post(url, data, format='json')
         """ check if response returns status code 401, user is not enterprise """
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
 class CustomerSummarizeTest(APITestCase):
     def setUp(self):
@@ -190,15 +202,32 @@ class NotifyCustomerTest(APITestCase):
         self.user.is_active = 1
         self.user.is_verified = 1
         self.user.save()
+        self.user_e = Account.objects.create_front_user(
+            email="test_enterprise@mail.com", password='password_enterprise')
+        self.user_e.is_active = 1
+        self.user_e.is_verified = 1
+        self.user_e.save()
         refresh = RefreshToken.for_user(self.user)
         self.token = refresh.access_token
         self.api_authentication()
-        self.enterprise = Account.objects.create_front_user(
-            email="test_e@test.com",
-            password='password')
+        self.enterprise = Enterprise.objects.create(
+            user=self.user_e,
+            email='test_enterprise@mail.com',
+            name="Test Company",
+            first_name="Demo",
+            last_name="Enterprise",
+            web="http://enterprise.com",
+        )
+        self.consumer = Customer.objects.create(
+            user=self.user,
+            email="customer@email.com",
+            first_name="Customer",
+            last_name="D.",
+            state_resident=True,
+        )
         self.consumer_request = ConsumerRequest.objects.create(
             enterprise=self.enterprise,
-            customer=self.user,
+            customer=self.consumer,
             title="Test customer request",
             description="Description test"
         )
@@ -229,7 +258,7 @@ class NotifyCustomerTest(APITestCase):
 
     """ test url that returns report about extended requests vs existing new requests"""
     def test_extended_vs_new_requests(self):
-        refresh = RefreshToken.for_user(self.enterprise)
+        refresh = RefreshToken.for_user(self.user)
         token = refresh.access_token
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {str(token)}")
         url = reverse('get_extended_requests_report')
@@ -253,28 +282,35 @@ class NotifyCustomerTest(APITestCase):
         """
     def test_enterprise_configuration_get(self):
         url = reverse('enterprise_configuration')
+        self.api_authentication()
         response = self.client.get(url, HTTP_ACCEPT='application/json')
-        """ check for error key in response """
-        self.assertIn('error', response.data)
+
         """ check respose status code to be 404"""
-        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     """ test creation of enterprise configuration"""
     def test_create_enterprise_configuration(self):
         url = reverse('enterprise_configuration')
-        refresh = RefreshToken.for_user(self.enterprise)
+        refresh = RefreshToken.for_user(self.user_e)
         token = refresh.access_token
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {str(token)}")
+        file_to_upload = self.generate_file_upload()
         data = {
-            "title": "Receiving data from customer",
-            "configuration": {
-                "allow_api_call": "True",
-                "allow_email": "true"
-            },
-            "enterprise": self.enterprise.id
+            "company_name": "Test Company",
+            "logo": file_to_upload,
+            "site_color": "#333333",
+            "site_theme": "Theme name",
+            "background_image": file_to_upload,
+            "website_launched_to": "www.www.com",
+            "additional_configuration": str({"input": [
+                {"type": "radio", "name": "is_resident", "label": "I am a state resident", "values": ["Yes", "No"]},
+                {"type": "text", "name": "first_name", "label": "First Name"},
+                {"type": "file", "name": "kyc", "label": "Upload your file"}]}),
+            "enterprise": self.enterprise.id,
+            "elroi_id": self.enterprise.elroi_id
         }
-        response = self.client.post(url, data, format='json')
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        response = self.client.post(url, data, format='multipart')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     """ test the creation of enterprise configuration sending 
         non existing user id
@@ -290,4 +326,8 @@ class NotifyCustomerTest(APITestCase):
             "enterprise": 12234
         }
         response = self.client.post(url, data, format='json')
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def generate_file_upload(self):
+        """ generate simple file to test the upload """
+        return SimpleUploadedFile("file.txt", b"abc", content_type="text/plain")

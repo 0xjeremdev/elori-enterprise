@@ -1,6 +1,8 @@
 from typing import re
 
+from django.conf import settings
 from django.template.loader import render_to_string
+from django.urls import reverse
 from rest_framework import mixins, permissions, status
 from rest_framework.generics import GenericAPIView
 from rest_framework.parsers import MultiPartParser, FormParser
@@ -10,6 +12,7 @@ from rest_framework.views import APIView
 from api.v1.accounts.permissions import HasEnterpriseViewPermission
 from api.v1.accounts.utlis import SendUserEmail
 from api.v1.analytics.mixins import LoggingMixin
+from api.v1.assessment.models import EnterpriseQuestionnaire, Assessment
 from api.v1.consumer_request.models import ConsumerRequest
 from api.v1.enterprise.models import UserGuideModel, CustomerConfiguration, EnterpriseConfigurationModel
 from api.v1.enterprise.serializers import (
@@ -145,7 +148,7 @@ class ExtendedVsNewRequests(LoggingMixin, APIView):
     def get(self, request, *args, **kwargs):
         user_id = request.user.id
         try:
-            enterprise_db = ConsumerRequest.objects.filter(enterprise__id=user_id)
+            enterprise_db = ConsumerRequest.objects.filter(enterprise__user_id=user_id)
             if enterprise_db.exists():
                 total_requsts = enterprise_db.count()
                 extended = enterprise_db.filter(extend_requested=1).count()
@@ -186,7 +189,7 @@ class EnterpriseConfiguration(LoggingMixin,
 
     def get(self, request, *args, **kwargs):
         try:
-            self.queryset = EnterpriseConfigurationModel.objects.get(enterprise__id=request.user.id)
+            self.queryset = EnterpriseConfigurationModel.objects.filter(enterprise_id__id=request.user.id)
             return self.list(request, *args, **kwargs)
         except EnterpriseConfigurationModel.DoesNotExist:
             return Response({"error": "Page not found"}, status=status.HTTP_404_NOT_FOUND)
@@ -201,20 +204,83 @@ class EnterpriseConfiguration(LoggingMixin,
 
     # update configuration
     def put(self, request, *args, **kwargs):
-        self.queryset = EnterpriseConfigurationModel.objects.get(enterprise__id=request.user.id, id=request.data.id)
+        self.queryset = EnterpriseConfigurationModel.objects.get(enterprise_id__id=request.user.id, id=request.data.id)
         return self.update(request, *args, **kwargs)
 
     # delete configuration
     def delete(self, request, *args, **kwargs):
-        self.queryset = EnterpriseConfigurationModel.objects.get(enterprise__id=request.user.id, id=request.data.id)
+        self.queryset = EnterpriseConfigurationModel.objects.get(enterprise_id__id=request.user.id, id=request.data.id)
         return self.destroy(request, *args, **kwargs)
 
 
-""" method to validate email address """
-
-
 def validate_email_format(email):
+    """ method to validate email address """
     regex = '^[a-z0-9]+[\._]?[a-z0-9]+[@]\w+[.]\w{2,3}$'
     if re.search(regex, email):
         return True
     return False
+
+
+class EnterpriseAssessmentShareLink(LoggingMixin, GenericAPIView):
+    """
+    get the assessment share link to be sent by email
+    """
+    def get(self, request, elroi_id, *args, **kwargs):
+        try:
+            e_q = EnterpriseQuestionnaire.objects.get(enterprise__elroi_id=elroi_id)
+            if e_q.is_yes:
+                assessment = Assessment.objects.get(
+                    question_id=e_q.question_id,
+                    answer_id=e_q.answer_id,
+                    allow_enterprise=True
+                )
+                return Response(
+                    {
+                        "id": assessment.id,
+                        "title": assessment.title,
+                        "assessment_url": reverse('view_shared_assessment', kwargs={"token": assessment.share_hash}),
+                     },
+                    status=status.HTTP_200_OK
+                )
+        except EnterpriseQuestionnaire.DoesNotExist:
+            return Response(
+                {"error": "Enterprise has no assessment or questionnaire was not completed."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+    def post(self, request, elroi_id, *args, **kwargs):
+        try:
+            email = request.data.get('email')
+            if validate_email_format(email):
+                assessment = Assessment.objects.get(id=request.data.get('assessment_id'))
+                assessment_url = reverse('view_shared_assessment', kwargs={"token": assessment.share_hash})
+                front_url = f'{settings.FRONTEND_URL}/assessment/{assessment.share_hash}'
+                email_template_data = {"assessment_url": front_url}
+                email_body = render_to_string('email/assessment_share_link.html', email_template_data)
+                email_data = {
+                    "email_body": email_body,
+                    "to_email": email,
+                    "email_subject": "Assessment Share Url"
+                }
+                SendUserEmail.send_email(email_data)
+                return Response(
+                    {
+                        "api_url": assessment_url
+                    },
+                    status=status.HTTP_200_OK
+                )
+            else:
+                return Response(
+                    {
+                        "error": "Please provide valid email address"
+                    },
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+        except Assessment.DoesNotExist:
+            return Response(
+                {
+                    "error": "Assessment was not found."
+                },
+                status=status.HTTP_404_NOT_FOUND
+            )

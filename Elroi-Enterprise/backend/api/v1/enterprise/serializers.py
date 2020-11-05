@@ -1,5 +1,4 @@
 from rest_framework import serializers
-from rest_framework.exceptions import ValidationError
 
 from api.v1.consumer_request.models import ConsumerRequest
 from api.v1.enterprise.models import UserGuideModel, CustomerConfiguration, EnterpriseConfigurationModel, \
@@ -19,6 +18,11 @@ class FileSerializer(serializers.ModelSerializer):
 
 
 class CustomerConfigurationSerializer(serializers.ModelSerializer):
+    elroi_id = serializers.SerializerMethodField()
+
+    def get_elroi_id(self, obj):
+        return obj.author.elroi_id
+
     class Meta:
         model = CustomerConfiguration
         fields = '__all__'
@@ -29,7 +33,7 @@ class CustomerSummarizeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ConsumerRequest
-        fields = '__all__'
+        exclude = ['enterprise']
 
 
 class RequestTrackerSerializer(serializers.ModelSerializer):
@@ -41,6 +45,11 @@ class RequestTrackerSerializer(serializers.ModelSerializer):
 
 
 class EnterpriseConfigurationSerializer(serializers.ModelSerializer):
+    elroi_id = serializers.SerializerMethodField()
+
+    def get_elroi_id(self, obj):
+        return obj.enterprise_id.elroi_id
+
     class Meta:
         model = EnterpriseConfigurationModel
         fields = '__all__'

@@ -18,6 +18,7 @@ urlpatterns = [
     path('api/v1/', include('api.v1.accounts.urls')),
     path('api/v1/enterprise/', include('api.v1.enterprise.urls')),
     path('api/v1/consumer/', include('api.v1.consumer_request.urls')),
+    path('api/v1/assessment/', include('api.v1.assessment.urls')),
     path('api/v1/admin/', include('api.v1.elroi_admin.urls')),
     path('', schema_view.with_ui('swagger', cache_timeout=0), name='schema_swagger_ui'),
     path('api/api.json/', schema_view.without_ui(cache_timeout=0), name='schema_json'),

@@ -33,6 +33,8 @@ from .serializers import (
 # Register API class
 from .utlis import SendUserEmail
 from ..analytics.mixins import LoggingMixin
+from ..assessment.models import Assessment
+from ..assessment.serializers import AssessmentSerializer
 from ..consumer_request.models import ConsumerRequest
 from ..consumer_request.serializers import ConsumerRequestSerializer
 from ..enterprise.models import EnterpriseConfigurationModel
@@ -121,8 +123,6 @@ class RegisterCustomer(LoggingMixin, GenericAPIView):
                 return Response(ConsumerRequestSerializer(customer_request).data, status=status.HTTP_201_CREATED)
             except EnterpriseConfigurationModel.DoesNotExist:
                 return Response({"error": "Enterprise was not found"}, status=status.HTTP_404_NOT_FOUND)
-
-            return Response({}, status=status.HTTP_200_OK)
         except Enterprise.DoesNotExist:
             return Response({"error": "Page was not found"}, status=status.HTTP_404_NOT_FOUND)
 
@@ -154,6 +154,9 @@ class RegisterEnterprise(LoggingMixin, GenericAPIView):
                     'elroi_id': enterprise.elroi_id,
                     'email': enterprise.email,
                     'name': enterprise.name,
+                    'first_name': enterprise.first_name,
+                    'last_name': enterprise.last_name,
+                    'full_name': enterprise.full_name(),
                     'web': enterprise.web,
                     'two_fa_valid': account.is_2fa_on(),
                     'profile': enterprise.profile(),
@@ -206,12 +209,16 @@ class LoginAPI(LoggingMixin, GenericAPIView):
         user = Account.objects.get(email__iexact=user_data['email'])
         if hasattr(user, 'customer'):
             account = user.customer
+            account_id = 'customer_id'
         elif hasattr(user, 'enterprise'):
             account = user.enterprise
+            account_id = 'enterprise_id'
         else:
             account = user
+            account_id = 'user_id'
 
         res_data = {
+            account_id: account.id,
             'elroi_id': account.elroi_id,
             'email': account.email,
             'full_name': account.full_name(),
@@ -219,6 +226,7 @@ class LoginAPI(LoggingMixin, GenericAPIView):
             'profile': account.profile(),
             'tokens': user.tokens()
         }
+
 
         return Response(res_data, status=status_response)
 
@@ -332,3 +340,22 @@ class VerificationCodeConfirmAPI(APIView):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+class AssessmentSharedLink(LoggingMixin, GenericAPIView):
+    """
+    Display shared assessment by url
+    """
+    def get(self, request, token, *args, **kwargs):
+        try:
+            assessment = Assessment.objects.get(share_hash=token)
+            return Response(
+                AssessmentSerializer(assessment).data,
+                status=status.HTTP_200_OK
+            )
+        except Assessment.DoesNotExist:
+            return Response(
+                {
+                    "error": "Page was not found"
+                },
+                status=status.HTTP_404_NOT_FOUND
+            )

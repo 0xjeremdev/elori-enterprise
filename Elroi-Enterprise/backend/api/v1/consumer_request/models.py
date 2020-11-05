@@ -13,7 +13,7 @@ from django.contrib.postgres.fields import JSONField
 class ConsumerRequest(models.Model):
     elroi_id = models.CharField(max_length=14, blank=True, null=True)
     title = models.CharField(blank=True, null=True, max_length=255)
-    enterprise = models.ForeignKey(Enterprise, on_delete=models.CASCADE, related_name='enterprise')
+    enterprise = models.ForeignKey(Enterprise, on_delete=models.CASCADE, related_name='enterprise', null=True, blank=True)
     customer = models.ForeignKey(Customer, related_name='customer', on_delete=models.CASCADE, null=True, blank=True)
     request_type = models.IntegerField(choices=settings.REQUEST_TYPES, default=0)
     description = models.TextField(blank=True, null=True)

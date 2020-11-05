@@ -6,7 +6,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.test import APITestCase
 from rest_framework import status
 
-from api.v1.accounts.models import Account
+from api.v1.accounts.models import Account, Enterprise, Customer
 
 
 class ConsumerRequestsTest(APITestCase):
@@ -19,9 +19,24 @@ class ConsumerRequestsTest(APITestCase):
         self.user.is_verified = True
         self.user.save()
         refresh = RefreshToken.for_user(self.user)
-        self.enterprise_user = Account.objects.create_front_user(
-            email="enterprise@email.com",
-            password="secret"
+        # self.enterprise_user = Account.objects.create_front_user(
+        #     email="enterprise@email.com",
+        #     password="secret"
+        # )
+        self.enterprise_user = Enterprise.objects.create(
+            email='test_enterprise@mail.com',
+            name="Test Company",
+            first_name="Demo",
+            last_name="Enterprise",
+            web="http://enterprise.com",
+        )
+
+        self.consumer = Customer.objects.create(
+            user=self.user,
+            email="customer@email.com",
+            first_name="Customer",
+            last_name="D.",
+            state_resident=True,
         )
 
         self.token = refresh.access_token
@@ -71,11 +86,12 @@ class ConsumerRequestsTest(APITestCase):
         data = {
             "title": "Test customer request",
             "request_type": 1,
+            "elroi_id": self.enterprise_user.elroi_id,
             "description": "Test customer request description",
             "is_data_subject_name": True,
             "status": 0,
             "extend_requested": False,
-            "customer": self.user.id,
+            "customer": self.consumer.id,
             "enterprise": self.enterprise_user.id
         }
         url = reverse('consumer_request')

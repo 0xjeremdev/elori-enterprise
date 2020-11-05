@@ -7,10 +7,14 @@ from api.v1.consumer_request.models import ConsumerRequest
 class ConsumerRequestSerializer(serializers.ModelSerializer):
     status_text = serializers.SerializerMethodField()
     request_type_text = serializers.SerializerMethodField()
+    elroi_id = serializers.SerializerMethodField()
+
+    def get_elroi_id(self, obj):
+        return obj.enterprise.elroi_id
 
     class Meta:
         model = ConsumerRequest
-        fields = '__all__'
+        exclude = ['enterprise']
 
     """ used to return text for statuses """
 

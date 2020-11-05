@@ -1,7 +1,7 @@
 from django.contrib.postgres.fields import JSONField
 from django.db import models
 
-from api.v1.accounts.models import Account
+from api.v1.accounts.models import Account, Enterprise
 
 
 class UserGuideModel(models.Model):
@@ -41,7 +41,7 @@ class UserGuideUploads(models.Model):
 
 class CustomerConfiguration(models.Model):
     title = models.CharField(max_length=255)
-    author = models.ForeignKey(Account, on_delete=models.CASCADE)
+    author = models.ForeignKey(Enterprise, on_delete=models.CASCADE)
     config = JSONField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -55,8 +55,7 @@ class CustomerConfiguration(models.Model):
 
 
 class EnterpriseConfigurationModel(models.Model):
-    title = models.CharField(max_length=255)
-    enterprise = models.ForeignKey(Account, related_name='configuration',  on_delete=models.CASCADE)
+    enterprise_id = models.ForeignKey(Enterprise, related_name='configuration',  on_delete=models.CASCADE)
     logo = models.FileField()
     site_color = models.CharField(max_length=7)
     site_theme = models.CharField(max_length=12)
@@ -69,7 +68,7 @@ class EnterpriseConfigurationModel(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return self.title
+        return self.company_name
 
     class Meta:
         db_table = 'enterprise_configuration'
