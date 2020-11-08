@@ -1,0 +1,16 @@
+{
+  "DASHBOARD": "/",
+  "PRIVACY": "/privacy-tool",
+  "REGISTER": "/register-system",
+  "DISPOSAL": "/disposal",
+  "CONSUMER": "/consumer-request",
+  "CONSUMERDETAIL": "/consumer-request/detail",
+  "USERS": "/users",
+  "SETTING": "/setting",
+  "RESOURCES": "/resources",
+  "LOGIN": "/login",
+  "SIGNUP": "/signup",
+  "EMAILCONFIRM": "/email-confirm/:id",
+  "REQUEST": "/request",
+  "VERIFYCODE": "/verify-code"
+}

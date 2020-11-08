@@ -1,0 +1,33 @@
+@font-face {
+    font-family: "Light Open Sans";
+    src: url("../../src/assets/font/OpenSans-Light.ttf") format("truetype");
+}
+
+@font-face {
+    font-family: "Semibold Open Sans";
+    src: url("../../src/assets/font/OpenSans-Semibold.ttf") format("truetype");
+}
+
+@font-face {
+    font-family: "Dotum";
+    src: url("../../src/assets/font/dotum.ttf") format("truetype");
+}
+
+@font-face {
+    font-family: "Bold Lato";
+    src: url("../../src/assets/font/Lato-Bold.ttf") format("truetype");
+}
+
+@font-face {
+    font-family: "Regular Lato";
+    src: url("../../src/assets/font/Lato-Regular.ttf") format("truetype");
+}
+
+@font-face {
+    font-family: "Medium Lato";
+    src: url("../../src/assets/font/Lato-Medium.ttf") format("truetype");
+}
+
+* {
+    font-family: "Helvetica";
+}
