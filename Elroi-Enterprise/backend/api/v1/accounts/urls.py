@@ -4,12 +4,13 @@ from rest_framework_simplejwt.views import TokenRefreshView, TokenObtainPairView
 from .views import (
     LoginAPI, VerifyEmailAPI, LogoutAPI,
     PasswordResetAPI, PasswordConfirmationAPI, SendValidationCodeAPI, VerificationCodeConfirmAPI, RegisterCustomer,
-    RegisterEnterprise, AssessmentSharedLink
+    RegisterEnterprise, AssessmentSharedLink, AccountProfileSettings
 )
 
 urlpatterns = [
     path('register/customer/<elroi_id>', RegisterCustomer.as_view(), name="register_customer"),
     path('register/enterprise/', RegisterEnterprise.as_view(), name="register_enterprise"),
+    path('profile-settings/', AccountProfileSettings.as_view(), name="profile_settings"),
     path('login/', LoginAPI.as_view(), name="login_api"),
     path('logout/', LogoutAPI.as_view(), name="logout_api"),
     path('email-verify/', VerifyEmailAPI.as_view(), name='email_verify'),

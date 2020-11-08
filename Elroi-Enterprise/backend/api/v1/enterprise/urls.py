@@ -2,7 +2,8 @@ from django.urls import path
 
 from api.v1.enterprise.views import (
     UserGuide, CustomerConfiguration, CustomerSummarize, RequestTracker,
-    NotifyCustomer, ExtendedVsNewRequests, EnterpriseConfiguration, UserGuideUpload, EnterpriseAssessmentShareLink
+    NotifyCustomer, ExtendedVsNewRequests, EnterpriseConfiguration, UserGuideUpload, EnterpriseAssessmentShareLink,
+    EnterpriseAccountSettings,
 )
 
 urlpatterns = [
@@ -15,4 +16,5 @@ urlpatterns = [
     path('get-extended-requests-report/', ExtendedVsNewRequests.as_view(), name='get_extended_requests_report'),
     path('consumer-request-config/', EnterpriseConfiguration.as_view(), name='enterprise_configuration'),
     path('enterprise-get-assessment-share-link/<elroi_id>', EnterpriseAssessmentShareLink.as_view(), name='enterprise_assessment_share_link'),
+    path('settings', EnterpriseAccountSettings.as_view(), name="enterprise_account_settings"),
 ]

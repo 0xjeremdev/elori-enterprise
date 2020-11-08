@@ -2,6 +2,7 @@ import os
 
 from rest_framework import serializers
 
+from api.v1.accounts.models import Enterprise
 from api.v1.consumer_request.models import ConsumerRequest
 from api.v1.enterprise.models import UserGuideModel, CustomerConfiguration, EnterpriseConfigurationModel, \
     UserGuideUploads
@@ -52,6 +53,8 @@ class RequestTrackerSerializer(serializers.ModelSerializer):
 
 class EnterpriseConfigurationSerializer(serializers.ModelSerializer):
     elroi_id = serializers.SerializerMethodField()
+    logo = serializers.FileField(required=False)
+    background_image = serializers.FileField(required=False)
 
     def get_elroi_id(self, obj):
         return obj.enterprise_id.elroi_id
@@ -59,3 +62,18 @@ class EnterpriseConfigurationSerializer(serializers.ModelSerializer):
     class Meta:
         model = EnterpriseConfigurationModel
         fields = '__all__'
+
+class EnterpriseAccountSettingsSerializer(serializers.ModelSerializer):
+    elroi_id = serializers.CharField(read_only=True)
+    logo = serializers.FileField()
+    site_color = serializers.JSONField()
+    second_color = serializers.JSONField()
+    notification_email = serializers.EmailField()
+    additional_emails = serializers.CharField()
+    address = serializers.CharField()
+    company_name = serializers.CharField()
+    timezone = serializers.CharField()
+
+    class Meta:
+        model = Enterprise
+        fields = ['elroi_id', 'logo', 'site_color','second_color', 'notification_email', 'additional_emails', 'address', 'company_name', 'timezone']

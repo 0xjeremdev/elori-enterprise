@@ -290,3 +290,18 @@ class VerificationCodeSerializer(serializers.Serializer):
 
 class UserTokenSerializer(TokenObtainPairSerializer):
     token = CharField(min_length=7, required=True)
+
+class AccountProfileSettingsSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(read_only=True)
+    email = serializers.EmailField(read_only=True)
+    logo = serializers.FileField()
+    first_name = serializers.CharField()
+    last_name = serializers.CharField()
+    company_email = serializers.EmailField()
+    phone_number = serializers.CharField()
+    company_name = serializers.CharField()
+    timezone = serializers.CharField()
+
+    class Meta:
+        model = Account
+        fields = ['id', 'email', 'logo', 'first_name', 'last_name', 'company_email', 'phone_number', 'company_name', 'timezone']

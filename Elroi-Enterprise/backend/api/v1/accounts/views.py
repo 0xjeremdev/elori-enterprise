@@ -28,7 +28,7 @@ from .renderers import UserRenderer
 from .serializers import (
     RegisterSerializer, LoginSerializer, EmailVerificationSerializer, LogoutSerializer,
     PasswordResetSerializer, PasswordCofirmationSerializer, EmailValidationCodeSerializer, VerificationCodeSerializer,
-    UserSerializer, CustomerSerializer, RegisterEnterpriseSerializer
+    UserSerializer, CustomerSerializer, RegisterEnterpriseSerializer, AccountProfileSettingsSerializer
 )
 # Register API class
 from .utlis import SendUserEmail
@@ -359,3 +359,25 @@ class AssessmentSharedLink(LoggingMixin, GenericAPIView):
                 },
                 status=status.HTTP_404_NOT_FOUND
             )
+
+class AccountProfileSettings(LoggingMixin, GenericAPIView):
+    """
+    Profile account settings
+    """
+    serializer_class = AccountProfileSettingsSerializer
+    permission_classes = (permissions.IsAuthenticated,)
+    parser_classes = (MultiPartParser, FormParser, FileUploadParser)
+
+    def get(self, request, *args, **kwargs):
+        user = request.user
+        return Response(AccountProfileSettingsSerializer(user).data, status=status.HTTP_200_OK)
+        pass
+
+    def post(self, request, *args, **kwargs):
+        user = request.user
+        serializer = self.serializer_class(user, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

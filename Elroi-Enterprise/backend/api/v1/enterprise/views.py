@@ -5,11 +5,10 @@ from django.template.loader import render_to_string
 from django.urls import reverse
 from rest_framework import mixins, permissions, status
 from rest_framework.generics import GenericAPIView
-from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.parsers import MultiPartParser, FormParser, FileUploadParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from api.v1.accounts.permissions import HasEnterpriseViewPermission
 from api.v1.accounts.utlis import SendUserEmail
 from api.v1.analytics.mixins import LoggingMixin
 from api.v1.assessment.models import EnterpriseQuestionnaire, Assessment
@@ -18,7 +17,7 @@ from api.v1.enterprise.models import UserGuideModel, CustomerConfiguration, Ente
 from api.v1.enterprise.serializers import (
     UserGuideSerializer, CustomerConfigurationSerializer,
     CustomerSummarizeSerializer, RequestTrackerSerializer,
-    EnterpriseConfigurationSerializer, FileSerializer
+    EnterpriseConfigurationSerializer, FileSerializer, EnterpriseAccountSettingsSerializer
 )
 
 
@@ -30,14 +29,16 @@ class UserGuide(LoggingMixin, mixins.ListModelMixin, mixins.CreateModelMixin, Ge
 
     def get(self, request, *args, **kwargs):
         if request.GET.get('enterprise_id'):
-            self.queryset = UserGuideModel.objects.filter(owner__id=request.GET.get('enterprise_id')).prefetch_related('uploads')
+            self.queryset = UserGuideModel.objects.filter(owner__id=request.GET.get('enterprise_id')).prefetch_related(
+                'uploads')
         else:
             self.queryset = UserGuideModel.objects.filter(created_by=request.user).prefetch_related('uploads')
         return self.list(request, *args, **kwargs)
 
     """ overwrite list method to assign the list of uploaded files based on guide id """
+
     def list(self, request, *args, **kwargs):
-        response = super(UserGuide, self).list(request,*args, **kwargs)
+        response = super(UserGuide, self).list(request, *args, **kwargs)
         uploads = []
         for upload_file in self.queryset:
             files = [str(guide_file.file) for guide_file in upload_file.uploads.filter(user_guide=upload_file.pk)]
@@ -47,6 +48,7 @@ class UserGuide(LoggingMixin, mixins.ListModelMixin, mixins.CreateModelMixin, Ge
 
     def post(self, request, *args, **kwargs):
         return self.create(request, *args, **kwargs)
+
 
 class UserGuideUpload(LoggingMixin, APIView):
     """ Upload file for specific guide id"""
@@ -177,11 +179,11 @@ class ExtendedVsNewRequests(LoggingMixin, APIView):
 
 
 class EnterpriseConfiguration(LoggingMixin,
-                            mixins.ListModelMixin,
-                            mixins.CreateModelMixin,
-                            mixins.UpdateModelMixin,
-                            mixins.DestroyModelMixin,
-                            GenericAPIView,):
+                              mixins.ListModelMixin,
+                              mixins.CreateModelMixin,
+                              mixins.UpdateModelMixin,
+                              mixins.DestroyModelMixin,
+                              GenericAPIView, ):
     serializer_class = EnterpriseConfigurationSerializer
     permission_classes = (permissions.IsAuthenticated,)
 
@@ -191,6 +193,10 @@ class EnterpriseConfiguration(LoggingMixin,
             return self.list(request, *args, **kwargs)
         except EnterpriseConfigurationModel.DoesNotExist:
             return Response({"error": "Page not found"}, status=status.HTTP_404_NOT_FOUND)
+
+    def list(self, request, *args, **kwargs):
+        response = super(EnterpriseConfiguration, self).list(request, args, kwargs)
+        return Response(response.data['results'][0], status=status.HTTP_200_OK)
 
     # create new configuration
     def post(self, request, *args, **kwargs):
@@ -202,12 +208,16 @@ class EnterpriseConfiguration(LoggingMixin,
 
     # update configuration
     def put(self, request, *args, **kwargs):
-        self.queryset = EnterpriseConfigurationModel.objects.get(enterprise_id__id=request.user.id, id=request.data.id)
         return self.update(request, *args, **kwargs)
+
+    def get_object(self):
+        return EnterpriseConfigurationModel.objects.get(
+            enterprise_id__user=self.request.user)
 
     # delete configuration
     def delete(self, request, *args, **kwargs):
-        self.queryset = EnterpriseConfigurationModel.objects.get(enterprise_id__id=request.user.id, id=request.data.id)
+        self.queryset = EnterpriseConfigurationModel.objects.get(enterprise_id__user=request.user,
+                                                                 enterprise_id__elroi_id=request.data.get('elroi_id'))
         return self.destroy(request, *args, **kwargs)
 
 
@@ -223,6 +233,7 @@ class EnterpriseAssessmentShareLink(LoggingMixin, GenericAPIView):
     """
     get the assessment share link to be sent by email
     """
+
     def get(self, request, elroi_id, *args, **kwargs):
         try:
             e_q = EnterpriseQuestionnaire.objects.get(enterprise__elroi_id=elroi_id)
@@ -237,7 +248,7 @@ class EnterpriseAssessmentShareLink(LoggingMixin, GenericAPIView):
                         "id": assessment.id,
                         "title": assessment.title,
                         "assessment_url": reverse('view_shared_assessment', kwargs={"token": assessment.share_hash}),
-                     },
+                    },
                     status=status.HTTP_200_OK
                 )
         except EnterpriseQuestionnaire.DoesNotExist:
@@ -282,3 +293,33 @@ class EnterpriseAssessmentShareLink(LoggingMixin, GenericAPIView):
                 },
                 status=status.HTTP_404_NOT_FOUND
             )
+
+
+class EnterpriseAccountSettings(GenericAPIView):
+    """
+    Account settings
+    """
+    serializer_class = EnterpriseAccountSettingsSerializer
+    permission_classes = (permissions.IsAuthenticated,)
+    parser_classes = (MultiPartParser, FormParser, FileUploadParser)
+
+    def get(self, request, *args, **kwargs):
+        user = request.user
+        if hasattr(user, 'enterprise'):
+            enterprise = user.enterprise
+            return Response(EnterpriseAccountSettingsSerializer(enterprise).data, status=status.HTTP_200_OK)
+        else:
+            return Response({"error": "Data not found"}, status=status.HTTP_400_BAD_REQUEST)
+
+    def post(self, request, *args, **kwargs):
+        user = request.user
+        if hasattr(user, 'enterprise'):
+            enterprise = user.enterprise
+            serializer = self.serializer_class(enterprise, data=request.data)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response({"error": "Not allowed to continue"}, status=status.HTTP_400_BAD_REQUEST)

@@ -51,8 +51,8 @@ CREATE TABLE public.accounts_account (
     id integer NOT NULL,
     password character varying(128) NOT NULL,
     username character varying(150) NOT NULL,
-    first_name character varying(30) NOT NULL,
-    last_name character varying(150) NOT NULL,
+    first_name character varying(80),
+    last_name character varying(80),
     date_joined timestamp with time zone NOT NULL,
     email character varying(60) NOT NULL,
     verification_code integer,
@@ -65,7 +65,12 @@ CREATE TABLE public.accounts_account (
     is_superuser boolean NOT NULL,
     last_login timestamp with time zone,
     created_at timestamp with time zone NOT NULL,
-    updated_at timestamp with time zone NOT NULL
+    updated_at timestamp with time zone NOT NULL,
+    company_email character varying(60),
+    company_name character varying(255),
+    logo character varying(100),
+    phone_number character varying(20),
+    timezone character varying(20)
 );
 
 
@@ -877,7 +882,15 @@ CREATE TABLE public.enterprises (
     payment jsonb,
     created_at timestamp with time zone NOT NULL,
     updated_by_id integer,
-    user_id integer
+    user_id integer,
+    additional_emails character varying(255),
+    address character varying(255),
+    company_name character varying(80),
+    notification_email character varying(80),
+    logo character varying(100),
+    second_color jsonb,
+    site_color jsonb,
+    timezone character varying(20)
 );
 
 
@@ -1513,7 +1526,8 @@ ALTER TABLE ONLY public.user_guide_uploads ALTER COLUMN id SET DEFAULT nextval('
 -- Data for Name: accounts_account; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-INSERT INTO public.accounts_account (id, password, username, first_name, last_name, date_joined, email, verification_code, otp_verified, is_admin, is_active, is_verified, is_banned, is_staff, is_superuser, last_login, created_at, updated_at) VALUES (1, 'pbkdf2_sha256$150000$8XAYmeXymnaB$WjzxEJZBo4z1VA45FogCu0Vj+mFBqbPvgH0hDfM4rZU=', 'enterprise@email.com', '', '', '2020-11-06 00:59:11.279645+02', 'enterprise@email.com', 0, false, true, true, true, false, true, true, '2020-11-06 00:59:11.420976+02', '2020-11-06 00:59:11.420976+02', '2020-11-06 00:59:11.420976+02');
+INSERT INTO public.accounts_account (id, password, username, first_name, last_name, date_joined, email, verification_code, otp_verified, is_admin, is_active, is_verified, is_banned, is_staff, is_superuser, last_login, created_at, updated_at, company_email, company_name, logo, phone_number, timezone) VALUES (2, '', '', 'Demo', 'D.', '2020-11-06 21:44:11.840777+02', '', 0, false, false, false, false, false, false, false, '2020-11-06 21:44:11.842772+02', '2020-11-06 21:44:11.842772+02', '2020-11-06 21:44:11.842772+02', 'email@company.com', 'Demo Company', 'Screenshot_9_OlyJhgg.png', '123456789', 'Europe/Bucharest');
+INSERT INTO public.accounts_account (id, password, username, first_name, last_name, date_joined, email, verification_code, otp_verified, is_admin, is_active, is_verified, is_banned, is_staff, is_superuser, last_login, created_at, updated_at, company_email, company_name, logo, phone_number, timezone) VALUES (1, 'pbkdf2_sha256$150000$8XAYmeXymnaB$WjzxEJZBo4z1VA45FogCu0Vj+mFBqbPvgH0hDfM4rZU=', 'enterprise@email.com', 'Demo', 'D.', '2020-11-06 00:59:11.279645+02', 'enterprise@email.com', 0, false, true, true, true, false, true, true, '2020-11-06 21:57:36.919281+02', '2020-11-06 00:59:11.420976+02', '2020-11-06 21:57:36.919281+02', 'email@company.com', 'Demo Company', 'documentation_E74Baj3.png', '123456789', 'Europe/Bucharest');
 
 
 --
@@ -1565,6 +1579,27 @@ INSERT INTO public.analytics_activitylog (id, username_persistent, requested_at,
 rest_framework.exceptions.ValidationError: {''site_color'': [ErrorDetail(string=''Value must be valid JSON.'', code=''invalid'')], ''site_theme'': [ErrorDetail(string=''Value must be valid JSON.'', code=''invalid'')]}
 ', 400, 1);
 INSERT INTO public.analytics_activitylog (id, username_persistent, requested_at, response_ms, elroi_id, path, view, view_method, remote_addr, host, method, query_params, data, response, errors, status_code, user_id) VALUES (5, 'enterprise@email.com', '2020-11-06 01:05:13.230179+02', 211, 'E-44C43B', '/api/v1/enterprise/consumer-request-config/', 'api.v1.enterprise.views.EnterpriseConfiguration', 'post', '127.0.0.1', '127.0.0.1:8000', 'POST', '{''site_color'': {''color'': ''#ffffff''}, ''site_theme'': {''theme'': ''demo''}, ''website_launched_to'': ''https://google.com'', ''company_name'': ''Individual SRL'', ''additional_configuration'': {''input'': [{''type'': ''radio'', ''name'': ''is_resident'', ''label'': ''I am a state resident'', ''values'': [''Yes'', ''No'']}, {''type'': ''text'', ''name'': ''first_name'', ''label'': ''First Name''}, {''type'': ''file'', ''name'': ''kyc'', ''label'': ''Upload your file''}]}, ''elroi_id'': ''E-692506'', ''enterprise_id'': ''1'', ''logo'': <InMemoryUploadedFile: Screenshot_9.png (image/png)>, ''background_image'': <InMemoryUploadedFile: Screenshot_9.png (image/png)>}', '{''site_color'': {''color'': ''#ffffff''}, ''site_theme'': {''theme'': ''demo''}, ''website_launched_to'': ''https://google.com'', ''company_name'': ''Individual SRL'', ''additional_configuration'': {''input'': [{''type'': ''radio'', ''name'': ''is_resident'', ''label'': ''I am a state resident'', ''values'': [''Yes'', ''No'']}, {''type'': ''text'', ''name'': ''first_name'', ''label'': ''First Name''}, {''type'': ''file'', ''name'': ''kyc'', ''label'': ''Upload your file''}]}, ''elroi_id'': ''E-692506'', ''enterprise_id'': ''1'', ''logo'': <InMemoryUploadedFile: Screenshot_9.png (image/png)>, ''background_image'': <InMemoryUploadedFile: Screenshot_9.png (image/png)>}', '{"id":1,"elroi_id":"E-44C43B","logo":"http://127.0.0.1:8000/media/Screenshot_9.png","site_color":{"color":"#ffffff"},"site_theme":{"theme":"demo"},"background_image":"http://127.0.0.1:8000/media/Screenshot_9_9E8H8MB.png","website_launched_to":"https://google.com","company_name":"Individual SRL","resident_state":false,"additional_configuration":{"input":[{"type":"radio","name":"is_resident","label":"I am a state resident","values":["Yes","No"]},{"type":"text","name":"first_name","label":"First Name"},{"type":"file","name":"kyc","label":"Upload your file"}]},"created_at":"2020-11-05T23:05:13.434109","updated_at":"2020-11-05T23:05:13.434109","enterprise_id":1}', NULL, 201, 1);
+INSERT INTO public.analytics_activitylog (id, username_persistent, requested_at, response_ms, elroi_id, path, view, view_method, remote_addr, host, method, query_params, data, response, errors, status_code, user_id) VALUES (6, 'Anonymous', '2020-11-06 21:39:21.874675+02', 367, 'E-44C43B', '/api/v1/login/', 'api.v1.accounts.views.LoginAPI', 'post', '127.0.0.1', '127.0.0.1:8000', 'POST', '{''email'': ''enterprise@email.com'', ''password'': ''********************''}', '{''email'': ''enterprise@email.com'', ''password'': ''********************''}', '{"enterprise_id":1,"elroi_id":"E-44C43B","email":"enterprise@email.com","full_name":"Demo D.","two_fa_valid":false,"profile":"Enterprise","tokens":{"refresh":"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTYwNDc3MDc2MiwianRpIjoiMTdmN2I2MjdlNDJiNDQ5Yjg2ZDRkMDc4MjJlZjU1YzQiLCJ1c2VyX2lkIjoxfQ.TV8KwloNE33nMGB8YpXf2A-c69Syc4xRJ06wlV0oJyU","access":"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNjA0NzAyMzYyLCJqdGkiOiI3MjYxYWIzY2ZiMzg0ZTFlOWU5OTI2YjJmNTgxZjlmYiIsInVzZXJfaWQiOjF9.AN9f0mg6N-TOBzi5dLNbDS7LOpRQLqiL58X1lV3Wy9E"}}', NULL, 206, NULL);
+INSERT INTO public.analytics_activitylog (id, username_persistent, requested_at, response_ms, elroi_id, path, view, view_method, remote_addr, host, method, query_params, data, response, errors, status_code, user_id) VALUES (7, 'enterprise@email.com', '2020-11-06 21:44:11.753012+02', 99, '', '/api/v1/profile-settings/', 'api.v1.accounts.views.AccountProfileSettings', 'post', '127.0.0.1', '127.0.0.1:8000', 'POST', '{''first_name'': ''Demo'', ''last_name'': ''D.'', ''company_email'': ''email@company.com'', ''phone_number'': ''123456789'', ''company_name'': ''Demo Company'', ''timezone'': ''Europe/Bucharest'', ''logo'': <InMemoryUploadedFile: Screenshot_9.png (image/png)>}', '{''first_name'': ''Demo'', ''last_name'': ''D.'', ''company_email'': ''email@company.com'', ''phone_number'': ''123456789'', ''company_name'': ''Demo Company'', ''timezone'': ''Europe/Bucharest'', ''logo'': <InMemoryUploadedFile: Screenshot_9.png (image/png)>}', '{"logo":"/media/Screenshot_9_OlyJhgg.png","first_name":"Demo","last_name":"D.","company_email":"email@company.com","phone_number":"123456789","company_name":"Demo Company","timezone":"Europe/Bucharest"}', NULL, 200, 1);
+INSERT INTO public.analytics_activitylog (id, username_persistent, requested_at, response_ms, elroi_id, path, view, view_method, remote_addr, host, method, query_params, data, response, errors, status_code, user_id) VALUES (8, 'enterprise@email.com', '2020-11-06 21:53:11.446768+02', 200, '', '/api/v1/profile-settings/', NULL, 'put', '127.0.0.1', '127.0.0.1:8000', 'PUT', '{''first_name'': ''Demo'', ''last_name'': ''D.'', ''company_email'': ''email@company.com'', ''phone_number'': ''123456789'', ''company_name'': ''Demo Company'', ''timezone'': ''Europe/Bucharest'', ''logo'': <InMemoryUploadedFile: Screenshot_9.png (image/png)>}', '{''first_name'': ''Demo'', ''last_name'': ''D.'', ''company_email'': ''email@company.com'', ''phone_number'': ''123456789'', ''company_name'': ''Demo Company'', ''timezone'': ''Europe/Bucharest'', ''logo'': <InMemoryUploadedFile: Screenshot_9.png (image/png)>}', '{"detail":"Method \"PUT\" not allowed."}', 'Traceback (most recent call last):
+  File "C:\Users\ALESAN\AppData\Local\Programs\Python\Python38-32\lib\site-packages\rest_framework\views.py", line 502, in dispatch
+    response = handler(request, *args, **kwargs)
+  File "C:\Users\ALESAN\AppData\Local\Programs\Python\Python38-32\lib\site-packages\rest_framework\views.py", line 167, in http_method_not_allowed
+    raise exceptions.MethodNotAllowed(request.method)
+rest_framework.exceptions.MethodNotAllowed: Method "PUT" not allowed.
+', 405, 1);
+INSERT INTO public.analytics_activitylog (id, username_persistent, requested_at, response_ms, elroi_id, path, view, view_method, remote_addr, host, method, query_params, data, response, errors, status_code, user_id) VALUES (9, 'enterprise@email.com', '2020-11-06 21:56:40.631139+02', 211, '', '/api/v1/profile-settings/', NULL, 'put', '127.0.0.1', '127.0.0.1:8000', 'PUT', '{''first_name'': ''Demo'', ''last_name'': ''D.'', ''company_email'': ''email@company.com'', ''phone_number'': ''123456789'', ''company_name'': ''Demo Company'', ''timezone'': ''Europe/Bucharest'', ''logo'': <InMemoryUploadedFile: Screenshot_9.png (image/png)>}', '{''first_name'': ''Demo'', ''last_name'': ''D.'', ''company_email'': ''email@company.com'', ''phone_number'': ''123456789'', ''company_name'': ''Demo Company'', ''timezone'': ''Europe/Bucharest'', ''logo'': <InMemoryUploadedFile: Screenshot_9.png (image/png)>}', '{"detail":"Method \"PUT\" not allowed."}', 'Traceback (most recent call last):
+  File "C:\Users\ALESAN\AppData\Local\Programs\Python\Python38-32\lib\site-packages\rest_framework\views.py", line 502, in dispatch
+    response = handler(request, *args, **kwargs)
+  File "C:\Users\ALESAN\AppData\Local\Programs\Python\Python38-32\lib\site-packages\rest_framework\views.py", line 167, in http_method_not_allowed
+    raise exceptions.MethodNotAllowed(request.method)
+rest_framework.exceptions.MethodNotAllowed: Method "PUT" not allowed.
+', 405, 1);
+INSERT INTO public.analytics_activitylog (id, username_persistent, requested_at, response_ms, elroi_id, path, view, view_method, remote_addr, host, method, query_params, data, response, errors, status_code, user_id) VALUES (10, 'enterprise@email.com', '2020-11-06 21:57:29.70708+02', 208, '', '/api/v1/profile-settings/', 'api.v1.accounts.views.AccountProfileSettings', 'post', '127.0.0.1', '127.0.0.1:8000', 'POST', '{''first_name'': ''Demo'', ''last_name'': ''D.'', ''company_email'': ''email@company.com'', ''phone_number'': ''123456789'', ''company_name'': ''Demo Company'', ''timezone'': ''Europe/Bucharest'', ''logo'': <InMemoryUploadedFile: Screenshot_9.png (image/png)>}', '{''first_name'': ''Demo'', ''last_name'': ''D.'', ''company_email'': ''email@company.com'', ''phone_number'': ''123456789'', ''company_name'': ''Demo Company'', ''timezone'': ''Europe/Bucharest'', ''logo'': <InMemoryUploadedFile: Screenshot_9.png (image/png)>}', '{"id":1,"logo":"/media/Screenshot_9_oU1MtWF.png","first_name":"Demo","last_name":"D.","company_email":"email@company.com","phone_number":"123456789","company_name":"Demo Company","timezone":"Europe/Bucharest"}', NULL, 200, 1);
+INSERT INTO public.analytics_activitylog (id, username_persistent, requested_at, response_ms, elroi_id, path, view, view_method, remote_addr, host, method, query_params, data, response, errors, status_code, user_id) VALUES (11, 'enterprise@email.com', '2020-11-06 21:57:36.816557+02', 105, '', '/api/v1/profile-settings/', 'api.v1.accounts.views.AccountProfileSettings', 'post', '127.0.0.1', '127.0.0.1:8000', 'POST', '{''first_name'': ''Demo'', ''last_name'': ''D.'', ''company_email'': ''email@company.com'', ''phone_number'': ''123456789'', ''company_name'': ''Demo Company'', ''timezone'': ''Europe/Bucharest'', ''logo'': <InMemoryUploadedFile: documentation.png (image/png)>}', '{''first_name'': ''Demo'', ''last_name'': ''D.'', ''company_email'': ''email@company.com'', ''phone_number'': ''123456789'', ''company_name'': ''Demo Company'', ''timezone'': ''Europe/Bucharest'', ''logo'': <InMemoryUploadedFile: documentation.png (image/png)>}', '{"id":1,"logo":"/media/documentation_E74Baj3.png","first_name":"Demo","last_name":"D.","company_email":"email@company.com","phone_number":"123456789","company_name":"Demo Company","timezone":"Europe/Bucharest"}', NULL, 200, 1);
+INSERT INTO public.analytics_activitylog (id, username_persistent, requested_at, response_ms, elroi_id, path, view, view_method, remote_addr, host, method, query_params, data, response, errors, status_code, user_id) VALUES (12, 'enterprise@email.com', '2020-11-06 22:00:38.753002+02', 91, '', '/api/v1/profile-settings/', 'api.v1.accounts.views.AccountProfileSettings', 'get', '127.0.0.1', '127.0.0.1:8000', 'GET', '{}', '{}', '{"id":1,"logo":"/media/documentation_E74Baj3.png","first_name":"Demo","last_name":"D.","company_email":"email@company.com","phone_number":"123456789","company_name":"Demo Company","timezone":"Europe/Bucharest"}', NULL, 200, 1);
+INSERT INTO public.analytics_activitylog (id, username_persistent, requested_at, response_ms, elroi_id, path, view, view_method, remote_addr, host, method, query_params, data, response, errors, status_code, user_id) VALUES (13, 'enterprise@email.com', '2020-11-06 22:01:16.861953+02', 97, '', '/api/v1/profile-settings/', 'api.v1.accounts.views.AccountProfileSettings', 'get', '127.0.0.1', '127.0.0.1:8000', 'GET', '{}', '{}', '{"id":1,"email":"enterprise@email.com","logo":"/media/documentation_E74Baj3.png","first_name":"Demo","last_name":"D.","company_email":"email@company.com","phone_number":"123456789","company_name":"Demo Company","timezone":"Europe/Bucharest"}', NULL, 200, 1);
+INSERT INTO public.analytics_activitylog (id, username_persistent, requested_at, response_ms, elroi_id, path, view, view_method, remote_addr, host, method, query_params, data, response, errors, status_code, user_id) VALUES (14, 'enterprise@email.com', '2020-11-06 22:16:00.82468+02', 97, '', '/api/v1/profile-settings/', 'api.v1.accounts.views.AccountProfileSettings', 'get', '127.0.0.1', '127.0.0.1:8000', 'GET', '{}', '{}', '{"id":1,"email":"enterprise@email.com","logo":"/media/documentation_E74Baj3.png","first_name":"Demo","last_name":"D.","company_email":"email@company.com","phone_number":"123456789","company_name":"Demo Company","timezone":"Europe/Bucharest"}', NULL, 200, 1);
 
 
 --
@@ -1812,6 +1847,8 @@ INSERT INTO public.django_migrations (id, app, name, applied) VALUES (32, 'token
 INSERT INTO public.django_migrations (id, app, name, applied) VALUES (33, 'token_blacklist', '0006_auto_20171017_2113', '2020-11-06 00:58:13.13862+02');
 INSERT INTO public.django_migrations (id, app, name, applied) VALUES (34, 'token_blacklist', '0007_auto_20171017_2214', '2020-11-06 00:58:13.214506+02');
 INSERT INTO public.django_migrations (id, app, name, applied) VALUES (35, 'enterprise', '0002_auto_20201105_2302', '2020-11-06 01:02:38.873981+02');
+INSERT INTO public.django_migrations (id, app, name, applied) VALUES (36, 'accounts', '0002_auto_20201106_1938', '2020-11-06 21:39:05.368361+02');
+INSERT INTO public.django_migrations (id, app, name, applied) VALUES (37, 'accounts', '0003_auto_20201106_2015', '2020-11-06 22:15:22.951938+02');
 
 
 --
@@ -1843,7 +1880,7 @@ INSERT INTO public.enterprise_configuration (id, logo, site_color, site_theme, b
 -- Data for Name: enterprises; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-INSERT INTO public.enterprises (id, email, elroi_id, name, first_name, last_name, web, trial_start, trial_end, current_plan_end, is_active, turn_off_date, allow_email_data, allow_api_call, payment, created_at, updated_by_id, user_id) VALUES (1, 'enterprise@email.com', 'E-44C43B', 'Enterprise', 'Demo', 'D.', 'http://google.com', NULL, NULL, NULL, true, NULL, true, true, NULL, '2020-11-06 00:59:11.443349+02', NULL, 1);
+INSERT INTO public.enterprises (id, email, elroi_id, name, first_name, last_name, web, trial_start, trial_end, current_plan_end, is_active, turn_off_date, allow_email_data, allow_api_call, payment, created_at, updated_by_id, user_id, additional_emails, address, company_name, notification_email, logo, second_color, site_color, timezone) VALUES (1, 'enterprise@email.com', 'E-44C43B', 'Enterprise', 'Demo', 'D.', 'http://google.com', NULL, NULL, NULL, true, NULL, true, true, NULL, '2020-11-06 00:59:11.443349+02', NULL, 1, 'test@test.com,email@email.com, third@email.com', 'Moldova R., Chisinau, 44', 'Test Company', 'notify@company.com', 'documentation_Gu8qtth.png', '{"color": "#000000"}', '{"color": "#ffffff"}', 'Europe/Bucharest');
 
 
 --
@@ -1896,6 +1933,8 @@ INSERT INTO public.token_blacklist_outstandingtoken (id, token, created_at, expi
 INSERT INTO public.token_blacklist_outstandingtoken (id, token, created_at, expires_at, user_id, jti) VALUES (2, 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTYwNDY5NjM1MywianRpIjoiMzdkZTlkYmQwMTU1NGVmZDhiNjE0ZDM5Mjg2ZTUxMzUiLCJ1c2VyX2lkIjoxfQ.MqKCni-izE2D_Ib_fFk3rqbXpqDjAjHsLHZswVZIFfI', '2020-11-05 22:59:13.027258+02', '2020-11-06 22:59:13+02', 1, '37de9dbd01554efd8b614d39286e5135');
 INSERT INTO public.token_blacklist_outstandingtoken (id, token, created_at, expires_at, user_id, jti) VALUES (3, 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTYwNDY5NjQzMSwianRpIjoiYzQ5OTk5YzcxMTg4NGVhNzlkYzNlYWVmNzM3ZmE0YjkiLCJ1c2VyX2lkIjoxfQ.IzQX6jtOT6pwMpz5_TlN0IANBzJUDc-A5d1H38PxmP8', '2020-11-05 23:00:31.199367+02', '2020-11-06 23:00:31+02', 1, 'c49999c711884ea79dc3eaef737fa4b9');
 INSERT INTO public.token_blacklist_outstandingtoken (id, token, created_at, expires_at, user_id, jti) VALUES (4, 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTYwNDY5NjQzMSwianRpIjoiMjBiM2IxMDg5ZTEyNGI2ZGE0MDllOGJiMzViMmMwNmUiLCJ1c2VyX2lkIjoxfQ.cLlPxv_NCmhJV5ZBhtckum3o0LgQcerSP-bjwVN6mos', '2020-11-05 23:00:31.218781+02', '2020-11-06 23:00:31+02', 1, '20b3b1089e124b6da409e8bb35b2c06e');
+INSERT INTO public.token_blacklist_outstandingtoken (id, token, created_at, expires_at, user_id, jti) VALUES (5, 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTYwNDc3MDc2MiwianRpIjoiMTY5ZjBhZmQ2MDdhNGUzZjk5NmU2OGQ0N2VmMGZkZmIiLCJ1c2VyX2lkIjoxfQ.iVN3MUkCfIQVOsn__PcogTFgtBPDLxbS3XhrN0lhejY', '2020-11-06 19:39:22.09954+02', '2020-11-07 19:39:22+02', 1, '169f0afd607a4e3f996e68d47ef0fdfb');
+INSERT INTO public.token_blacklist_outstandingtoken (id, token, created_at, expires_at, user_id, jti) VALUES (6, 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTYwNDc3MDc2MiwianRpIjoiMTdmN2I2MjdlNDJiNDQ5Yjg2ZDRkMDc4MjJlZjU1YzQiLCJ1c2VyX2lkIjoxfQ.TV8KwloNE33nMGB8YpXf2A-c69Syc4xRJ06wlV0oJyU', '2020-11-06 19:39:22.178139+02', '2020-11-07 19:39:22+02', 1, '17f7b627e42b449b86d4d07822ef55c4');
 
 
 --
@@ -1929,7 +1968,7 @@ SELECT pg_catalog.setval('public.accounts_account_groups_id_seq', 1, false);
 -- Name: accounts_account_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.accounts_account_id_seq', 1, true);
+SELECT pg_catalog.setval('public.accounts_account_id_seq', 2, true);
 
 
 --
@@ -1950,7 +1989,7 @@ SELECT pg_catalog.setval('public.admin_enterprise_config_id_seq', 1, false);
 -- Name: analytics_activitylog_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.analytics_activitylog_id_seq', 5, true);
+SELECT pg_catalog.setval('public.analytics_activitylog_id_seq', 14, true);
 
 
 --
@@ -2034,7 +2073,7 @@ SELECT pg_catalog.setval('public.django_content_type_id_seq', 28, true);
 -- Name: django_migrations_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.django_migrations_id_seq', 35, true);
+SELECT pg_catalog.setval('public.django_migrations_id_seq', 37, true);
 
 
 --
@@ -2118,7 +2157,7 @@ SELECT pg_catalog.setval('public.token_blacklist_blacklistedtoken_id_seq', 1, fa
 -- Name: token_blacklist_outstandingtoken_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.token_blacklist_outstandingtoken_id_seq', 4, true);
+SELECT pg_catalog.setval('public.token_blacklist_outstandingtoken_id_seq', 6, true);
 
 
 --
