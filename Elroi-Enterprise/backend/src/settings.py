@@ -110,7 +110,7 @@ DATABASES = {
         'USER': 'postgres',
         'PASSWORD': 'postgres',
         'HOST': 'localhost',
-        'PORT': '5432',
+        'PORT': '5433',
     }
 }
 STATUSES = (
@@ -211,10 +211,10 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 UPLOAD_FOLDER = os.path.join(BASE_DIR, 'media/requests_docs')
 UPLOAD_USER_GUIDE_FOLDER = os.path.join(BASE_DIR, 'media/user_guide')
 
-FRONTEND_URL = 'http://localhost:3000'
+FRONTEND_URL = 'http://10.209.18.180:8082'
 
 DEFAULT_FROM_EMAIL = 'target@email.com'
 EMAIL_HOST = 'smtp.mailtrap.io'
-EMAIL_HOST_USER = 'f2c13a4aa2f7c7'
-EMAIL_HOST_PASSWORD = '098c119aea4f00'
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
 EMAIL_PORT = '2525'
