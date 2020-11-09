@@ -93,7 +93,8 @@ AUTH_USER_MODEL = 'accounts.Account'
 # CORS WHITELIST
 CORS_ORIGIN_WHITELIST = [
     "http://localhost:3000",
-    "http://127.0.0.1:8080"
+    "http://127.0.0.1:8080",
+    "http://10.209.18.180:8080"
 ]
 
 CORS_ORIGIN_REGEX_WHITELIST = []
