@@ -3,11 +3,18 @@ import os
 from pathlib import Path
 
 from dotenv import load_dotenv, find_dotenv
+from django.core.exceptions import ImproperlyConfigured
 
 load_dotenv(find_dotenv())
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+def get_env_value(env_variable):
+    try:
+        return os.getenv(env_variable)
+    except KeyError:
+        raise ImproperlyConfigured(f'Set the "{env_variable}" environment variable.')
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.1/howto/deployment/checklist/
@@ -211,10 +218,10 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 UPLOAD_FOLDER = os.path.join(BASE_DIR, 'media/requests_docs')
 UPLOAD_USER_GUIDE_FOLDER = os.path.join(BASE_DIR, 'media/user_guide')
 
-FRONTEND_URL = 'http://10.209.18.180:8082'
+FRONTEND_URL = get_env_value('FRONTEND_URL')
 
-DEFAULT_FROM_EMAIL = 'target@email.com'
-EMAIL_HOST = 'smtp.mailtrap.io'
-EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
-EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
-EMAIL_PORT = '2525'
+DEFAULT_FROM_EMAIL = get_env_value('DEFAULT_FROM_EMAIL')
+EMAIL_HOST = get_env_value('EMAIL_HOST')
+EMAIL_HOST_USER = get_env_value('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = get_env_value('EMAIL_HOST_PASSWORD')
+EMAIL_PORT = get_env_value('EMAIL_PORT')
