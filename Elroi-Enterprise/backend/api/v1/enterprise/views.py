@@ -200,19 +200,21 @@ class EnterpriseConfiguration(LoggingMixin,
 
     # create new configuration
     def post(self, request, *args, **kwargs):
-        if request.user and hasattr(request.user, 'enterprise'):
-            return self.create(request, *args, **kwargs)
-        return Response({
-            'error': 'You are not allowed to continue',
-        }, status=status.HTTP_401_UNAUTHORIZED)
-
-    # update configuration
-    def put(self, request, *args, **kwargs):
-        return self.update(request, *args, **kwargs)
-
-    def get_object(self):
-        return EnterpriseConfigurationModel.objects.get(
-            enterprise_id__user=self.request.user)
+        try:
+            configuration = EnterpriseConfigurationModel.objects.get(enterprise_id=request.data.get('enterprise_id'),
+                                                                     enterprise_id__user=request.user)
+            serializer = self.serializer_class(configuration, data=request.data)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except EnterpriseConfigurationModel.DoesNotExist:
+            if request.user and hasattr(request.user, 'enterprise'):
+                return self.create(request, *args, **kwargs)
+            return Response({
+                'error': 'You are not allowed to continue',
+            }, status=status.HTTP_401_UNAUTHORIZED)
 
     # delete configuration
     def delete(self, request, *args, **kwargs):

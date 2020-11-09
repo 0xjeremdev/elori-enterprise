@@ -53,8 +53,6 @@ class RequestTrackerSerializer(serializers.ModelSerializer):
 
 class EnterpriseConfigurationSerializer(serializers.ModelSerializer):
     elroi_id = serializers.SerializerMethodField()
-    logo = serializers.FileField(required=False)
-    background_image = serializers.FileField(required=False)
 
     def get_elroi_id(self, obj):
         return obj.enterprise_id.elroi_id
