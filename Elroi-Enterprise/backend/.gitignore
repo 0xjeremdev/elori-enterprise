@@ -2,6 +2,7 @@
 .env
 venv/*
 media/*
+staticfiles/*
 __ pycache __
 __pycache__
 __pycache__/
