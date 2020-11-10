@@ -4,6 +4,7 @@ from django.core.mail import EmailMessage
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
 from dotenv import load_dotenv, find_dotenv
+load_dotenv(find_dotenv())
 
 class SendUserEmail:
     @staticmethod
