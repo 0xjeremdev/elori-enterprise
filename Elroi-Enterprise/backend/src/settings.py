@@ -223,4 +223,4 @@ EMAIL_HOST_USER = get_env_value('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = get_env_value('EMAIL_HOST_PASSWORD')
 EMAIL_PORT = get_env_value('EMAIL_PORT')
 EMAIL_USE_TLS = get_env_value('EMAIL_USE_TLS')
-
+SENDGRID_API_KEY = get_env_value('SENDGRID_API_KEY')
