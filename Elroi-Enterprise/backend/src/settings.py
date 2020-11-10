@@ -100,7 +100,8 @@ AUTH_USER_MODEL = 'accounts.Account'
 # CORS WHITELIST
 CORS_ORIGIN_WHITELIST = [
     "http://localhost:3000",
-    "http://127.0.0.1:8080"
+    "http://127.0.0.1:8080",
+    "http://10.209.18.180:8080"
 ]
 
 CORS_ORIGIN_REGEX_WHITELIST = []
@@ -117,7 +118,7 @@ DATABASES = {
         'USER': 'postgres',
         'PASSWORD': 'postgres',
         'HOST': 'localhost',
-        'PORT': '5433',
+        'PORT': '5432',
     }
 }
 STATUSES = (
@@ -208,6 +209,7 @@ USE_TZ = False
 STATIC_URL = '/static/'
 MEDIA_URL = '/media/'
 
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'static'),
 ]
