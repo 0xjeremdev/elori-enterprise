@@ -100,25 +100,21 @@ AUTH_USER_MODEL = 'accounts.Account'
 # CORS WHITELIST
 CORS_ORIGIN_WHITELIST = [
     "http://localhost:3000",
-    "http://127.0.0.1:8080",
-    "http://10.209.18.180:8080"
+    "http://127.0.0.1:8080"
 ]
 
 CORS_ORIGIN_REGEX_WHITELIST = []
 
 # Database
 # https://docs.djangoproject.com/en/3.1/ref/settings/#databases
-APPEND_SLASH = False
 DATABASES = {
     'default': {
-        # 'ENGINE': 'django.db.backends.sqlite3',
-        # 'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'target_project',
         'USER': 'postgres',
         'PASSWORD': 'postgres',
         'HOST': 'localhost',
-        'PORT': '5432',
+        'PORT': '5433',
     }
 }
 STATUSES = (
@@ -209,7 +205,6 @@ USE_TZ = False
 STATIC_URL = '/static/'
 MEDIA_URL = '/media/'
 
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'static'),
 ]
