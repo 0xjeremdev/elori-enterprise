@@ -370,7 +370,7 @@ class AccountProfileSettings(LoggingMixin, GenericAPIView):
 
     def get(self, request, *args, **kwargs):
         user = request.user
-        return Response(AccountProfileSettingsSerializer(user).data, status=status.HTTP_200_OK)
+        return Response(AccountProfileSettingsSerializer(user, context={"request": request}).data, status=status.HTTP_200_OK)
         pass
 
     def post(self, request, *args, **kwargs):

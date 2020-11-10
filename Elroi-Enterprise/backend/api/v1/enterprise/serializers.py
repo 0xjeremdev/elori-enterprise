@@ -57,10 +57,14 @@ class EnterpriseConfigurationSerializer(serializers.ModelSerializer):
     background_image = serializers.SerializerMethodField()
 
     def get_logo(self, obj):
-        return obj.logo.url
+        return self.build_url(obj.logo.url)
 
     def get_background_image(self, obj):
-        return obj.background_image.url
+        return self.build_url(obj.background_image.url)
+
+    def build_url(self, file_url):
+        request = self.context.get('request')
+        return request.build_absolute_uri(file_url)
 
     def get_elroi_id(self, obj):
         return obj.enterprise_id.elroi_id
@@ -79,7 +83,12 @@ class EnterpriseAccountSettingsSerializer(serializers.ModelSerializer):
     address = serializers.CharField()
     company_name = serializers.CharField()
     timezone = serializers.CharField()
+    logo_url = serializers.SerializerMethodField()
+
+    def get_logo_url(self, obj):
+        request = self.context.get('request')
+        return request.build_absolute_uri(obj.logo.url)
 
     class Meta:
         model = Enterprise
-        fields = ['elroi_id', 'logo', 'site_color','second_color', 'notification_email', 'additional_emails', 'address', 'company_name', 'timezone']
+        fields = ['elroi_id', 'logo', 'logo_url', 'site_color','second_color', 'notification_email', 'additional_emails', 'address', 'company_name', 'timezone']
