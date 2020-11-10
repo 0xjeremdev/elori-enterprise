@@ -1,7 +1,7 @@
 import pyotp
 import os
 from django.core.mail import EmailMessage
-from sendgrid import SendGridApiClient
+from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
 from dotenv import load_dotenv, find_dotenv
 
