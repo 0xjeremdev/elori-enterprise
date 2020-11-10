@@ -116,7 +116,7 @@ module.exports = (options) => ({
       API_ENDPOINT:
         options.mode === "development"
           ? "http://localhost:8002/api/v1"
-          : "http://10.209.18.180:8082//api/v1",
+          : "http://10.209.18.180:8082/api/v1",
     }),
   ]),
   resolve: {
