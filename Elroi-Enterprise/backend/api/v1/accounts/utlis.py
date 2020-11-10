@@ -27,7 +27,7 @@ class SendUserEmail:
             print(response.body)
             print(response.headers)
         except Exception as e:
-            print(e.message)
+            print(e)
 
 
 def generate_verification_code():
