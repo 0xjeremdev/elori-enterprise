@@ -100,8 +100,7 @@ AUTH_USER_MODEL = 'accounts.Account'
 # CORS WHITELIST
 CORS_ORIGIN_WHITELIST = [
     "http://localhost:3000",
-    "http://127.0.0.1:8080",
-    "http://10.209.18.180:8080"
+    "http://127.0.0.1:8080"
 ]
 
 CORS_ORIGIN_REGEX_WHITELIST = []
@@ -118,7 +117,7 @@ DATABASES = {
         'USER': 'postgres',
         'PASSWORD': 'postgres',
         'HOST': 'localhost',
-        'PORT': '5432',
+        'PORT': '5433',
     }
 }
 STATUSES = (
@@ -207,7 +206,6 @@ USE_TZ = False
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
 
 STATIC_URL = '/static/'
-#STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 MEDIA_URL = '/media/'
 
 STATICFILES_DIRS = [
@@ -226,3 +224,5 @@ EMAIL_HOST = get_env_value('EMAIL_HOST')
 EMAIL_HOST_USER = get_env_value('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = get_env_value('EMAIL_HOST_PASSWORD')
 EMAIL_PORT = get_env_value('EMAIL_PORT')
+EMAIL_USE_TLS = get_env_value('EMAIL_USE_TLS')
+
