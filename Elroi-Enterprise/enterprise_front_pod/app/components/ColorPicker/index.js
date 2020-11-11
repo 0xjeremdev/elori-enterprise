@@ -5,12 +5,12 @@ import { SketchPicker } from "react-color";
 class ColorPicker extends React.Component {
   state = {
     displayColorPicker: false,
-    color: this.props.color,
+    color: { r: 255, g: 120, b: 0, a: 1 },
   };
 
   componentDidUpdate(prevPros) {
     const { color } = this.props;
-    if (JSON.stringify(color) !== JSON.stringify(prevPros.color)) {
+    if (color && JSON.stringify(color) !== JSON.stringify(prevPros.color)) {
       this.setState({ color });
     }
   }

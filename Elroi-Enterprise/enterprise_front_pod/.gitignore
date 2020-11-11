@@ -1,2 +1,10 @@
-/node_modules
-/build
+coverage
+build
+node_modules
+stats.json
+webpack-assets.json
+
+.DS_Store
+npm-debug.log
+.idea
+.env

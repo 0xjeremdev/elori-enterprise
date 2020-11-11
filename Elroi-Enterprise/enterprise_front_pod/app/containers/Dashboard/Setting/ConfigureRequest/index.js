@@ -60,7 +60,6 @@ class ConfigureRequest extends React.Component {
     site_color,
     site_theme,
   }) => {
-    console.log(site_color, site_theme);
     this.setState({
       additionalQuestions: additional_configuration,
       backUrl: background_image,
@@ -68,14 +67,15 @@ class ConfigureRequest extends React.Component {
       lanchUrl: website_launched_to,
       logoUrl: logo,
       siteColor: site_color,
-      siteTheme: site_theme
+      siteTheme: site_theme,
     });
   };
 
   componentDidMount() {
     consumerRequestFormApis
       .getConsumerRequestForm()
-      .then((res) => this.initState(res));
+      .then((res) => this.initState(res))
+      .catch((err) => console.log("err", err));
   }
 
   onLogoChange = (e) => {
@@ -140,7 +140,12 @@ class ConfigureRequest extends React.Component {
       <Container>
         <Grid.Row verticalAlign="middle">
           <Grid.Column width={3}>
-            <Image src={logoFile ? logoBS64 : logoUrl} size="small" bordered />
+            <Image
+              src={logoFile ? logoBS64 : logoUrl}
+              style={{ width: "120px", height: "120px" }}
+              size="small"
+              bordered
+            />
           </Grid.Column>
           <Grid.Column width={4}>
             <input type="file" id="logo" hidden onChange={this.onLogoChange} />
@@ -189,6 +194,7 @@ class ConfigureRequest extends React.Component {
                   <Image
                     src={backImg ? backImgBS64 : backUrl}
                     size="small"
+                    style={{ width: "120px", height: "60px" }}
                     bordered
                   />
                   <input

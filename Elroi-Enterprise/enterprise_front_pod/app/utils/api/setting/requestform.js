@@ -47,7 +47,7 @@ function setConsumerRequestForm(payload) {
           },
         }
       )
-      .then((res) => console.log(res))
+      .then((res) => resolve(res))
       .catch((e) => reject(e));
   });
 }
@@ -94,7 +94,7 @@ function updateConsumerRequestForm(payload) {
           },
         }
       )
-      .then((res) => console.log(res))
+      .then((res) => resolve(res))
       .catch((e) => reject(e));
   });
 }

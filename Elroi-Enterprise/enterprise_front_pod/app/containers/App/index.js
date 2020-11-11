@@ -25,7 +25,7 @@ export default function App() {
       <Route exact path={routes.EMAILCONFIRM} component={EmailConfirm} />
       <Route exact path={routes.REQUEST} component={Request} />
       <PrivateRoute exact path={routes.VERIFYCODE} component={VerifyCode} />
-      <Route path={routes.DASHBOARD} component={Dashboard} />
+      <PrivateRoute path={routes.DASHBOARD} component={Dashboard} />
     </Switch>
   );
 }
