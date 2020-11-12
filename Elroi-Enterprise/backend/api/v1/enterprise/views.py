@@ -309,7 +309,7 @@ class EnterpriseAccountSettings(GenericAPIView):
         user = request.user
         if hasattr(user, 'enterprise'):
             enterprise = user.enterprise
-            return Response(EnterpriseAccountSettingsSerializer(enterprise).data, status=status.HTTP_200_OK)
+            return Response(EnterpriseAccountSettingsSerializer(enterprise, context={"request": request}).data, status=status.HTTP_200_OK)
         else:
             return Response({"error": "Data not found"}, status=status.HTTP_400_BAD_REQUEST)
 

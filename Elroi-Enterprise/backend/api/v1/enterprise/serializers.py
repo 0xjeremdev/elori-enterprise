@@ -57,10 +57,16 @@ class EnterpriseConfigurationSerializer(serializers.ModelSerializer):
     background_image = serializers.SerializerMethodField()
 
     def get_logo(self, obj):
-        return self.build_url(obj.logo.url)
+        if obj.logo.url:
+            return self.build_url(obj.logo.url)
+        else:
+            return obj.logo
 
     def get_background_image(self, obj):
-        return self.build_url(obj.background_image.url)
+        if obj.background_image.url:
+            return self.build_url(obj.background_image.url)
+        else:
+            return obj.background_image
 
     def build_url(self, file_url):
         request = self.context.get('request')
@@ -87,7 +93,10 @@ class EnterpriseAccountSettingsSerializer(serializers.ModelSerializer):
 
     def get_logo_url(self, obj):
         request = self.context.get('request')
-        return request.build_absolute_uri(obj.logo.url)
+        if obj.logo.url:
+            return request.build_absolute_uri(obj.logo.url)
+        else:
+            return obj.logo
 
     class Meta:
         model = Enterprise
