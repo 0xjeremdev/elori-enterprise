@@ -20,20 +20,24 @@ const Container = styled.div`
 
 class ToggleButton extends React.Component {
   state = {
-    isActive: false,
+    isActive: this.props.value,
   };
+  handleActive = (active) => {
+    this.setState({isActive: active});
+    this.props.onActive(active);
+  }
   render() {
     return (
       <Container fontColor={this.props.fontColor}>
         <Button
           active={this.state.isActive}
-          onClick={() => this.setState({ isActive: true })}
+          onClick={() => this.handleActive(true)}
         >
           YES
         </Button>
         <Button
           active={!this.state.isActive}
-          onClick={() => this.setState({ isActive: false })}
+          onClick={() => this.handleActive(false)}
         >
           NO
         </Button>

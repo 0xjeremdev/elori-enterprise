@@ -5,50 +5,66 @@ from rest_framework import permissions
 from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from django.template.loader import render_to_string
 
 from api.v1.accounts.models import Customer, Enterprise
+from api.v1.accounts.utlis import SendUserEmail
 from api.v1.analytics.mixins import LoggingMixin
 from api.v1.consumer_request.models import ConsumerRequest
-from api.v1.consumer_request.serializers import ConsumerRequestSerializer, PeriodParameterSerializer
+from api.v1.consumer_request.serializers import (
+    ConsumerRequestSerializer,
+    PeriodParameterSerializer,
+)
 
 
-class ConsumerRequestAPI(LoggingMixin, mixins.ListModelMixin,
-                         mixins.CreateModelMixin,
-                         mixins.UpdateModelMixin,
-                         mixins.DestroyModelMixin,
-                         GenericAPIView):
+class ConsumerRequestAPI(
+    LoggingMixin,
+    mixins.ListModelMixin,
+    mixins.CreateModelMixin,
+    mixins.UpdateModelMixin,
+    mixins.DestroyModelMixin,
+    GenericAPIView,
+):
     queryset = ConsumerRequest.objects.all()
     serializer_class = ConsumerRequestSerializer
     permission_classes = (permissions.AllowAny,)
 
     # get the list of consumer requests
     def get(self, request, *args, **kwargs):
-        period = 'week'
-        if request.GET.get('period'):
-            period = request.GET.get('period')
+        period = "week"
+        if request.GET.get("period"):
+            period = request.GET.get("period")
 
-        if period == 'year':
-            self.queryset = ConsumerRequest.objects.filter(request_date__year=datetime.today().year)
-        elif period == 'month':
-            self.queryset = ConsumerRequest.objects.filter(request_date__month=datetime.today().month)
-        elif period == 'week':
+        if period == "year":
+            self.queryset = ConsumerRequest.objects.filter(
+                request_date__year=datetime.today().year
+            )
+        elif period == "month":
+            self.queryset = ConsumerRequest.objects.filter(
+                request_date__month=datetime.today().month
+            )
+        elif period == "week":
             week_start = datetime.today()
             week_start -= timedelta(days=week_start.weekday())
             week_end = week_start + timedelta(days=7)
-            self.queryset = ConsumerRequest.objects.filter(request_date__gte=week_start,
-                                                           request_date__lt=week_end)
-        elif period == 'day':
-            self.queryset = ConsumerRequest.objects.filter(request_date__day=datetime.today().day)
+            self.queryset = ConsumerRequest.objects.filter(
+                request_date__gte=week_start, request_date__lt=week_end
+            )
+        elif period == "day":
+            self.queryset = ConsumerRequest.objects.filter(
+                request_date__day=datetime.today().day
+            )
 
         return self.list(request, *args, **kwargs)
 
     """ overwrite the list method to add extra data """
+
     def list(self, request, *args, **kwargs):
         response = super(ConsumerRequestAPI, self).list(request, args, kwargs)
         """ add numbers to create progress bar with approved of total """
-        response.data['progress'] = {
+        response.data["progress"] = {
             "total": self.queryset.count(),
-            "approved": self.queryset.filter(status=1).count()
+            "approved": self.queryset.filter(status=1).count(),
         }
         return response
 
@@ -57,35 +73,33 @@ class ConsumerRequestAPI(LoggingMixin, mixins.ListModelMixin,
         return self.create(request, *args, **kwargs)
 
     def create(self, request, *args, **kwargs):
-        serializer = self.serializer_class(data=request.data)
+        serializer = self.serializer_class(
+            data=request.data, context={"request": request}
+        )
         try:
-            enterprise = Enterprise.objects.get(elroi_id=request.data.get('elroi_id'))
+            enterprise = Enterprise.objects.get(id=request.data.get("enterprise"))
             if serializer.is_valid():
-                try:
-                    customer = Customer.objects.get(email__iexact=request.data.get('email'))
-                except Customer.DoesNotExist:
-                    customer = Customer.objects.create(
-                        email=request.data.get('email'),
-                        first_name=request.data.get('first_name'),
-                        last_name=request.data.get('last_name')
-                    )
-                customer_request = ConsumerRequest.objects.create(
-                    elroi_id=request.data.get('elroi_id'),
-                    customer=customer,
-                    enterprise=enterprise,
-                    description=request.data.get('description'),
-                    request_type=request.data.get('request_type'),
-                    status=request.data.get('status')
+                serializer.save()
+                user_full_name = (
+                    f"{serializer.data['first_name']} {serializer.data['last_name']}"
                 )
-                return Response(ConsumerRequestSerializer(customer_request).data, status=status.HTTP_201_CREATED)
+                message_body = render_to_string(
+                    "email/customer/new_request_created.html",
+                    {"user_full_name": user_full_name},
+                )
+                email_data = {
+                    "email_body": message_body,
+                    "to_email": serializer.data["email"],
+                    "email_subject": "Your request was sent to Elroi",
+                }
+                SendUserEmail.send_email(email_data)
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
             else:
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Enterprise.DoesNotExist:
             return Response(
-                {
-                    "error": "Enterprise with that elroi, was not found."
-                },
-                status=status.HTTP_400_BAD_REQUEST
+                {"error": "Enterprise was not found."},
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
     # update consumer request
@@ -107,27 +121,31 @@ class ConsumerRequestProgressAPI(LoggingMixin, APIView):
         status_list = (1, 2, 4)
         try:
             obj_response = {"active": 0, "approved": 0, "rejected": 0}
-            obj_result = ConsumerRequest.objects.filter(request_date__month=datetime.today().month,
-                                                        status__in=status_list)
-            if period == 'year':
-                obj_result = ConsumerRequest.objects.filter(request_date__year=datetime.today().year,
-                                                            status__in=status_list)
-            elif period == 'week':
+            obj_result = ConsumerRequest.objects.filter(
+                request_date__month=datetime.today().month, status__in=status_list
+            )
+            if period == "year":
+                obj_result = ConsumerRequest.objects.filter(
+                    request_date__year=datetime.today().year, status__in=status_list
+                )
+            elif period == "week":
                 week_start = datetime.today()
                 week_start -= timedelta(days=week_start.weekday())
                 week_end = week_start + timedelta(days=7)
-                obj_result = ConsumerRequest.objects.filter(request_date__gte=week_start,
-                                                            request_date__lt=week_end,
-                                                            status__in=status_list)
+                obj_result = ConsumerRequest.objects.filter(
+                    request_date__gte=week_start,
+                    request_date__lt=week_end,
+                    status__in=status_list,
+                )
             if obj_result.exists():
                 total = obj_result.count()
                 for item in obj_result:
                     if item.status == 2:
-                        obj_response['active'] += 1
+                        obj_response["active"] += 1
                     if item.status == 1:
-                        obj_response['approved'] += 1
+                        obj_response["approved"] += 1
                     if item.status == 4:
-                        obj_response['rejected'] += 1
+                        obj_response["rejected"] += 1
 
                 """ calculate percentage """
                 for k in obj_response:
@@ -135,7 +153,9 @@ class ConsumerRequestProgressAPI(LoggingMixin, APIView):
 
             return Response(obj_response, status=status.HTTP_200_OK)
         except:
-            return Response({'error': 'Wrong Url Format'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "Wrong Url Format"}, status=status.HTTP_400_BAD_REQUEST
+            )
 
 
 class ConsumerRequestMade(LoggingMixin, APIView):
@@ -146,11 +166,16 @@ class ConsumerRequestMade(LoggingMixin, APIView):
             """ get total number of requests """
             total_number = ConsumerRequest.objects.count()
             """ get date for last request made"""
-            last_request = ConsumerRequest.objects.latest('request_date')
-            return Response({
-                "confirmed": total_confirmed,
-                "total_made": total_number,
-                "last_date": last_request.request_date,
-            }, status=status.HTTP_200_OK)
+            last_request = ConsumerRequest.objects.latest("request_date")
+            return Response(
+                {
+                    "confirmed": total_confirmed,
+                    "total_made": total_number,
+                    "last_date": last_request.request_date,
+                },
+                status=status.HTTP_200_OK,
+            )
         except:
-            return Response({'error': 'Wrong Url Format'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "Wrong Url Format"}, status=status.HTTP_400_BAD_REQUEST
+            )

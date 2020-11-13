@@ -1,8 +1,7 @@
 import secrets
 from datetime import datetime
 
-from django.contrib.auth.models import (BaseUserManager, AbstractUser)
-from django.contrib.postgres.fields import JSONField
+from django.contrib.auth.models import BaseUserManager, AbstractUser
 from django.db import models
 from django.db.models.signals import post_save
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -69,20 +68,20 @@ class Account(AbstractUser):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    USERNAME_FIELD = 'email'
+    USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
 
     objects = CustomAccountManager()
 
     @property
     def elroi_id(self):
-        return 'Account'
+        return "Account"
 
     def full_name(self):
-        return 'Account'
+        return "Account"
 
     def profile(self):
-        return 'Account'
+        return "Account"
 
     def is_2fa_on(self):
         if self.verification_code is not None and self.otp_verified:
@@ -101,29 +100,36 @@ class Account(AbstractUser):
 
     def tokens(self):
         refresh = RefreshToken.for_user(self)
-        return {
-            'refresh': str(refresh),
-            'access': str(refresh.access_token)
-        }
+        return {"refresh": str(refresh), "access": str(refresh.access_token)}
 
     """ get user's full name"""
 
     def full_name(self):
-        return f'{self.first_name} {self.last_name}'
+        return f"{self.first_name} {self.last_name}"
 
 
 """ customers table """
 
 
 class Customer(models.Model):
-    user = models.OneToOneField(Account, related_name='customer', on_delete=models.CASCADE, null=True, blank=True)
-    elroi_id = models.CharField(max_length=9, db_index=True, unique=True, null=True, blank=True)
+    user = models.OneToOneField(
+        Account,
+        related_name="customer",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+    )
+    elroi_id = models.CharField(
+        max_length=9, db_index=True, unique=True, null=True, blank=True
+    )
     file = models.FileField(blank=True, null=True)
-    email = models.EmailField(verbose_name="Email", max_length=60, unique=True, null=True, blank=True)
+    email = models.EmailField(
+        verbose_name="Email", max_length=60, unique=True, null=True, blank=True
+    )
     first_name = models.CharField(max_length=40, null=True)
     last_name = models.CharField(max_length=40, null=True)
     state_resident = models.BooleanField(default=False)
-    additional_fields = JSONField(null=True, blank=True)
+    additional_fields = models.JSONField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -133,10 +139,10 @@ class Customer(models.Model):
         return "Customer"
 
     def full_name(self):
-        return f'{self.first_name} {self.last_name}'
+        return f"{self.first_name} {self.last_name}"
 
     class Meta:
-        db_table = 'customers'
+        db_table = "customers"
 
 
 """ method used to update elroi_id when new user is created """
@@ -144,7 +150,7 @@ class Customer(models.Model):
 
 def update_customer_elroi_id(sender, instance, created, **kwargs):
     if created:
-        token = generate_id(prefix='C')
+        token = generate_id(prefix="C")
         elroi_id = check_unique_customer_elroi_id(token)
         instance.elroi_id = elroi_id
         instance.save()
@@ -156,7 +162,7 @@ def update_customer_elroi_id(sender, instance, created, **kwargs):
 def check_unique_customer_elroi_id(elroi_id):
     try:
         Customer.objects.get(elroi_id__exact=elroi_id)
-        elroi_id = generate_id(prefix='C')
+        elroi_id = generate_id(prefix="C")
         return check_unique_customer_elroi_id(elroi_id)
     except Customer.DoesNotExist:
         return elroi_id
@@ -169,8 +175,16 @@ post_save.connect(update_customer_elroi_id, sender=Customer)
 
 
 class Enterprise(models.Model):
-    user = models.OneToOneField(Account, related_name='enterprise', on_delete=models.CASCADE, blank=True, null=True)
-    elroi_id = models.CharField(max_length=9, db_index=True, unique=True, blank=True, null=True)
+    user = models.OneToOneField(
+        Account,
+        related_name="enterprise",
+        on_delete=models.CASCADE,
+        blank=True,
+        null=True,
+    )
+    elroi_id = models.CharField(
+        max_length=9, db_index=True, unique=True, blank=True, null=True
+    )
     email = models.EmailField(max_length=80, unique=True)
     name = models.CharField(max_length=255, blank=True, null=True)
     notification_email = models.EmailField(max_length=80, null=True, blank=True)
@@ -179,8 +193,8 @@ class Enterprise(models.Model):
     timezone = models.CharField(max_length=20, null=True, blank=True)
     address = models.CharField(max_length=255, null=True, blank=True)
     logo = models.FileField(null=True, blank=True)
-    site_color = JSONField(null=True, blank=True)
-    second_color = JSONField(null=True, blank=True)
+    site_color = models.JSONField(null=True, blank=True)
+    second_color = models.JSONField(null=True, blank=True)
     first_name = models.CharField(max_length=40, null=True)
     last_name = models.CharField(max_length=40, null=True)
     web = models.CharField(max_length=255, blank=True, null=True)
@@ -191,8 +205,14 @@ class Enterprise(models.Model):
     turn_off_date = models.DateTimeField(blank=True, null=True)
     allow_email_data = models.BooleanField(default=True)
     allow_api_call = models.BooleanField(default=True)
-    payment = JSONField(null=True, blank=True)
-    updated_by = models.ForeignKey(Account, related_name='updated_by', on_delete=models.CASCADE, blank=True, null=True)
+    payment = models.JSONField(null=True, blank=True)
+    updated_by = models.ForeignKey(
+        Account,
+        related_name="updated_by",
+        on_delete=models.CASCADE,
+        blank=True,
+        null=True,
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -202,22 +222,22 @@ class Enterprise(models.Model):
         return "Enterprise"
 
     def full_name(self):
-        return f'{self.first_name} {self.last_name}'
+        return f"{self.first_name} {self.last_name}"
 
     """ get current subscription type """
 
     def current_subscription(self):
         if self.trial_end <= datetime.now():
-            return 'trial'
+            return "trial"
 
         if self.current_plan_end >= datetime.now():
-            return 'subscribed'
+            return "subscribed"
 
-        return 'expired'
+        return "expired"
 
     class Meta:
-        db_table = 'enterprises'
-        ordering = ['-created_at']
+        db_table = "enterprises"
+        ordering = ["-created_at"]
 
 
 """ update elroi id for enterprises"""
@@ -225,7 +245,7 @@ class Enterprise(models.Model):
 
 def update_enterprise_elroi_id(sender, instance, created, **kwargs):
     if created:
-        token = generate_id(prefix='E')
+        token = generate_id(prefix="E")
         elroi_id = check_unique_enterprise_elroi_id(token)
         instance.elroi_id = elroi_id
         instance.save()
@@ -237,7 +257,7 @@ def update_enterprise_elroi_id(sender, instance, created, **kwargs):
 def check_unique_enterprise_elroi_id(check_id):
     try:
         Enterprise.objects.get(elroi_id__exact=check_id)
-        elroi_id = generate_id('E')
+        elroi_id = generate_id("E")
         return check_unique_enterprise_elroi_id(elroi_id)
     except Enterprise.DoesNotExist:
         return check_id
@@ -248,6 +268,6 @@ post_save.connect(update_enterprise_elroi_id, sender=Enterprise)
 """generate random id ( characters+ digits)"""
 
 
-def generate_id(prefix='C'):
+def generate_id(prefix="C"):
     token = secrets.token_hex(3).upper()
-    return f'{prefix}-{token}'
+    return f"{prefix}-{token}"

@@ -108,7 +108,11 @@ function getConsumerRequestForm() {
           Authorization: `Bearer ${token}`,
         },
       })
-      .then((res) => resolve(res.data))
+      .then((res) => {
+        if (res.data.success) {
+          resolve(res.data.data);
+        }
+      })
       .catch((e) => reject(e));
   });
 }

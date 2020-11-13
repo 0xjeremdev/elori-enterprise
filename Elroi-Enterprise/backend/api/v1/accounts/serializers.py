@@ -294,13 +294,13 @@ class UserTokenSerializer(TokenObtainPairSerializer):
 class AccountProfileSettingsSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(read_only=True)
     email = serializers.EmailField(read_only=True)
-    logo = serializers.FileField()
-    first_name = serializers.CharField()
-    last_name = serializers.CharField()
-    company_email = serializers.EmailField()
-    phone_number = serializers.CharField()
-    company_name = serializers.CharField()
-    timezone = serializers.CharField()
+    logo = serializers.FileField(required=False)
+    first_name = serializers.CharField(required=False)
+    last_name = serializers.CharField(required=False)
+    company_email = serializers.EmailField(required=False)
+    phone_number = serializers.CharField(required=False)
+    company_name = serializers.CharField(required=False)
+    timezone = serializers.CharField(required=False)
 
     class Meta:
         model = Account

@@ -1,7 +1,7 @@
 import React, { PureComponent } from "react";
 import { Sidebar, Menu, Grid, Icon, Image } from "semantic-ui-react";
 import styled from "styled-components";
-import targetLogo from "../../assets/images/target.png";
+import noImage from "../../assets/images/no-img.png";
 
 const MenuWithRef = React.forwardRef((props, ref) => <Menu {...props} />);
 
@@ -38,7 +38,7 @@ const MenuWrapper = styled.div`
   }
   & .menu-item.active {
     background: #e1e0ff;
-    border-left: 6px solid #7E52E8 !important;
+    border-left: 6px solid #7e52e8 !important;
     & p {
       color: #0b7fd7;
       text-align: left;
@@ -78,7 +78,11 @@ class VerticalSidebar extends PureComponent {
           }}
         >
           <div style={{ filter: "drop-shadow(1px 0px 2px white)" }}>
-            <Image src={targetLogo} size="tiny" centered />
+            <Image
+              src={this.props.logoUrl ? this.props.logoUrl : noImage}
+              size="tiny"
+              centered
+            />
           </div>
           <br />
           <MenuWrapper visible={visible}>

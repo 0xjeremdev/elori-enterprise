@@ -13,26 +13,40 @@ from api.v1.accounts.utlis import SendUserEmail
 from api.v1.analytics.mixins import LoggingMixin
 from api.v1.assessment.models import EnterpriseQuestionnaire, Assessment
 from api.v1.consumer_request.models import ConsumerRequest
-from api.v1.enterprise.models import UserGuideModel, CustomerConfiguration, EnterpriseConfigurationModel
+from api.v1.enterprise.models import (
+    UserGuideModel,
+    CustomerConfiguration,
+    EnterpriseConfigurationModel,
+)
 from api.v1.enterprise.serializers import (
-    UserGuideSerializer, CustomerConfigurationSerializer,
-    CustomerSummarizeSerializer, RequestTrackerSerializer,
-    EnterpriseConfigurationSerializer, FileSerializer, EnterpriseAccountSettingsSerializer
+    UserGuideSerializer,
+    CustomerConfigurationSerializer,
+    CustomerSummarizeSerializer,
+    RequestTrackerSerializer,
+    EnterpriseConfigurationSerializer,
+    FileSerializer,
+    EnterpriseAccountSettingsSerializer,
 )
 
 
-class UserGuide(LoggingMixin, mixins.ListModelMixin, mixins.CreateModelMixin, GenericAPIView):
+class UserGuide(
+    LoggingMixin, mixins.ListModelMixin, mixins.CreateModelMixin, GenericAPIView
+):
     """ user guide """
+
     queryset = UserGuideModel.objects.all()
     serializer_class = UserGuideSerializer
     permission_classes = (permissions.IsAuthenticated,)
 
     def get(self, request, *args, **kwargs):
-        if request.GET.get('enterprise_id'):
-            self.queryset = UserGuideModel.objects.filter(owner__id=request.GET.get('enterprise_id')).prefetch_related(
-                'uploads')
+        if request.GET.get("enterprise_id"):
+            self.queryset = UserGuideModel.objects.filter(
+                owner__id=request.GET.get("enterprise_id")
+            ).prefetch_related("uploads")
         else:
-            self.queryset = UserGuideModel.objects.filter(created_by=request.user).prefetch_related('uploads')
+            self.queryset = UserGuideModel.objects.filter(
+                created_by=request.user
+            ).prefetch_related("uploads")
         return self.list(request, *args, **kwargs)
 
     """ overwrite list method to assign the list of uploaded files based on guide id """
@@ -41,9 +55,12 @@ class UserGuide(LoggingMixin, mixins.ListModelMixin, mixins.CreateModelMixin, Ge
         response = super(UserGuide, self).list(request, *args, **kwargs)
         uploads = []
         for upload_file in self.queryset:
-            files = [str(guide_file.file) for guide_file in upload_file.uploads.filter(user_guide=upload_file.pk)]
+            files = [
+                str(guide_file.file)
+                for guide_file in upload_file.uploads.filter(user_guide=upload_file.pk)
+            ]
             uploads.extend(files)
-        response.data['uploads'] = uploads
+        response.data["uploads"] = uploads
         return response
 
     def post(self, request, *args, **kwargs):
@@ -52,6 +69,7 @@ class UserGuide(LoggingMixin, mixins.ListModelMixin, mixins.CreateModelMixin, Ge
 
 class UserGuideUpload(LoggingMixin, APIView):
     """ Upload file for specific guide id"""
+
     permission_classes = (permissions.IsAuthenticated,)
     parser_classes = (MultiPartParser, FormParser)
 
@@ -64,11 +82,14 @@ class UserGuideUpload(LoggingMixin, APIView):
             return Response(file_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class CustomerConfiguration(LoggingMixin, mixins.ListModelMixin,
-                            mixins.CreateModelMixin,
-                            mixins.UpdateModelMixin,
-                            mixins.DestroyModelMixin,
-                            GenericAPIView):
+class CustomerConfiguration(
+    LoggingMixin,
+    mixins.ListModelMixin,
+    mixins.CreateModelMixin,
+    mixins.UpdateModelMixin,
+    mixins.DestroyModelMixin,
+    GenericAPIView,
+):
     queryset = CustomerConfiguration.objects.all()
     serializer_class = CustomerConfigurationSerializer
     permission_classes = (permissions.IsAuthenticated,)
@@ -78,11 +99,14 @@ class CustomerConfiguration(LoggingMixin, mixins.ListModelMixin,
 
     # create new configuration
     def post(self, request, *args, **kwargs):
-        if request.user and hasattr(request.user, 'enterprise'):
+        if request.user and hasattr(request.user, "enterprise"):
             return self.create(request, *args, **kwargs)
-        return Response({
-            'error': 'You are not allowed to continue',
-        }, status=status.HTTP_401_UNAUTHORIZED)
+        return Response(
+            {
+                "error": "You are not allowed to continue",
+            },
+            status=status.HTTP_401_UNAUTHORIZED,
+        )
 
     # update configuration
     def put(self, request, *args, **kwargs):
@@ -99,8 +123,8 @@ class CustomerSummarize(LoggingMixin, mixins.ListModelMixin, GenericAPIView):
     permission_classes = (permissions.IsAuthenticated,)
 
     def get(self, request, *args, **kwargs):
-        if request.GET.get('id'):
-            self.queryset = ConsumerRequest.objects.filter(id=request.GET.get('id'))
+        if request.GET.get("id"):
+            self.queryset = ConsumerRequest.objects.filter(id=request.GET.get("id"))
         return self.list(request, *args, **kwargs)
 
 
@@ -110,8 +134,10 @@ class RequestTracker(LoggingMixin, mixins.ListModelMixin, GenericAPIView):
     permission_classes = (permissions.IsAuthenticated,)
 
     def get(self, request, *args, **kwargs):
-        if request.GET.get('id'):
-            self.queryset = ConsumerRequest.objects.filter(elroi_id=request.GET.get('id'))
+        if request.GET.get("id"):
+            self.queryset = ConsumerRequest.objects.filter(
+                elroi_id=request.GET.get("id")
+            )
         return self.list(request, *args, **kwargs)
 
 
@@ -119,27 +145,29 @@ class NotifyCustomer(LoggingMixin, APIView):
     permission_classes = (permissions.IsAuthenticated,)
 
     def post(self, request, *args, **kwargs):
-        request_id = request.data.get('request_id')
+        request_id = request.data.get("request_id")
         try:
             db_res = ConsumerRequest.objects.get(id=request_id)
             customer_email = db_res.customer.email
             user_full_name = db_res.customer.full_name()
-            email_template_data = {
-                'user_full_name': user_full_name
-            }
-            message_body = render_to_string('email/first_45_days_period.html', email_template_data)
+            email_template_data = {"user_full_name": user_full_name}
+            message_body = render_to_string(
+                "email/first_45_days_period.html", email_template_data
+            )
             email_data = {
-                'email_body': message_body,
-                'to_email': customer_email,
-                'email_subject': "First add 45 days"
+                "email_body": message_body,
+                "to_email": customer_email,
+                "email_subject": "First add 45 days",
             }
             SendUserEmail.send_email(email_data)
-            return Response({
-                "success": True,
-                "message": "Email was sent."
-            }, status=status.HTTP_200_OK)
+            return Response(
+                {"success": True, "message": "Email was sent."},
+                status=status.HTTP_200_OK,
+            )
         except ConsumerRequest.DoesNotExist:
-            return Response({'error': 'Invalid customer'}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"error": "Invalid customer"}, status=status.HTTP_404_NOT_FOUND
+            )
 
 
 class ExtendedVsNewRequests(LoggingMixin, APIView):
@@ -155,54 +183,72 @@ class ExtendedVsNewRequests(LoggingMixin, APIView):
                 new_requests = enterprise_db.filter(extend_requested=0).count()
                 extended_percent = round((extended * 100) / total_requsts, 2)
                 new_percent = round(100 - extended_percent)
-                return Response({
-                    "total": total_requsts,
-                    "extended": extended,
-                    "new": new_requests,
-                    "percentage": {
-                        "extended": f'{extended_percent}%',
-                        "new": f'{new_percent}%'
-                    }
-                }, status=status.HTTP_200_OK)
+                return Response(
+                    {
+                        "total": total_requsts,
+                        "extended": extended,
+                        "new": new_requests,
+                        "percentage": {
+                            "extended": f"{extended_percent}%",
+                            "new": f"{new_percent}%",
+                        },
+                    },
+                    status=status.HTTP_200_OK,
+                )
             else:
-                return Response({
-                    "total": 0,
-                    "extended": 0,
-                    "new": 0,
-                    "percentage": {
-                        "extended": '0%',
-                        "new": '0%'
-                    }
-                }, status=status.HTTP_200_OK)
+                return Response(
+                    {
+                        "total": 0,
+                        "extended": 0,
+                        "new": 0,
+                        "percentage": {"extended": "0%", "new": "0%"},
+                    },
+                    status=status.HTTP_200_OK,
+                )
         except ConsumerRequest.DoesNotExist:
-            return Response({"error": "Data not found."}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"error": "Data not found."}, status=status.HTTP_404_NOT_FOUND
+            )
 
 
-class EnterpriseConfiguration(LoggingMixin,
-                              mixins.ListModelMixin,
-                              mixins.CreateModelMixin,
-                              mixins.UpdateModelMixin,
-                              mixins.DestroyModelMixin,
-                              GenericAPIView, ):
+class EnterpriseConfiguration(
+    LoggingMixin,
+    mixins.ListModelMixin,
+    mixins.CreateModelMixin,
+    mixins.UpdateModelMixin,
+    mixins.DestroyModelMixin,
+    GenericAPIView,
+):
     serializer_class = EnterpriseConfigurationSerializer
     permission_classes = (permissions.IsAuthenticated,)
-
+    # parser_classes = (MultiPartParser, FormParser, FileUploadParser)
     def get(self, request, *args, **kwargs):
         try:
-            self.queryset = EnterpriseConfigurationModel.objects.filter(enterprise_id__id=request.user.id)
+            self.queryset = EnterpriseConfigurationModel.objects.filter(
+                enterprise_id__id=request.user.id
+            )
             return self.list(request, *args, **kwargs)
         except EnterpriseConfigurationModel.DoesNotExist:
-            return Response({"error": "Page not found"}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"error": "Page not found"}, status=status.HTTP_404_NOT_FOUND
+            )
 
     def list(self, request, *args, **kwargs):
         response = super(EnterpriseConfiguration, self).list(request, args, kwargs)
-        return Response(response.data['results'][0], status=status.HTTP_200_OK)
+        if len(response.data["results"]) == 0:
+            return Response({"success": False}, status=status.HTTP_200_OK)
+        return Response(
+            {"success": True, "data": response.data["results"][0]},
+            status=status.HTTP_200_OK,
+        )
 
     # create new configuration
     def post(self, request, *args, **kwargs):
         try:
-            configuration = EnterpriseConfigurationModel.objects.get(enterprise_id=request.data.get('enterprise_id'),
-                                                                     enterprise_id__user=request.user)
+            configuration = EnterpriseConfigurationModel.objects.get(
+                enterprise_id=request.data.get("enterprise_id"),
+                enterprise_id__user=request.user,
+            )
             serializer = self.serializer_class(configuration, data=request.data)
             if serializer.is_valid():
                 serializer.save()
@@ -210,22 +256,27 @@ class EnterpriseConfiguration(LoggingMixin,
             else:
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except EnterpriseConfigurationModel.DoesNotExist:
-            if request.user and hasattr(request.user, 'enterprise'):
+            if request.user and hasattr(request.user, "enterprise"):
                 return self.create(request, *args, **kwargs)
-            return Response({
-                'error': 'You are not allowed to continue',
-            }, status=status.HTTP_401_UNAUTHORIZED)
+            return Response(
+                {
+                    "error": "You are not allowed to continue",
+                },
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
 
     # delete configuration
     def delete(self, request, *args, **kwargs):
-        self.queryset = EnterpriseConfigurationModel.objects.get(enterprise_id__user=request.user,
-                                                                 enterprise_id__elroi_id=request.data.get('elroi_id'))
+        self.queryset = EnterpriseConfigurationModel.objects.get(
+            enterprise_id__user=request.user,
+            enterprise_id__elroi_id=request.data.get("elroi_id"),
+        )
         return self.destroy(request, *args, **kwargs)
 
 
 def validate_email_format(email):
     """ method to validate email address """
-    regex = '^[a-z0-9]+[\._]?[a-z0-9]+[@]\w+[.]\w{2,3}$'
+    regex = "^[a-z0-9]+[\._]?[a-z0-9]+[@]\w+[.]\w{2,3}$"
     if re.search(regex, email):
         return True
     return False
@@ -243,57 +294,60 @@ class EnterpriseAssessmentShareLink(LoggingMixin, GenericAPIView):
                 assessment = Assessment.objects.get(
                     question_id=e_q.question_id,
                     answer_id=e_q.answer_id,
-                    allow_enterprise=True
+                    allow_enterprise=True,
                 )
                 return Response(
                     {
                         "id": assessment.id,
                         "title": assessment.title,
-                        "assessment_url": reverse('view_shared_assessment', kwargs={"token": assessment.share_hash}),
+                        "assessment_url": reverse(
+                            "view_shared_assessment",
+                            kwargs={"token": assessment.share_hash},
+                        ),
                     },
-                    status=status.HTTP_200_OK
+                    status=status.HTTP_200_OK,
                 )
         except EnterpriseQuestionnaire.DoesNotExist:
             return Response(
-                {"error": "Enterprise has no assessment or questionnaire was not completed."},
-                status=status.HTTP_404_NOT_FOUND
+                {
+                    "error": "Enterprise has no assessment or questionnaire was not completed."
+                },
+                status=status.HTTP_404_NOT_FOUND,
             )
 
     def post(self, request, elroi_id, *args, **kwargs):
         try:
-            email = request.data.get('email')
+            email = request.data.get("email")
             if validate_email_format(email):
-                assessment = Assessment.objects.get(id=request.data.get('assessment_id'))
-                assessment_url = reverse('view_shared_assessment', kwargs={"token": assessment.share_hash})
-                front_url = f'{settings.FRONTEND_URL}/assessment/{assessment.share_hash}'
+                assessment = Assessment.objects.get(
+                    id=request.data.get("assessment_id")
+                )
+                assessment_url = reverse(
+                    "view_shared_assessment", kwargs={"token": assessment.share_hash}
+                )
+                front_url = (
+                    f"{settings.FRONTEND_URL}/assessment/{assessment.share_hash}"
+                )
                 email_template_data = {"assessment_url": front_url}
-                email_body = render_to_string('email/assessment_share_link.html', email_template_data)
+                email_body = render_to_string(
+                    "email/assessment_share_link.html", email_template_data
+                )
                 email_data = {
                     "email_body": email_body,
                     "to_email": email,
-                    "email_subject": "Assessment Share Url"
+                    "email_subject": "Assessment Share Url",
                 }
                 SendUserEmail.send_email(email_data)
-                return Response(
-                    {
-                        "api_url": assessment_url
-                    },
-                    status=status.HTTP_200_OK
-                )
+                return Response({"api_url": assessment_url}, status=status.HTTP_200_OK)
             else:
                 return Response(
-                    {
-                        "error": "Please provide valid email address"
-                    },
-                    status=status.HTTP_400_BAD_REQUEST
+                    {"error": "Please provide valid email address"},
+                    status=status.HTTP_400_BAD_REQUEST,
                 )
 
         except Assessment.DoesNotExist:
             return Response(
-                {
-                    "error": "Assessment was not found."
-                },
-                status=status.HTTP_404_NOT_FOUND
+                {"error": "Assessment was not found."}, status=status.HTTP_404_NOT_FOUND
             )
 
 
@@ -301,27 +355,39 @@ class EnterpriseAccountSettings(GenericAPIView):
     """
     Account settings
     """
+
     serializer_class = EnterpriseAccountSettingsSerializer
     permission_classes = (permissions.IsAuthenticated,)
     parser_classes = (MultiPartParser, FormParser, FileUploadParser)
 
     def get(self, request, *args, **kwargs):
         user = request.user
-        if hasattr(user, 'enterprise'):
+        if hasattr(user, "enterprise"):
             enterprise = user.enterprise
-            return Response(EnterpriseAccountSettingsSerializer(enterprise, context={"request": request}).data, status=status.HTTP_200_OK)
+            return Response(
+                EnterpriseAccountSettingsSerializer(
+                    enterprise, context={"request": request}
+                ).data,
+                status=status.HTTP_200_OK,
+            )
         else:
-            return Response({"error": "Data not found"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "Data not found"}, status=status.HTTP_400_BAD_REQUEST
+            )
 
     def post(self, request, *args, **kwargs):
         user = request.user
-        if hasattr(user, 'enterprise'):
+        if hasattr(user, "enterprise"):
             enterprise = user.enterprise
-            serializer = self.serializer_class(enterprise, data=request.data)
+            serializer = self.serializer_class(
+                enterprise, data=request.data, context={"request": request}
+            )
             if serializer.is_valid():
                 serializer.save()
                 return Response(serializer.data, status=status.HTTP_200_OK)
             else:
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         else:
-            return Response({"error": "Not allowed to continue"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "Not allowed to continue"}, status=status.HTTP_400_BAD_REQUEST
+            )

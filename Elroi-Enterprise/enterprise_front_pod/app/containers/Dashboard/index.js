@@ -49,6 +49,8 @@ class Dashboard extends React.Component {
       to: routes.DASHBOARD,
       content: "Dashboard",
     },
+    avatarUrl: null,
+    logoUrl: null,
   };
 
   componentDidUpdate(prevProps) {
@@ -70,7 +72,7 @@ class Dashboard extends React.Component {
           (item) => item.to === routes.CONSUMER
         )[0],
       });
-    }else if (item.to === routes.SETTING) {
+    } else if (item.to === routes.SETTING) {
       this.setState({
         activeMenuItem: adminRoutes.filter(
           (item) => item.to === routes.SETTING
@@ -92,6 +94,15 @@ class Dashboard extends React.Component {
     this.setActiveMenu(item);
   };
 
+  updateAvatar = (avatarUrl) => {
+    this.setState({ avatarUrl });
+  };
+
+  logoUpdate = (logoUrl) => {
+    console.log(logoUrl,"============")
+    this.setState({logoUrl});
+  }
+
   render() {
     const { animation, direction, visible, activeMenuItem } = this.state;
     return (
@@ -107,6 +118,7 @@ class Dashboard extends React.Component {
             onLogout={this.handleLogout}
             active={activeMenuItem}
             handleContact={this.handleContactAdmin}
+            logoUrl={this.state.logoUrl}
           />
           <Sidebar.Pusher>
             <RightWrapper basic>
@@ -115,11 +127,25 @@ class Dashboard extends React.Component {
                 style={{ marginRight: "0 !important" }}
                 visible={visible}
               >
-                <Topbar />
+                <Topbar avatarUrl={this.state.avatarUrl} />
                 <Switch>
-                  <Route exact path={routes.CONSUMER} component={ConsumerRequest} />
-                  <Route exact path={routes.CONSUMERDETAIL} component={ConsumerDetail} />
-                  <Route exact path={routes.SETTING} component={Setting} />
+                  <Route
+                    exact
+                    path={routes.CONSUMER}
+                    component={ConsumerRequest}
+                  />
+                  <Route
+                    exact
+                    path={routes.CONSUMERDETAIL}
+                    component={ConsumerDetail}
+                  />
+                  <Route
+                    exact
+                    path={routes.SETTING}
+                    render={(props) => (
+                      <Setting {...props} onAvatarUpdate={this.updateAvatar} onlogoUpdate={this.logoUpdate}/>
+                    )}
+                  />
                 </Switch>
               </ContentWrapper>
             </RightWrapper>

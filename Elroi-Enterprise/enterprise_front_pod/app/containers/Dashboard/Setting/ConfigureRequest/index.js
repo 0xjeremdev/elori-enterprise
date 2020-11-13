@@ -74,7 +74,10 @@ class ConfigureRequest extends React.Component {
   componentDidMount() {
     consumerRequestFormApis
       .getConsumerRequestForm()
-      .then((res) => this.initState(res))
+      .then((res) => {
+        console.log(res)
+          this.initState(res);
+      })
       .catch((err) => console.log("err", err));
   }
 

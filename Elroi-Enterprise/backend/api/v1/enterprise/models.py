@@ -5,11 +5,19 @@ from api.v1.accounts.models import Account, Enterprise
 
 
 class UserGuideModel(models.Model):
-    enterprise = models.ForeignKey(Enterprise, on_delete=models.SET_NULL, null=True, blank=True)
-    elroi_id = models.CharField(max_length=9, null=True, blank=True, )
+    enterprise = models.ForeignKey(
+        Enterprise, on_delete=models.SET_NULL, null=True, blank=True
+    )
+    elroi_id = models.CharField(
+        max_length=9,
+        null=True,
+        blank=True,
+    )
     title = models.CharField(max_length=255, blank=True, null=True)
     content = models.TextField(null=True, blank=True)
-    created_by = models.ForeignKey(Account, on_delete=models.SET_NULL, null=True, blank=True)
+    created_by = models.ForeignKey(
+        Account, on_delete=models.SET_NULL, null=True, blank=True
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -24,11 +32,17 @@ class UserGuideModel(models.Model):
         super(UserGuideModel, self).save(*args, **kwargs)
 
     class Meta:
-        db_table = 'user_guide'
-        ordering = ['-created_at']
+        db_table = "user_guide"
+        ordering = ["-created_at"]
+
 
 class UserGuideUploads(models.Model):
-    user_guide = models.ForeignKey(UserGuideModel, related_name='uploads', related_query_name='uploads', on_delete=models.CASCADE)
+    user_guide = models.ForeignKey(
+        UserGuideModel,
+        related_name="uploads",
+        related_query_name="uploads",
+        on_delete=models.CASCADE,
+    )
     name = models.CharField(max_length=255)
     file = models.FileField(blank=False, null=False)
     size = models.IntegerField(default=0)
@@ -43,15 +57,15 @@ class UserGuideUploads(models.Model):
         super(UserGuideUploads, self).save(*args, **kwargs)
 
     class Meta:
-        db_table = 'user_guide_uploads'
-        ordering = ['-created_at']
-        default_related_name = 'uploads'
+        db_table = "user_guide_uploads"
+        ordering = ["-created_at"]
+        default_related_name = "uploads"
 
 
 class CustomerConfiguration(models.Model):
     title = models.CharField(max_length=255)
     author = models.ForeignKey(Enterprise, on_delete=models.CASCADE)
-    config = JSONField()
+    config = models.JSONField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -59,20 +73,22 @@ class CustomerConfiguration(models.Model):
         return self.title
 
     class Meta:
-        db_table = 'enterprise_customer_configuration'
-        ordering = ['-created_at']
+        db_table = "enterprise_customer_configuration"
+        ordering = ["-created_at"]
 
 
 class EnterpriseConfigurationModel(models.Model):
-    enterprise_id = models.ForeignKey(Enterprise, related_name='configuration',  on_delete=models.CASCADE)
+    enterprise_id = models.ForeignKey(
+        Enterprise, related_name="configuration", on_delete=models.CASCADE
+    )
     logo = models.FileField()
-    site_color = JSONField(null=True, blank=True)
-    site_theme = JSONField(null=True, blank=True)
+    site_color = models.JSONField(null=True, blank=True)
+    site_theme = models.JSONField(null=True, blank=True)
     background_image = models.FileField()
     website_launched_to = models.CharField(max_length=255)
     company_name = models.CharField(max_length=255)
     resident_state = models.BooleanField(default=True)
-    additional_configuration = JSONField(blank=True)
+    additional_configuration = models.JSONField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -80,5 +96,5 @@ class EnterpriseConfigurationModel(models.Model):
         return self.company_name
 
     class Meta:
-        db_table = 'enterprise_configuration'
-        ordering = ['-created_at']
+        db_table = "enterprise_configuration"
+        ordering = ["-created_at"]

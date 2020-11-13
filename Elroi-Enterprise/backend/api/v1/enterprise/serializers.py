@@ -4,14 +4,18 @@ from rest_framework import serializers
 
 from api.v1.accounts.models import Enterprise
 from api.v1.consumer_request.models import ConsumerRequest
-from api.v1.enterprise.models import UserGuideModel, CustomerConfiguration, EnterpriseConfigurationModel, \
-    UserGuideUploads
+from api.v1.enterprise.models import (
+    UserGuideModel,
+    CustomerConfiguration,
+    EnterpriseConfigurationModel,
+    UserGuideUploads,
+)
 
 
 class UserGuideSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserGuideModel
-        fields = '__all__'
+        fields = "__all__"
 
 
 class FileSerializer(serializers.ModelSerializer):
@@ -21,7 +25,7 @@ class FileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = UserGuideUploads
-        fields = ['file', 'name', 'size']
+        fields = ["file", "name", "size"]
 
 
 class CustomerConfigurationSerializer(serializers.ModelSerializer):
@@ -32,7 +36,7 @@ class CustomerConfigurationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CustomerConfiguration
-        fields = '__all__'
+        fields = "__all__"
 
 
 class CustomerSummarizeSerializer(serializers.ModelSerializer):
@@ -40,7 +44,7 @@ class CustomerSummarizeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ConsumerRequest
-        exclude = ['enterprise']
+        exclude = ["enterprise"]
 
 
 class RequestTrackerSerializer(serializers.ModelSerializer):
@@ -48,56 +52,85 @@ class RequestTrackerSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ConsumerRequest
-        fields = ('status', 'request_date', 'process_end_date', 'elroi_id', 'remaining_days')
+        fields = (
+            "status",
+            "request_date",
+            "process_end_date",
+            "elroi_id",
+            "remaining_days",
+        )
 
 
 class EnterpriseConfigurationSerializer(serializers.ModelSerializer):
     elroi_id = serializers.SerializerMethodField()
-    logo = serializers.SerializerMethodField()
-    background_image = serializers.SerializerMethodField()
+    logo = serializers.FileField(required=False)
+    site_color = serializers.JSONField(required=False)
+    site_theme = serializers.JSONField(required=False)
+    background_image = serializers.FileField(required=False)
+    website_launched_to = serializers.CharField(required=False)
+    company_name = serializers.CharField(required=False)
+    resident_state = serializers.BooleanField(required=False)
+    additional_configuration = serializers.JSONField(required=False)
+    # logo = serializers.SerializerMethodField()
+    # background_image = serializers.SerializerMethodField()
 
-    def get_logo(self, obj):
-        if obj.logo.url:
-            return self.build_url(obj.logo.url)
-        else:
-            return obj.logo
+    # def get_logo(self, obj):
+    #     if obj.logo.url:
+    #         return self.build_url(obj.logo.url)
+    #     else:
+    #         return obj.logo
 
-    def get_background_image(self, obj):
-        if obj.background_image.url:
-            return self.build_url(obj.background_image.url)
-        else:
-            return obj.background_image
+    # def get_background_image(self, obj):
+    #     if obj.background_image.url:
+    #         return self.build_url(obj.background_image.url)
+    #     else:
+    #         return obj.background_image
 
-    def build_url(self, file_url):
-        request = self.context.get('request')
-        return request.build_absolute_uri(file_url)
+    # def build_url(self, file_url):
+    #     request = self.context.get("request")
+    #     return request.build_absolute_uri(file_url)
 
     def get_elroi_id(self, obj):
         return obj.enterprise_id.elroi_id
 
     class Meta:
         model = EnterpriseConfigurationModel
-        fields = '__all__'
+        fields = "__all__"
+
 
 class EnterpriseAccountSettingsSerializer(serializers.ModelSerializer):
     elroi_id = serializers.CharField(read_only=True)
-    logo = serializers.FileField()
-    site_color = serializers.JSONField()
-    second_color = serializers.JSONField()
-    notification_email = serializers.EmailField()
-    additional_emails = serializers.CharField()
-    address = serializers.CharField()
-    company_name = serializers.CharField()
-    timezone = serializers.CharField()
-    logo_url = serializers.SerializerMethodField()
+    logo = serializers.FileField(required=False)
+    site_color = serializers.JSONField(required=False)
+    second_color = serializers.JSONField(required=False)
+    notification_email = serializers.EmailField(required=False)
+    additional_emails = serializers.CharField(required=False)
+    address = serializers.CharField(required=False)
+    company_name = serializers.CharField(required=False)
+    timezone = serializers.CharField(required=False)
+    # logo_url = serializers.SerializerMethodField(required=False)
 
-    def get_logo_url(self, obj):
-        request = self.context.get('request')
-        if obj.logo.url:
-            return request.build_absolute_uri(obj.logo.url)
-        else:
-            return obj.logo
+    # def get_logo_url(self, obj):
+    #     request = self.context.get("request")
+    #     try:
+    #         if obj.logo.url:
+    #             return request.build_absolute_uri(obj.logo.url)
+    #         else:
+    #             return obj.logo
+    #     except:
+    #         return None
 
     class Meta:
         model = Enterprise
-        fields = ['elroi_id', 'logo', 'logo_url', 'site_color','second_color', 'notification_email', 'additional_emails', 'address', 'company_name', 'timezone']
+        fields = [
+            "elroi_id",
+            "logo",
+            # "logo_url",
+            "site_color",
+            "second_color",
+            "notification_email",
+            "additional_emails",
+            "address",
+            "company_name",
+            "timezone",
+        ]

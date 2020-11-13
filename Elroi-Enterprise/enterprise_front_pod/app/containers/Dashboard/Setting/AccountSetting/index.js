@@ -56,6 +56,7 @@ class AccountSetting extends React.Component {
     company_name,
     timezone,
   }) => {
+    this.props.logoUpdate(logo);
     this.setState({
       logoUrl: logo,
       siteColor: site_color,
@@ -77,6 +78,7 @@ class AccountSetting extends React.Component {
 
   onLogoChange = (e) => {
     const self = this;
+    console.log(e.target.files[0]," this is logo file")
     this.setState(
       { logoFile: e.target.files[0], logoFileName: e.target.files[0].name },
       () => {
@@ -92,7 +94,7 @@ class AccountSetting extends React.Component {
   handleSave = () => {
     enterpriseSettingApis
       .setEnterpriseSetting(this.state)
-      .then((res) => console.log(res));
+      .then((res) => this.initState(res.data));
   };
 
   render() {

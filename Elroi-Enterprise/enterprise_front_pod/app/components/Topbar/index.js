@@ -1,6 +1,7 @@
 import React from "react";
 import { Grid, Icon, Image } from "semantic-ui-react";
 import userAvatar from "../../assets/images/user-sm.png";
+import noImage from "../../assets/images/no-img.png";
 
 class Topbar extends React.Component {
   render() {
@@ -22,7 +23,7 @@ class Topbar extends React.Component {
           </Grid.Column>
           <Grid.Column>
             <span>
-              <Image src={userAvatar} />
+              <Image src={this.props.avatarUrl?this.props.avatarUrl:noImage} />
             </span>
           </Grid.Column>
         </Grid.Row>

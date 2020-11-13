@@ -12,6 +12,8 @@ import ToggleButton from "../../../components/ToggleButton";
 import Dropzone from "../../../components/Dropzone";
 import { consumerRequestFormApis } from "../../../utils/api/setting/requestform";
 import { map } from "lodash";
+import { consumerRequestApis } from "../../../utils/api/consumer/request";
+import ConfirmModal from "./ConfirmModal";
 
 const RequestFormContainer = styled.div`
   p.title {
@@ -48,11 +50,19 @@ const RequestFormContainer = styled.div`
     width: 1000px !important;
   }
   .ui.input.form-input input {
-    border: 2px solid ${props=>`rgb(${props.fontColor.r},${props.fontColor.g},${props.fontColor.b},${props.fontColor.a})`};
+    border: 2px solid
+      ${(props) =>
+        `rgb(${props.fontColor.r},${props.fontColor.g},${props.fontColor.b},${
+          props.fontColor.a
+        })`};
     font-size: 16px;
   }
   .ui.dropdown.form-select {
-    border: 2px solid ${props=>`rgb(${props.fontColor.r},${props.fontColor.g},${props.fontColor.b},${props.fontColor.a})`};
+    border: 2px solid
+      ${(props) =>
+        `rgb(${props.fontColor.r},${props.fontColor.g},${props.fontColor.b},${
+          props.fontColor.a
+        })`};
     font-size: 16px;
   }
   .captcha > div > div {
@@ -74,12 +84,19 @@ const RequestFormContainer = styled.div`
     text-align: center;
   }
   section.container .dropzone {
-    border: dashed 2px ${props=>`rgb(${props.fontColor.r},${props.fontColor.g},${props.fontColor.b},${props.fontColor.a})`};
+    border: dashed 2px
+      ${(props) =>
+        `rgb(${props.fontColor.r},${props.fontColor.g},${props.fontColor.b},${
+          props.fontColor.a
+        })`};
     text-align: center;
     padding: 40px 50px 50px;
     margin: auto;
     &:focus {
-      outline-color: ${props=>`rgb(${props.fontColor.r},${props.fontColor.g},${props.fontColor.b},${props.fontColor.a})`} !important;
+      outline-color: ${(props) =>
+        `rgb(${props.fontColor.r},${props.fontColor.g},${props.fontColor.b},${
+          props.fontColor.a
+        })`} !important;
     }
   }
   span.power-by {
@@ -110,10 +127,19 @@ class Request extends React.Component {
       { key: 2, question: "", value: "" },
       { key: 3, question: "", value: "" },
     ],
+    enableSubmit: false,
+    first_name: "",
+    last_name: "",
+    email: "",
+    state_resident: true,
+    request_type: "",
+    file: null,
+    additional_fields: [],
+    confirmModal: false
   };
 
   onCaptcha = (value) => {
-    console.log("Captcha value:", value);
+    this.setState({ enableSubmit: true });
   };
 
   initState = ({
@@ -125,7 +151,6 @@ class Request extends React.Component {
     site_color,
     site_theme,
   }) => {
-    console.log(site_color, site_theme);
     this.setState({
       additionalQuestions: additional_configuration,
       backUrl: background_image,
@@ -135,16 +160,43 @@ class Request extends React.Component {
       siteColor: site_color,
       siteTheme: site_theme,
     });
+    let additional_fields = [];
+    additional_configuration.forEach((item) => {
+      additional_fields.push({ question: item.question, value: "" });
+    });
+    this.setState({ ...this.state, additional_fields: [...additional_fields] });
   };
 
   componentDidMount() {
-    consumerRequestFormApis
-      .getConsumerRequestForm()
-      .then((res) => this.initState(res));
+    consumerRequestFormApis.getConsumerRequestForm().then((res) => {
+      this.initState(res);
+    });
   }
 
+  handleStateChange = (value, index) => {
+    const { additional_fields } = this.state;
+    additional_fields[index].value = value;
+    this.setState({ ...this.state, additional_fields: [...additional_fields] });
+  };
+
+  uploadFile = (files) => {
+    this.setState({ file: files[0] });
+  };
+
+  handleUpload = () => {
+    consumerRequestApis
+      .sendConsumerRequest(this.state)
+      .then((res) => this.setState({confirmModal: true}));
+  };
+
   render() {
-    const { logoUrl, backUrl, companyName, additionalQuestions, siteColor } = this.state;
+    const {
+      logoUrl,
+      backUrl,
+      companyName,
+      additionalQuestions,
+      siteColor,
+    } = this.state;
     const requestTypeOptions = [
       { key: "1", text: "Return", value: "request_return" },
       { key: "2", text: "Delete", value: "request_delete" },
@@ -210,7 +262,11 @@ class Request extends React.Component {
           <Grid.Row className="form-row">
             <Grid.Column>
               <p className="control-label">* I am a STATE resident</p>
-              <ToggleButton fontColor={siteColor}/>
+              <ToggleButton
+                fontColor={siteColor}
+                value={this.state.state_resident}
+                onActive={(active) => this.setState({ state_resident: active })}
+              />
             </Grid.Column>
           </Grid.Row>
           <Grid.Row className="form-row">
@@ -220,6 +276,10 @@ class Request extends React.Component {
                 className="form-input"
                 placeholder="hello, nice to meet you, what is your first name?"
                 fluid
+                value={this.state.first_name}
+                onChange={(e, { value }) =>
+                  this.setState({ first_name: value })
+                }
               />
             </Grid.Column>
           </Grid.Row>
@@ -230,6 +290,8 @@ class Request extends React.Component {
                 className="form-input"
                 placeholder="let's get more connected, and your last name?"
                 fluid
+                value={this.state.last_name}
+                onChange={(e, { value }) => this.setState({ last_name: value })}
               />
             </Grid.Column>
           </Grid.Row>
@@ -240,6 +302,8 @@ class Request extends React.Component {
                 className="form-input"
                 placeholder="and how about your email address?"
                 fluid
+                value={this.state.email}
+                onChange={(e, { value }) => this.setState({ email: value })}
               />
             </Grid.Column>
           </Grid.Row>
@@ -251,10 +315,14 @@ class Request extends React.Component {
                 selection
                 className="form-select"
                 options={requestTypeOptions}
+                value={this.state.request_type}
+                onChange={(e, { value }) =>
+                  this.setState({ request_type: value })
+                }
               />
             </Grid.Column>
           </Grid.Row>
-          {additionalQuestions.map((item) => (
+          {additionalQuestions.map((item, index) => (
             <Grid.Row className="form-row">
               <Grid.Column>
                 <p className="control-label">* {item.question}</p>
@@ -264,13 +332,29 @@ class Request extends React.Component {
                     selection
                     className="form-select"
                     options={booleanTypeOptions}
+                    onChange={(e, { value }) =>
+                      this.handleStateChange(value, index)
+                    }
                   />
                 )}
                 {item.value === "text" && (
-                  <Input className="form-input" fluid />
+                  <Input
+                    className="form-input"
+                    fluid
+                    onChange={(e, { value }) =>
+                      this.handleStateChange(value, index)
+                    }
+                  />
                 )}
                 {item.value === "file" && (
-                  <Input className="form-input" type="file" fluid />
+                  <Input
+                    className="form-input"
+                    type="file"
+                    fluid
+                    onChange={(e, { value }) =>
+                      this.handleStateChange(value, index)
+                    }
+                  />
                 )}
               </Grid.Column>
             </Grid.Row>
@@ -278,8 +362,9 @@ class Request extends React.Component {
           <Grid.Row>
             <Grid.Column width="16">
               <ReCAPTCHA
-                sitekey="Your client site key"
+                sitekey="6LchsOIZAAAAAJmYZDbHKBGtYXfNJuBz8eM0om_o"
                 onChange={this.onCaptcha}
+                onExpired={() => this.setState({ enableSubmit: false })}
                 className="captcha"
               />
             </Grid.Column>
@@ -301,12 +386,17 @@ class Request extends React.Component {
           </Grid.Row>
           <Grid.Row centered>
             <Grid.Column width="10">
-              <Dropzone />
+              <Dropzone onDrop={this.uploadFile} />
             </Grid.Column>
           </Grid.Row>
           <Grid.Row textAlign="center">
             <Grid.Column width="16">
-              <Button className="yellow" size="medium">
+              <Button
+                className="yellow"
+                size="medium"
+                disabled={!this.state.enableSubmit}
+                onClick={this.handleUpload}
+              >
                 Submit!
               </Button>
             </Grid.Column>
@@ -334,6 +424,10 @@ class Request extends React.Component {
             </Grid.Column>
           </Grid.Row>
         </Grid>
+        <ConfirmModal
+          open={this.state.confirmModal}
+          onClose={() => this.setState({ confirmModal: false })}
+        />
       </RequestFormContainer>
     );
   }

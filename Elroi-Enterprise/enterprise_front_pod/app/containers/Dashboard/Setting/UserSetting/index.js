@@ -48,6 +48,7 @@ class UserSetting extends React.Component {
     company_name,
     timezone,
   }) => {
+    this.props.avatarUpdate(logo);
     this.setState({
       logoUrl: logo,
       firstName: first_name,
@@ -80,7 +81,7 @@ class UserSetting extends React.Component {
   handleSave = () => {
     accountSettingApis
       .setAccountSetting(this.state)
-      .then((res) => console.log(res));
+      .then((res) => this.initState(res.data));
   };
 
   render() {
@@ -193,7 +194,7 @@ class UserSetting extends React.Component {
                       selection
                       options={timezoneOptions}
                       label="Timezone"
-                      value={this.state.timezone || ''}
+                      value={this.state.timezone || ""}
                       onChange={(e, { value }) =>
                         this.setState({ timezone: value })
                       }

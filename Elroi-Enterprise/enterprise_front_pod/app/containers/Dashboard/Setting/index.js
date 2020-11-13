@@ -50,15 +50,15 @@ class Setting extends React.Component {
         menuItem: "Account Setting",
         render: () => (
           <Tab.Pane>
-            <UserSetting />
+            <UserSetting avatarUpdate={this.props.onAvatarUpdate}/>
           </Tab.Pane>
         ),
       },
       {
-        menuItem: "Target Dashboard",
+        menuItem: "Enterprise Dashboard",
         render: () => (
           <Tab.Pane>
-            <AccountSetting />
+            <AccountSetting logoUpdate={this.props.onlogoUpdate}/>
           </Tab.Pane>
         ),
       },
