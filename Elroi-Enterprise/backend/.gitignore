@@ -1,5 +1,5 @@
 .vscode
-.env
+# .env
 venv/*
 media/*
 staticfiles/*
