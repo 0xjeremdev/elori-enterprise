@@ -94,35 +94,38 @@ WSGI_APPLICATION = "src.wsgi.application"
 
 AUTH_USER_MODEL = "accounts.Account"
 
-# CORS WHITELIST
-CORS_ORIGIN_WHITELIST = [
-    "http://localhost:3000",
-    "http://127.0.0.1:8080",
-    "http://10.209.18.180:8080",
-]
 
-CORS_ORIGIN_REGEX_WHITELIST = []
+CORS_ORIGIN_ALLOW_ALL = True
+# CORS WHITELIST
+# CORS_ORIGIN_WHITELIST = [
+#     "http://localhost:3000",
+#     "http://127.0.0.1:8080",
+#     "http://10.209.18.180:8080",
+#     "http://10.209.18.180:8080",
+# ]
+
+# CORS_ORIGIN_REGEX_WHITELIST = []
 
 # Database
 # https://docs.djangoproject.com/en/3.1/ref/settings/#databases
 
-# DATABASES = {
-#     "default": {
-#         "ENGINE": "django.db.backends.sqlite3",
-#         "NAME": str(BASE_DIR.joinpath("db.sqlite3").resolve()),
-#     }
-# }
-
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": "target_project",
-        "USER": "custdbuser",
-        "PASSWORD": "Custz3!tqvYK@",
-        "HOST": "localhost",
-        "PORT": "5432",
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": str(BASE_DIR.joinpath("db.sqlite3").resolve()),
     }
 }
+
+# DATABASES = {
+#     "default": {
+#         "ENGINE": "django.db.backends.postgresql",
+#         "NAME": "target_project",
+#         "USER": "custdbuser",
+#         "PASSWORD": "Custz3!tqvYK@",
+#         "HOST": "localhost",
+#         "PORT": "5432",
+#     }
+# }
 
 STATUSES = (
     (0, "For Review"),
