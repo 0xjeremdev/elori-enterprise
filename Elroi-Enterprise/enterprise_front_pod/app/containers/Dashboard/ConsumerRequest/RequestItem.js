@@ -1,6 +1,7 @@
 import React from "react";
 import { Button, Grid, Progress } from "semantic-ui-react";
 import styled from "styled-components";
+import { COMPLETE, PROCESS, REJECT, REVIEW } from "../../../constants/constants";
 
 const Container = styled.div`
   border-radius: 4px;
@@ -17,13 +18,25 @@ const Container = styled.div`
 `;
 
 class RequestItem extends React.Component {
+  calcRemainingDate = (request_date) => {
+    const today = new Date();
+    const receiveDate = new Date(request_date);
+    const diffTime = Math.abs(today - receiveDate);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return 45 - diffDays;
+  };
+
   render() {
+    const { data } = this.props;
+
     return (
       <Container>
         <Grid>
           <Grid.Row>
             <Grid.Column width={4} verticalAlign="middle" textAlign="center">
-              <p>Data Subject Name</p>
+              <p>
+                {data.first_name} {data.last_name}
+              </p>
               <Button positive attached="left">
                 YES
               </Button>
@@ -39,8 +52,12 @@ class RequestItem extends React.Component {
                     <p className="span-grey">Approved Timestamp</p>
                   </Grid.Column>
                   <Grid.Column width={8}>
-                    <p className="span-black">Oct 22, 2020</p>
-                    <p className="span-black">Oct 22, 2020</p>
+                    <p className="span-black">
+                      {new Date(data.request_date).toLocaleDateString()}
+                    </p>
+                    <p className="span-black">
+                      {data.approved_date ? data.approved_date : "-"}
+                    </p>
                   </Grid.Column>
                 </Grid.Row>
               </Grid>
@@ -49,27 +66,35 @@ class RequestItem extends React.Component {
               <Grid>
                 <Grid.Row>
                   <Grid.Column>
-                    <span className="span-grey">ID: 734-876-6943</span>
+                    <span className="span-grey">ID: {data.id}</span>
                   </Grid.Column>
                 </Grid.Row>
                 <Grid.Row>
                   <Grid.Column>
                     <Button
-                      positive={this.props.status === "success"}
-                      negative={this.props.status === "error"}
                       color={
-                        this.props.status === "warning" ? "yellow" : "blue"
+                        data.status === REVIEW
+                          ? "olive"
+                          : data.status === PROCESS
+                          ? "yellow"
+                          : data.status === COMPLETE
+                          ? "Blue"
+                          : "red"
                       }
                     >
-                      {this.props.status === "success" && "Approved"}
-                      {this.props.status === "error" && "Rejected"}
-                      {this.props.status === "warning" && "Processing"}
+                      {data.status === COMPLETE && "Complete"}
+                      {data.status === REJECT && "Rejected"}
+                      {data.status === PROCESS && "Processing"}
+                      {data.status === REVIEW && "Review"}
                     </Button>
                   </Grid.Column>
                 </Grid.Row>
                 <Grid.Row>
                   <Grid.Column>
-                    <span className="span-grey">Days Left to Process: 14</span>
+                    <span className="span-grey">
+                      Days Left to Process:{" "}
+                      {this.calcRemainingDate(data.request_date)}
+                    </span>
                   </Grid.Column>
                 </Grid.Row>
               </Grid>
@@ -78,7 +103,9 @@ class RequestItem extends React.Component {
           <Grid.Row style={{ padding: "0px" }}>
             <Grid.Column>
               <Progress
-                percent={this.props.percent}
+                percent={
+                  ((45 - this.calcRemainingDate(data.request_date)) / 45) * 100
+                }
                 success={this.props.status === "success"}
                 error={this.props.status === "error"}
                 warning={this.props.status === "warning"}

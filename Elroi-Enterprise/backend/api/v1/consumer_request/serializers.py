@@ -1,7 +1,9 @@
 from django.conf import settings
 from rest_framework import serializers
-
+from rest_framework.exceptions import AuthenticationFailed, ValidationError
+from rest_framework import serializers, status
 from api.v1.consumer_request.models import ConsumerRequest
+from api.v1.enterprise.models import Enterprise
 
 
 class ConsumerRequestSerializer(serializers.ModelSerializer):
@@ -9,7 +11,7 @@ class ConsumerRequestSerializer(serializers.ModelSerializer):
     # request_type_text = serializers.SerializerMethodField()
     # elroi_id = serializers.SerializerMethodField()
 
-    enterprise = serializers.IntegerField(read_only=True)
+    enterprise_id = serializers.IntegerField(read_only=True)
     email = serializers.CharField(required=True)
     first_name = serializers.CharField(required=False)
     last_name = serializers.CharField(required=False)
@@ -23,8 +25,8 @@ class ConsumerRequestSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ConsumerRequest
-        fields = "__all__"
-        # exclude = ["enterprise"]
+        # fields = "__all__"
+        exclude = ["enterprise"]
 
     """ used to return text for statuses """
 
@@ -33,12 +35,19 @@ class ConsumerRequestSerializer(serializers.ModelSerializer):
 
     """ used to return text for request type """
 
-    # def get_request_type_text(self, obj):
-    #     return settings.REQUEST_TYPES[obj.request_type][1]
+    def create(self, validated_data):
+        request = self.context.get("request")
+        enterprise = Enterprise.objects.get(
+            id=request.data.get("enterprise_id"))
+        consumer_request = ConsumerRequest.objects.create(
+            enterprise=enterprise, **validated_data)
+        return consumer_request
 
 
 class PeriodParameterSerializer(serializers.Serializer):
-    period = serializers.CharField(max_length=8, write_only=True, required=False)
+    period = serializers.CharField(max_length=8,
+                                   write_only=True,
+                                   required=False)
 
     class Meta:
         fields = ["period"]

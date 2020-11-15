@@ -1,3 +1,4 @@
+import { map } from "lodash";
 import React from "react";
 import {
   Button,
@@ -12,6 +13,14 @@ import {
 import styled from "styled-components";
 import CircularChart from "../../../components/CircularChart";
 import MultiRadialChart from "../../../components/MultiRadialChart";
+import {
+  COMPLETE,
+  PROCESS,
+  REJECT,
+  REVIEW,
+} from "../../../constants/constants";
+import { consumerRequestApis } from "../../../utils/api/consumer/request";
+import RequestDetailModal from "./RequestDetailModal";
 import RequestItem from "./RequestItem";
 
 const Container = styled(Segment)`
@@ -44,15 +53,50 @@ const Container = styled(Segment)`
 class ConsumerRequest extends React.Component {
   state = {
     activeMenuItem: "processing",
+    consumerList: [],
+    count: [],
+    selRequestItem: {},
+    detailModal: false,
+    filterStatus: REVIEW,
+  };
+
+  handleDetailModal = (id) => {
+    const { consumerList } = this.state;
+    const selRequestItem = consumerList.find((item) => item.id === id);
+    this.setState({ selRequestItem, detailModal: true });
+  };
+
+  initState = () => {
+    consumerRequestApis.getConsumerRequest().then((res) => {
+      if (res) {
+        this.setState({ consumerList: res.results, count: res.count });
+      }
+    });
+  };
+
+  componentDidMount() {
+    this.initState();
+  }
+
+  updateRequestItem = (id, status, extend) => {
+    this.setState({ detailModal: false });
+    consumerRequestApis
+      .updateConsumerRequest(id, status, extend)
+      .then((res) => {
+        this.initState();
+      });
   };
 
   render() {
-    const { activeMenuItem } = this.state;
+    const { activeMenuItem, consumerList, filterStatus } = this.state;
     const selectOptions = [
       { key: "1", value: "week", text: "This week" },
       { key: "2", value: "month", text: "This month" },
       { key: "3", value: "day", text: "Today" },
     ];
+    const consumerRenderList = consumerList.filter(
+      (item) => item.status === filterStatus
+    );
     return (
       <Grid>
         <Grid.Row>
@@ -62,9 +106,7 @@ class ConsumerRequest extends React.Component {
                 <Grid.Row>
                   <Grid.Column width={8}>
                     <b>
-                      <span>
-                        23 October, <span className="span-grey">Sunday</span>
-                      </span>
+                      <span>{new Date().toDateString()}</span>
                     </b>
                   </Grid.Column>
                   <Grid.Column width={8} textAlign="right">
@@ -105,37 +147,63 @@ class ConsumerRequest extends React.Component {
                     <Menu secondary>
                       <Menu.Item
                         name="For Review"
-                        active={activeMenuItem === "forReview"}
+                        active={filterStatus === REVIEW}
                         onClick={() => {
-                          this.setState({ activeMenuItem: "forReview" });
+                          this.setState({
+                            filterStatus: REVIEW,
+                          });
                         }}
                       />
                       <Menu.Item
                         name="Processing"
-                        active={activeMenuItem === "processing"}
+                        active={filterStatus === PROCESS}
                         onClick={() => {
-                          this.setState({ activeMenuItem: "processing" });
+                          this.setState({
+                            filterStatus: PROCESS,
+                          });
                         }}
                       />
                       <Menu.Item
                         name="Complete"
-                        active={activeMenuItem === "complete"}
+                        active={filterStatus === COMPLETE}
                         onClick={() => {
-                          this.setState({ activeMenuItem: "complete" });
+                          this.setState({
+                            filterStatus: COMPLETE,
+                          });
                         }}
                       />
                       <Menu.Item
                         name="Rejected"
-                        active={activeMenuItem === "rejected"}
+                        active={filterStatus === REJECT}
                         onClick={() => {
-                          this.setState({ activeMenuItem: "rejected" });
+                          this.setState({
+                            filterStatus: REJECT,
+                          });
                         }}
                       />
                     </Menu>
                   </Grid.Column>
                 </Grid.Row>
                 <Divider />
-                <Grid.Row>
+                {map(consumerRenderList, (item) => (
+                  <Grid.Row key={item.created_at}>
+                    <Grid.Column
+                      onClick={() => {
+                        this.handleDetailModal(item.id);
+                      }}
+                    >
+                      <RequestItem percent={96} status="success" data={item} />
+                    </Grid.Column>
+                  </Grid.Row>
+                ))}
+                {consumerRenderList.length === 0 && (
+                  <Grid.Row textAlign="center">
+                    <Grid.Column>
+                      <p>No Consumer Request</p>
+                    </Grid.Column>
+                  </Grid.Row>
+                )}
+                {/* <Grid.Row>
                   <Grid.Column>
                     <RequestItem percent={96} status="success" />
                   </Grid.Column>
@@ -149,8 +217,10 @@ class ConsumerRequest extends React.Component {
                   <Grid.Column>
                     <RequestItem percent={80} status="warning" />
                   </Grid.Column>
-                </Grid.Row>
-                    <Button fluid attached="bottom">Next Page</Button>
+                </Grid.Row> */}
+                <Button fluid attached="bottom">
+                  Next Page
+                </Button>
               </Grid>
             </Container>
           </Grid.Column>
@@ -178,6 +248,14 @@ class ConsumerRequest extends React.Component {
             </Container>
           </Grid.Column>
         </Grid.Row>
+        <RequestDetailModal
+          data={this.state.selRequestItem}
+          open={this.state.detailModal}
+          onUpdate={(id, status, extend) =>
+            this.updateRequestItem(id, status, extend)
+          }
+          onClose={() => this.setState({ detailModal: false })}
+        />
       </Grid>
     );
   }

@@ -18,44 +18,48 @@ from api.v1.consumer_request.serializers import (
 
 
 class ConsumerRequestAPI(
-    LoggingMixin,
-    mixins.ListModelMixin,
-    mixins.CreateModelMixin,
-    mixins.UpdateModelMixin,
-    mixins.DestroyModelMixin,
-    GenericAPIView,
+        LoggingMixin,
+        mixins.ListModelMixin,
+        mixins.CreateModelMixin,
+        mixins.UpdateModelMixin,
+        mixins.DestroyModelMixin,
+        GenericAPIView,
 ):
     queryset = ConsumerRequest.objects.all()
     serializer_class = ConsumerRequestSerializer
-    permission_classes = (permissions.AllowAny,)
+    permission_classes = (permissions.AllowAny, )
 
     # get the list of consumer requests
     def get(self, request, *args, **kwargs):
-        period = "week"
-        if request.GET.get("period"):
-            period = request.GET.get("period")
+        # period = "week"
+        # if request.GET.get("period"):
+        #     period = request.GET.get("period")
 
-        if period == "year":
+        # if period == "year":
+        #     self.queryset = ConsumerRequest.objects.filter(
+        #         request_date__year=datetime.today().year)
+        # elif period == "month":
+        #     self.queryset = ConsumerRequest.objects.filter(
+        #         request_date__month=datetime.today().month)
+        # elif period == "week":
+        #     week_start = datetime.today()
+        #     week_start -= timedelta(days=week_start.weekday())
+        #     week_end = week_start + timedelta(days=7)
+        #     self.queryset = ConsumerRequest.objects.filter(
+        #         request_date__gte=week_start, request_date__lt=week_end)
+        # elif period == "day":
+        #     self.queryset = ConsumerRequest.objects.filter(
+        #         request_date__day=datetime.today().day)
+        try:
+            enterprise = Enterprise.objects.get(id=kwargs["enterprise_id"])
             self.queryset = ConsumerRequest.objects.filter(
-                request_date__year=datetime.today().year
+                enterprise=enterprise)
+            return self.list(request, *args, **kwargs)
+        except Enterprise.DoesNotExist:
+            return Response(
+                {"error": "Enterprise was not found."},
+                status=status.HTTP_400_BAD_REQUEST,
             )
-        elif period == "month":
-            self.queryset = ConsumerRequest.objects.filter(
-                request_date__month=datetime.today().month
-            )
-        elif period == "week":
-            week_start = datetime.today()
-            week_start -= timedelta(days=week_start.weekday())
-            week_end = week_start + timedelta(days=7)
-            self.queryset = ConsumerRequest.objects.filter(
-                request_date__gte=week_start, request_date__lt=week_end
-            )
-        elif period == "day":
-            self.queryset = ConsumerRequest.objects.filter(
-                request_date__day=datetime.today().day
-            )
-
-        return self.list(request, *args, **kwargs)
 
     """ overwrite the list method to add extra data """
 
@@ -73,11 +77,11 @@ class ConsumerRequestAPI(
         return self.create(request, *args, **kwargs)
 
     def create(self, request, *args, **kwargs):
-        serializer = self.serializer_class(
-            data=request.data, context={"request": request}
-        )
         try:
-            enterprise = Enterprise.objects.get(id=request.data.get("enterprise"))
+            enterprise = Enterprise.objects.get(
+                id=request.data.get("enterprise_id"))
+            serializer = self.serializer_class(data=request.data,
+                                               context={"request": request})
             if serializer.is_valid():
                 serializer.save()
                 user_full_name = (
@@ -93,9 +97,11 @@ class ConsumerRequestAPI(
                     "email_subject": "Your request was sent to Elroi",
                 }
                 SendUserEmail.send_email(email_data)
-                return Response(serializer.data, status=status.HTTP_201_CREATED)
+                return Response(serializer.data,
+                                status=status.HTTP_201_CREATED)
             else:
-                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                return Response(serializer.errors,
+                                status=status.HTTP_400_BAD_REQUEST)
         except Enterprise.DoesNotExist:
             return Response(
                 {"error": "Enterprise was not found."},
@@ -104,16 +110,97 @@ class ConsumerRequestAPI(
 
     # update consumer request
     def put(self, request, *args, **kwargs):
-        return self.update(request, *args, **kwargs)
+        try:
+            consumer_request = ConsumerRequest.objects.get(
+                id=request.data["id"])
+            serializer = self.serializer_class(consumer_request,
+                                               data=request.data,
+                                               context={"request": request})
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data,
+                                status=status.HTTP_201_CREATED)
+            else:
+                return Response(serializer.errors,
+                                status=status.HTTP_400_BAD_REQUEST)
+        except ConsumerRequest.DoesNotExist:
+            return Response(
+                {"error": "ConsumerRequest was not found."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
     # delete consumer request
     def delete(self, request, *args, **kwargs):
-        return self.destroy(request, *args, **kwargs)
+        try:
+            consumer_request = ConsumerRequest.objects.get(
+                id=request.data["id"])
+            consumer_request.delete()
+            return Response(
+                {
+                    "success": True,
+                    "data": "The object was removed."
+                },
+                status=status.HTTP_200_OK)
+        except ConsumerRequest.DoesNotExist:
+            return Response(
+                {"error": "ConsumerRequest was not found."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+
+class ConsumerRequestSetStatus(GenericAPIView):
+    # serializer_class = ConsumerRequestSerializer
+    permission_classes = (permissions.IsAuthenticated, )
+
+    def post(self, request):
+        try:
+            consumer_request = ConsumerRequest.objects.get(
+                id=request.data["id"])
+            status_text = ""
+            if "status" in request.data:
+                consumer_request.status = request.data["status"]
+                if consumer_request.status == 1:
+                    consumer_request.approved_date = datetime.utcnow()
+                    status_text = "approved"
+                elif consumer_request.status == 3:
+                    status_text = "completed"
+                elif consumer_request.status == 4:
+                    status_text = "rejected"
+            if "extended" in request.data and request.data["extended"] == True:
+                consumer_request.extend_requested_date = datetime.utcnow()
+                consumer_request.request_date = datetime.utcnow()
+                status_text = "extended"
+            consumer_request.save()
+
+            user_full_name = (
+                f"{consumer_request.first_name} {consumer_request.last_name}")
+            message_body = render_to_string(
+                "email/customer/request_status_update.html",
+                {
+                    "user_full_name": user_full_name,
+                    "status_text": status_text
+                },
+            )
+            email_data = {
+                "email_body": message_body,
+                "to_email": consumer_request.email,
+                "email_subject": "Your request status was updated",
+            }
+            SendUserEmail.send_email(email_data)
+            return Response({
+                "success": True,
+            }, status=status.HTTP_200_OK)
+
+        except:
+            return Response(
+                {"error": "Parameter error."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
 
 class ConsumerRequestProgressAPI(LoggingMixin, APIView):
     serializer_class = PeriodParameterSerializer
-    permission_classes = (permissions.IsAuthenticated,)
+    permission_classes = (permissions.IsAuthenticated, )
 
     def get(self, request, period):
         serializer = self.serializer_class(data=request.data)
@@ -122,12 +209,12 @@ class ConsumerRequestProgressAPI(LoggingMixin, APIView):
         try:
             obj_response = {"active": 0, "approved": 0, "rejected": 0}
             obj_result = ConsumerRequest.objects.filter(
-                request_date__month=datetime.today().month, status__in=status_list
-            )
+                request_date__month=datetime.today().month,
+                status__in=status_list)
             if period == "year":
                 obj_result = ConsumerRequest.objects.filter(
-                    request_date__year=datetime.today().year, status__in=status_list
-                )
+                    request_date__year=datetime.today().year,
+                    status__in=status_list)
             elif period == "week":
                 week_start = datetime.today()
                 week_start -= timedelta(days=week_start.weekday())
@@ -146,16 +233,14 @@ class ConsumerRequestProgressAPI(LoggingMixin, APIView):
                         obj_response["approved"] += 1
                     if item.status == 4:
                         obj_response["rejected"] += 1
-
                 """ calculate percentage """
                 for k in obj_response:
                     obj_response[k] = round((obj_response[k] * 100) / total, 2)
 
             return Response(obj_response, status=status.HTTP_200_OK)
         except:
-            return Response(
-                {"error": "Wrong Url Format"}, status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({"error": "Wrong Url Format"},
+                            status=status.HTTP_400_BAD_REQUEST)
 
 
 class ConsumerRequestMade(LoggingMixin, APIView):
@@ -176,6 +261,5 @@ class ConsumerRequestMade(LoggingMixin, APIView):
                 status=status.HTTP_200_OK,
             )
         except:
-            return Response(
-                {"error": "Wrong Url Format"}, status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({"error": "Wrong Url Format"},
+                            status=status.HTTP_400_BAD_REQUEST)

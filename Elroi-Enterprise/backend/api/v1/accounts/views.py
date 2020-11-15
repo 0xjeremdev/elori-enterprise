@@ -64,7 +64,7 @@ def generate_random_email():
 
 class RegisterCustomer(LoggingMixin, GenericAPIView):
     serializer_class = CustomerSerializer
-    renderer_classes = (UserRenderer,)
+    renderer_classes = (UserRenderer, )
     parser_classes = (
         MultiPartParser,
         FormParser,
@@ -76,10 +76,10 @@ class RegisterCustomer(LoggingMixin, GenericAPIView):
             enterprise = Enterprise.objects.get(elroi_id__exact=elroi_id)
             try:
                 enterprise_configuration = EnterpriseConfigurationModel.objects.get(
-                    enterprise_id=enterprise.id
-                )
+                    enterprise_id=enterprise.id)
                 return Response(
-                    EnterpriseConfigurationSerializer(enterprise_configuration).data,
+                    EnterpriseConfigurationSerializer(
+                        enterprise_configuration).data,
                     status=status.HTTP_200_OK,
                 )
             except EnterpriseConfigurationModel.DoesNotExist:
@@ -88,26 +88,26 @@ class RegisterCustomer(LoggingMixin, GenericAPIView):
                     status=status.HTTP_404_NOT_FOUND,
                 )
         except Enterprise.DoesNotExist:
-            return Response(
-                {"error": "Page was not found"}, status=status.HTTP_404_NOT_FOUND
-            )
+            return Response({"error": "Page was not found"},
+                            status=status.HTTP_404_NOT_FOUND)
 
     def post(self, request, elroi_id, *args, **kwargs):
         try:
             enterprise = Enterprise.objects.get(elroi_id__exact=elroi_id)
             try:
                 enterprise_configuration = EnterpriseConfigurationModel.objects.get(
-                    enterprise_id=enterprise.id
-                )
+                    enterprise_id=enterprise.id)
                 c_dict = json.loads(
-                    json.dumps(enterprise_configuration.additional_configuration)
-                )
+                    json.dumps(
+                        enterprise_configuration.additional_configuration))
                 db_obj = {
                     "email": generate_random_email(),
                     "first_name": "",
                     "last_name": "",
                     "state_resident": "",
-                    "additional_fields": {"input": []},
+                    "additional_fields": {
+                        "input": []
+                    },
                 }
                 for item in c_dict["input"]:
                     if item["type"] == "email":
@@ -117,9 +117,8 @@ class RegisterCustomer(LoggingMixin, GenericAPIView):
 
                     if item["type"] == "file":
                         file = request.FILES[item["name"]]
-                        open(
-                            os.path.join(settings.UPLOAD_FOLDER, file.name), "wb"
-                        ).write(file.file.read())
+                        open(os.path.join(settings.UPLOAD_FOLDER, file.name),
+                             "wb").write(file.file.read())
                         db_obj["file"] = file.name
                         file_uploaded = {
                             "type": "file",
@@ -127,12 +126,15 @@ class RegisterCustomer(LoggingMixin, GenericAPIView):
                             "label": item["label"],
                             "value": file.name,
                         }
-                        db_obj["additional_fields"]["input"].append(file_uploaded)
+                        db_obj["additional_fields"]["input"].append(
+                            file_uploaded)
                     else:
                         if item["name"] == "first_name":
-                            db_obj["first_name"] = request.data.get(item["name"])
+                            db_obj["first_name"] = request.data.get(
+                                item["name"])
                         if item["name"] == "last_name":
-                            db_obj["last_name"] = request.data.get(item["name"])
+                            db_obj["last_name"] = request.data.get(
+                                item["name"])
 
                         if "resident" in item["name"]:
                             is_resident = request.data.get(item["name"])
@@ -147,7 +149,8 @@ class RegisterCustomer(LoggingMixin, GenericAPIView):
                             "label": item["label"],
                             "value": request.data.get(item["name"]),
                         }
-                        db_obj["additional_fields"]["input"].append(request_data)
+                        db_obj["additional_fields"]["input"].append(
+                            request_data)
                 customer = Customer.objects.create(**db_obj)
                 db_req_obj = {
                     "enterprise_id": enterprise.id,
@@ -165,27 +168,28 @@ class RegisterCustomer(LoggingMixin, GenericAPIView):
                     status=status.HTTP_404_NOT_FOUND,
                 )
         except Enterprise.DoesNotExist:
-            return Response(
-                {"error": "Page was not found"}, status=status.HTTP_404_NOT_FOUND
-            )
+            return Response({"error": "Page was not found"},
+                            status=status.HTTP_404_NOT_FOUND)
 
 
 class RegisterEnterprise(LoggingMixin, GenericAPIView):
     serializer_class = RegisterEnterpriseSerializer
-    renderer_classes = (UserRenderer,)
+    renderer_classes = (UserRenderer, )
 
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
             serializer.save()
             enterprise_data = serializer.data
-            account = Account.objects.get(email__iexact=enterprise_data["email"])
+            account = Account.objects.get(
+                email__iexact=enterprise_data["email"])
             enterprise = account.enterprise
             token = RefreshToken.for_user(account).access_token
             activate_url = f"{settings.FRONTEND_URL}/email-confirm/{str(token)}"
-            message_body = render_to_string(
-                "email/activate_account.html", {"user": account, "url": activate_url}
-            )
+            message_body = render_to_string("email/activate_account.html", {
+                "user": account,
+                "url": activate_url
+            })
             email_data = {
                 "email_body": message_body,
                 "to_email": account.email,
@@ -210,7 +214,8 @@ class RegisterEnterprise(LoggingMixin, GenericAPIView):
                 status=status.HTTP_201_CREATED,
             )
         else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response(serializer.errors,
+                            status=status.HTTP_400_BAD_REQUEST)
 
 
 class VerifyEmailAPI(LoggingMixin, APIView):
@@ -232,17 +237,14 @@ class VerifyEmailAPI(LoggingMixin, APIView):
                 user.is_verified = True
                 user.is_active = True
                 user.save()
-            return Response(
-                {"email": "Successfully activated"}, status=status.HTTP_200_OK
-            )
+            return Response({"email": "Successfully activated"},
+                            status=status.HTTP_200_OK)
         except jwt.ExpiredSignatureError as identifier:
-            return Response(
-                {"error": "Activation Expired"}, status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({"error": "Activation Expired"},
+                            status=status.HTTP_400_BAD_REQUEST)
         except jwt.exceptions.DecodeError as identifier:
-            return Response(
-                {"error": "Invalid token"}, status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({"error": "Invalid token"},
+                            status=status.HTTP_400_BAD_REQUEST)
 
 
 # Login Api class
@@ -284,7 +286,7 @@ class LoginAPI(LoggingMixin, GenericAPIView):
 # log out current user
 class LogoutAPI(LoggingMixin, APIView):
     serializer_class = LogoutSerializer
-    permission_classes = (permissions.IsAuthenticated,)
+    permission_classes = (permissions.IsAuthenticated, )
 
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
@@ -306,9 +308,11 @@ class PasswordResetAPI(LoggingMixin, GenericAPIView):
             uidb64 = urlsafe_base64_encode(smart_bytes(user.id))
             token = PasswordResetTokenGenerator().make_token(user)
             current_site = get_current_site(request=request).domain
-            url = reverse(
-                "password_reset_confirmation", kwargs={"uidb64": uidb64, "token": token}
-            )
+            url = reverse("password_reset_confirmation",
+                          kwargs={
+                              "uidb64": uidb64,
+                              "token": token
+                          })
             redirect_url = request.data.get("redirect_url", "")
             reset_link = f"{settings.FRONTEND_URL}/{url}?redirect_url={redirect_url}"
             email_template_data = {
@@ -316,9 +320,8 @@ class PasswordResetAPI(LoggingMixin, GenericAPIView):
                 "domain": current_site,
                 "url": reset_link,
             }
-            message_body = render_to_string(
-                "email/password_reset.html", email_template_data
-            )
+            message_body = render_to_string("email/password_reset.html",
+                                            email_template_data)
             email_data = {
                 "email_body": message_body,
                 "to_email": user.email,
@@ -327,7 +330,8 @@ class PasswordResetAPI(LoggingMixin, GenericAPIView):
             SendUserEmail.send_email(email_data)
         return Response(
             {
-                "success": "Please check your Inbox, we have sent you a link to reset password."
+                "success":
+                "Please check your Inbox, we have sent you a link to reset password."
             },
             status=status.HTTP_200_OK,
         )
@@ -361,7 +365,7 @@ class PasswordConfirmationAPI(GenericAPIView):
 
 class SendValidationCodeAPI(LoggingMixin, APIView):
     serializer_class = EmailValidationCodeSerializer
-    permission_classes = (permissions.IsAuthenticated,)
+    permission_classes = (permissions.IsAuthenticated, )
 
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
@@ -373,9 +377,8 @@ class SendValidationCodeAPI(LoggingMixin, APIView):
                 "verification_code": user.verification_code,
                 "user_full_name": f"{user.first_name} {user.last_name}",
             }
-            message_body = render_to_string(
-                "email/verification_code.html", email_template_data
-            )
+            message_body = render_to_string("email/verification_code.html",
+                                            email_template_data)
             email_data = {
                 "email_body": message_body,
                 "to_email": user.email,
@@ -390,7 +393,7 @@ class SendValidationCodeAPI(LoggingMixin, APIView):
 
 class VerificationCodeConfirmAPI(APIView):
     serializer_class = VerificationCodeSerializer
-    permission_classes = (permissions.IsAuthenticated,)
+    permission_classes = (permissions.IsAuthenticated, )
 
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
@@ -402,17 +405,14 @@ class AssessmentSharedLink(LoggingMixin, GenericAPIView):
     """
     Display shared assessment by url
     """
-
     def get(self, request, token, *args, **kwargs):
         try:
             assessment = Assessment.objects.get(share_hash=token)
-            return Response(
-                AssessmentSerializer(assessment).data, status=status.HTTP_200_OK
-            )
+            return Response(AssessmentSerializer(assessment).data,
+                            status=status.HTTP_200_OK)
         except Assessment.DoesNotExist:
-            return Response(
-                {"error": "Page was not found"}, status=status.HTTP_404_NOT_FOUND
-            )
+            return Response({"error": "Page was not found"},
+                            status=status.HTTP_404_NOT_FOUND)
 
 
 class AccountProfileSettings(LoggingMixin, GenericAPIView):
@@ -421,24 +421,28 @@ class AccountProfileSettings(LoggingMixin, GenericAPIView):
     """
 
     serializer_class = AccountProfileSettingsSerializer
-    permission_classes = (permissions.IsAuthenticated,)
+    permission_classes = (permissions.IsAuthenticated, )
     parser_classes = (MultiPartParser, FormParser, FileUploadParser)
 
     def get(self, request, *args, **kwargs):
         user = request.user
         return Response(
-            AccountProfileSettingsSerializer(user, context={"request": request}).data,
+            AccountProfileSettingsSerializer(user,
+                                             context={
+                                                 "request": request
+                                             }).data,
             status=status.HTTP_200_OK,
         )
         # pass
 
     def post(self, request, *args, **kwargs):
         user = request.user
-        serializer = self.serializer_class(
-            user, data=request.data, context={"request": request}
-        )
+        serializer = self.serializer_class(user,
+                                           data=request.data,
+                                           context={"request": request})
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response(serializer.errors,
+                            status=status.HTTP_400_BAD_REQUEST)

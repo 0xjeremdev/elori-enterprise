@@ -12,3 +12,8 @@ export const formAnswerTypeOptions = [
   { key: '3', text: 'Email', value: 'email' },
   { key: '4', text: 'File', value: 'file' },
 ]
+
+export const REVIEW = 0;
+export const PROCESS = 1;
+export const COMPLETE = 3;
+export const REJECT = 4;
