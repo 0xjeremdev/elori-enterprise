@@ -424,7 +424,7 @@ class AccountProfileSettings(LoggingMixin, GenericAPIView):
     """
 
     serializer_class = AccountProfileSettingsSerializer
-    permission_classes = (permissions.IsAuthenticated, )
+    # permission_classes = (permissions.IsAuthenticated, )
     parser_classes = (MultiPartParser, FormParser, FileUploadParser)
 
     def get(self, request, *args, **kwargs):

@@ -29,24 +29,22 @@ from api.v1.enterprise.serializers import (
 )
 
 
-class UserGuide(
-    LoggingMixin, mixins.ListModelMixin, mixins.CreateModelMixin, GenericAPIView
-):
+class UserGuide(LoggingMixin, mixins.ListModelMixin, mixins.CreateModelMixin,
+                GenericAPIView):
     """ user guide """
 
     queryset = UserGuideModel.objects.all()
     serializer_class = UserGuideSerializer
-    permission_classes = (permissions.IsAuthenticated,)
+    permission_classes = (permissions.IsAuthenticated, )
 
     def get(self, request, *args, **kwargs):
         if request.GET.get("enterprise_id"):
             self.queryset = UserGuideModel.objects.filter(
-                owner__id=request.GET.get("enterprise_id")
-            ).prefetch_related("uploads")
+                owner__id=request.GET.get("enterprise_id")).prefetch_related(
+                    "uploads")
         else:
             self.queryset = UserGuideModel.objects.filter(
-                created_by=request.user
-            ).prefetch_related("uploads")
+                created_by=request.user).prefetch_related("uploads")
         return self.list(request, *args, **kwargs)
 
     """ overwrite list method to assign the list of uploaded files based on guide id """
@@ -57,7 +55,8 @@ class UserGuide(
         for upload_file in self.queryset:
             files = [
                 str(guide_file.file)
-                for guide_file in upload_file.uploads.filter(user_guide=upload_file.pk)
+                for guide_file in upload_file.uploads.filter(
+                    user_guide=upload_file.pk)
             ]
             uploads.extend(files)
         response.data["uploads"] = uploads
@@ -70,29 +69,31 @@ class UserGuide(
 class UserGuideUpload(LoggingMixin, APIView):
     """ Upload file for specific guide id"""
 
-    permission_classes = (permissions.IsAuthenticated,)
+    permission_classes = (permissions.IsAuthenticated, )
     parser_classes = (MultiPartParser, FormParser)
 
     def post(self, request, *args, **kwargs):
         file_serializer = FileSerializer(data=request.data)
         if file_serializer.is_valid():
             file_serializer.save()
-            return Response(file_serializer.data, status=status.HTTP_201_CREATED)
+            return Response(file_serializer.data,
+                            status=status.HTTP_201_CREATED)
         else:
-            return Response(file_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response(file_serializer.errors,
+                            status=status.HTTP_400_BAD_REQUEST)
 
 
 class CustomerConfiguration(
-    LoggingMixin,
-    mixins.ListModelMixin,
-    mixins.CreateModelMixin,
-    mixins.UpdateModelMixin,
-    mixins.DestroyModelMixin,
-    GenericAPIView,
+        LoggingMixin,
+        mixins.ListModelMixin,
+        mixins.CreateModelMixin,
+        mixins.UpdateModelMixin,
+        mixins.DestroyModelMixin,
+        GenericAPIView,
 ):
     queryset = CustomerConfiguration.objects.all()
     serializer_class = CustomerConfigurationSerializer
-    permission_classes = (permissions.IsAuthenticated,)
+    permission_classes = (permissions.IsAuthenticated, )
 
     def get(self, request, *args, **kwargs):
         return self.list(request, *args, **kwargs)
@@ -120,29 +121,29 @@ class CustomerConfiguration(
 class CustomerSummarize(LoggingMixin, mixins.ListModelMixin, GenericAPIView):
     queryset = ConsumerRequest.objects.all()
     serializer_class = CustomerSummarizeSerializer
-    permission_classes = (permissions.IsAuthenticated,)
+    permission_classes = (permissions.IsAuthenticated, )
 
     def get(self, request, *args, **kwargs):
         if request.GET.get("id"):
-            self.queryset = ConsumerRequest.objects.filter(id=request.GET.get("id"))
+            self.queryset = ConsumerRequest.objects.filter(
+                id=request.GET.get("id"))
         return self.list(request, *args, **kwargs)
 
 
 class RequestTracker(LoggingMixin, mixins.ListModelMixin, GenericAPIView):
     queryset = ConsumerRequest.objects.all()
     serializer_class = RequestTrackerSerializer
-    permission_classes = (permissions.IsAuthenticated,)
+    permission_classes = (permissions.IsAuthenticated, )
 
     def get(self, request, *args, **kwargs):
         if request.GET.get("id"):
             self.queryset = ConsumerRequest.objects.filter(
-                elroi_id=request.GET.get("id")
-            )
+                elroi_id=request.GET.get("id"))
         return self.list(request, *args, **kwargs)
 
 
 class NotifyCustomer(LoggingMixin, APIView):
-    permission_classes = (permissions.IsAuthenticated,)
+    permission_classes = (permissions.IsAuthenticated, )
 
     def post(self, request, *args, **kwargs):
         request_id = request.data.get("request_id")
@@ -151,9 +152,8 @@ class NotifyCustomer(LoggingMixin, APIView):
             customer_email = db_res.customer.email
             user_full_name = db_res.customer.full_name()
             email_template_data = {"user_full_name": user_full_name}
-            message_body = render_to_string(
-                "email/first_45_days_period.html", email_template_data
-            )
+            message_body = render_to_string("email/first_45_days_period.html",
+                                            email_template_data)
             email_data = {
                 "email_body": message_body,
                 "to_email": customer_email,
@@ -161,22 +161,25 @@ class NotifyCustomer(LoggingMixin, APIView):
             }
             SendUserEmail.send_email(email_data)
             return Response(
-                {"success": True, "message": "Email was sent."},
+                {
+                    "success": True,
+                    "message": "Email was sent."
+                },
                 status=status.HTTP_200_OK,
             )
         except ConsumerRequest.DoesNotExist:
-            return Response(
-                {"error": "Invalid customer"}, status=status.HTTP_404_NOT_FOUND
-            )
+            return Response({"error": "Invalid customer"},
+                            status=status.HTTP_404_NOT_FOUND)
 
 
 class ExtendedVsNewRequests(LoggingMixin, APIView):
-    permission_classes = (permissions.IsAuthenticated,)
+    permission_classes = (permissions.IsAuthenticated, )
 
     def get(self, request, *args, **kwargs):
         user_id = request.user.id
         try:
-            enterprise_db = ConsumerRequest.objects.filter(enterprise__user_id=user_id)
+            enterprise_db = ConsumerRequest.objects.filter(
+                enterprise__user_id=user_id)
             if enterprise_db.exists():
                 total_requsts = enterprise_db.count()
                 extended = enterprise_db.filter(extend_requested=1).count()
@@ -201,44 +204,49 @@ class ExtendedVsNewRequests(LoggingMixin, APIView):
                         "total": 0,
                         "extended": 0,
                         "new": 0,
-                        "percentage": {"extended": "0%", "new": "0%"},
+                        "percentage": {
+                            "extended": "0%",
+                            "new": "0%"
+                        },
                     },
                     status=status.HTTP_200_OK,
                 )
         except ConsumerRequest.DoesNotExist:
-            return Response(
-                {"error": "Data not found."}, status=status.HTTP_404_NOT_FOUND
-            )
+            return Response({"error": "Data not found."},
+                            status=status.HTTP_404_NOT_FOUND)
 
 
 class EnterpriseConfiguration(
-    LoggingMixin,
-    mixins.ListModelMixin,
-    mixins.CreateModelMixin,
-    mixins.UpdateModelMixin,
-    mixins.DestroyModelMixin,
-    GenericAPIView,
+        LoggingMixin,
+        mixins.ListModelMixin,
+        mixins.CreateModelMixin,
+        mixins.UpdateModelMixin,
+        mixins.DestroyModelMixin,
+        GenericAPIView,
 ):
     serializer_class = EnterpriseConfigurationSerializer
-    permission_classes = (permissions.IsAuthenticated,)
+
+    # permission_classes = (permissions.IsAuthenticated,)
     # parser_classes = (MultiPartParser, FormParser, FileUploadParser)
     def get(self, request, *args, **kwargs):
         try:
             self.queryset = EnterpriseConfigurationModel.objects.filter(
-                enterprise_id__id=request.user.id
-            )
+                enterprise_id__id=request.user.id)
             return self.list(request, *args, **kwargs)
         except EnterpriseConfigurationModel.DoesNotExist:
-            return Response(
-                {"error": "Page not found"}, status=status.HTTP_404_NOT_FOUND
-            )
+            return Response({"error": "Page not found"},
+                            status=status.HTTP_404_NOT_FOUND)
 
     def list(self, request, *args, **kwargs):
-        response = super(EnterpriseConfiguration, self).list(request, args, kwargs)
+        response = super(EnterpriseConfiguration,
+                         self).list(request, args, kwargs)
         if len(response.data["results"]) == 0:
             return Response({"success": False}, status=status.HTTP_200_OK)
         return Response(
-            {"success": True, "data": response.data["results"][0]},
+            {
+                "success": True,
+                "data": response.data["results"][0]
+            },
             status=status.HTTP_200_OK,
         )
 
@@ -249,12 +257,14 @@ class EnterpriseConfiguration(
                 enterprise_id=request.data.get("enterprise_id"),
                 enterprise_id__user=request.user,
             )
-            serializer = self.serializer_class(configuration, data=request.data)
+            serializer = self.serializer_class(configuration,
+                                               data=request.data)
             if serializer.is_valid():
                 serializer.save()
                 return Response(serializer.data, status=status.HTTP_200_OK)
             else:
-                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                return Response(serializer.errors,
+                                status=status.HTTP_400_BAD_REQUEST)
         except EnterpriseConfigurationModel.DoesNotExist:
             if request.user and hasattr(request.user, "enterprise"):
                 return self.create(request, *args, **kwargs)
@@ -286,10 +296,10 @@ class EnterpriseAssessmentShareLink(LoggingMixin, GenericAPIView):
     """
     get the assessment share link to be sent by email
     """
-
     def get(self, request, elroi_id, *args, **kwargs):
         try:
-            e_q = EnterpriseQuestionnaire.objects.get(enterprise__elroi_id=elroi_id)
+            e_q = EnterpriseQuestionnaire.objects.get(
+                enterprise__elroi_id=elroi_id)
             if e_q.is_yes:
                 assessment = Assessment.objects.get(
                     question_id=e_q.question_id,
@@ -298,9 +308,12 @@ class EnterpriseAssessmentShareLink(LoggingMixin, GenericAPIView):
                 )
                 return Response(
                     {
-                        "id": assessment.id,
-                        "title": assessment.title,
-                        "assessment_url": reverse(
+                        "id":
+                        assessment.id,
+                        "title":
+                        assessment.title,
+                        "assessment_url":
+                        reverse(
                             "view_shared_assessment",
                             kwargs={"token": assessment.share_hash},
                         ),
@@ -310,7 +323,8 @@ class EnterpriseAssessmentShareLink(LoggingMixin, GenericAPIView):
         except EnterpriseQuestionnaire.DoesNotExist:
             return Response(
                 {
-                    "error": "Enterprise has no assessment or questionnaire was not completed."
+                    "error":
+                    "Enterprise has no assessment or questionnaire was not completed."
                 },
                 status=status.HTTP_404_NOT_FOUND,
             )
@@ -320,25 +334,24 @@ class EnterpriseAssessmentShareLink(LoggingMixin, GenericAPIView):
             email = request.data.get("email")
             if validate_email_format(email):
                 assessment = Assessment.objects.get(
-                    id=request.data.get("assessment_id")
-                )
+                    id=request.data.get("assessment_id"))
                 assessment_url = reverse(
-                    "view_shared_assessment", kwargs={"token": assessment.share_hash}
-                )
+                    "view_shared_assessment",
+                    kwargs={"token": assessment.share_hash})
                 front_url = (
                     f"{settings.FRONTEND_URL}/assessment/{assessment.share_hash}"
                 )
                 email_template_data = {"assessment_url": front_url}
                 email_body = render_to_string(
-                    "email/assessment_share_link.html", email_template_data
-                )
+                    "email/assessment_share_link.html", email_template_data)
                 email_data = {
                     "email_body": email_body,
                     "to_email": email,
                     "email_subject": "Assessment Share Url",
                 }
                 SendUserEmail.send_email(email_data)
-                return Response({"api_url": assessment_url}, status=status.HTTP_200_OK)
+                return Response({"api_url": assessment_url},
+                                status=status.HTTP_200_OK)
             else:
                 return Response(
                     {"error": "Please provide valid email address"},
@@ -346,9 +359,8 @@ class EnterpriseAssessmentShareLink(LoggingMixin, GenericAPIView):
                 )
 
         except Assessment.DoesNotExist:
-            return Response(
-                {"error": "Assessment was not found."}, status=status.HTTP_404_NOT_FOUND
-            )
+            return Response({"error": "Assessment was not found."},
+                            status=status.HTTP_404_NOT_FOUND)
 
 
 class EnterpriseAccountSettings(GenericAPIView):
@@ -357,7 +369,7 @@ class EnterpriseAccountSettings(GenericAPIView):
     """
 
     serializer_class = EnterpriseAccountSettingsSerializer
-    permission_classes = (permissions.IsAuthenticated,)
+    # permission_classes = (permissions.IsAuthenticated,)
     parser_classes = (MultiPartParser, FormParser, FileUploadParser)
 
     def get(self, request, *args, **kwargs):
@@ -365,29 +377,29 @@ class EnterpriseAccountSettings(GenericAPIView):
         if hasattr(user, "enterprise"):
             enterprise = user.enterprise
             return Response(
-                EnterpriseAccountSettingsSerializer(
-                    enterprise, context={"request": request}
-                ).data,
+                EnterpriseAccountSettingsSerializer(enterprise,
+                                                    context={
+                                                        "request": request
+                                                    }).data,
                 status=status.HTTP_200_OK,
             )
         else:
-            return Response(
-                {"error": "Data not found"}, status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({"error": "Data not found"},
+                            status=status.HTTP_400_BAD_REQUEST)
 
     def post(self, request, *args, **kwargs):
         user = request.user
         if hasattr(user, "enterprise"):
             enterprise = user.enterprise
-            serializer = self.serializer_class(
-                enterprise, data=request.data, context={"request": request}
-            )
+            serializer = self.serializer_class(enterprise,
+                                               data=request.data,
+                                               context={"request": request})
             if serializer.is_valid():
                 serializer.save()
                 return Response(serializer.data, status=status.HTTP_200_OK)
             else:
-                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                return Response(serializer.errors,
+                                status=status.HTTP_400_BAD_REQUEST)
         else:
-            return Response(
-                {"error": "Not allowed to continue"}, status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({"error": "Not allowed to continue"},
+                            status=status.HTTP_400_BAD_REQUEST)
