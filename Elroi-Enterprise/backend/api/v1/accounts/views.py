@@ -52,7 +52,7 @@ from ..enterprise.serializers import EnterpriseConfigurationSerializer
 
 
 class CustomRedirect(HttpResponsePermanentRedirect):
-    allowed_schemes = [os.environ.get("APP_SCHEME"), "http", "https"]
+    allowed_schemes = ["http", "https"]
 
 
 def generate_random_email():
