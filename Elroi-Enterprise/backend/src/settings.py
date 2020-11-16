@@ -15,7 +15,8 @@ def get_env_value(env_variable):
     try:
         return os.getenv(env_variable)
     except KeyError:
-        raise ImproperlyConfigured(f'Set the "{env_variable}" environment variable.')
+        raise ImproperlyConfigured(
+            f'Set the "{env_variable}" environment variable.')
 
 
 # Quick-start development settings - unsuitable for production
@@ -56,7 +57,11 @@ INSTALLED_APPS = [
 
 SWAGGER_SETTINGS = {
     "SECURITY_DEFINITIONS": {
-        "Bearer": {"type": "apiKey", "name": "Authorization", "in": "header"}
+        "Bearer": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
+        }
     },
     "VALIDATOR_URL": "http://localhost:8189",
 }
@@ -94,7 +99,6 @@ WSGI_APPLICATION = "src.wsgi.application"
 
 AUTH_USER_MODEL = "accounts.Account"
 
-
 CORS_ORIGIN_ALLOW_ALL = True
 # CORS WHITELIST
 # CORS_ORIGIN_WHITELIST = [
@@ -109,23 +113,23 @@ CORS_ORIGIN_ALLOW_ALL = True
 # Database
 # https://docs.djangoproject.com/en/3.1/ref/settings/#databases
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": str(BASE_DIR.joinpath("db.sqlite3").resolve()),
-    }
-}
-
 # DATABASES = {
 #     "default": {
-#         "ENGINE": "django.db.backends.postgresql",
-#         "NAME": "target_project",
-#         "USER": "custdbuser",
-#         "PASSWORD": "Custz3!tqvYK@",
-#         "HOST": "localhost",
-#         "PORT": "5432",
+#         "ENGINE": "django.db.backends.sqlite3",
+#         "NAME": str(BASE_DIR.joinpath("db.sqlite3").resolve()),
 #     }
 # }
+
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": "target_project",
+        "USER": "entdbuser",
+        "PASSWORD": "Ent5gGhcx@",
+        "HOST": "localhost",
+        "PORT": "5432",
+    }
+}
 
 STATUSES = (
     (0, "For Review"),
@@ -142,12 +146,14 @@ REQUEST_TYPES = (
 )
 
 REST_FRAMEWORK = {
-    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
-    "PAGE_SIZE": 10,
-    "NON_FIELD_ERRORS_KEY": "error",
-    "DEFAULT_AUTHENTICATION_CLASSES": (
-        "rest_framework_simplejwt.authentication.JWTAuthentication",
-    ),
+    "DEFAULT_PAGINATION_CLASS":
+    "rest_framework.pagination.PageNumberPagination",
+    "PAGE_SIZE":
+    10,
+    "NON_FIELD_ERRORS_KEY":
+    "error",
+    "DEFAULT_AUTHENTICATION_CLASSES":
+    ("rest_framework_simplejwt.authentication.JWTAuthentication", ),
 }
 
 SIMPLE_JWT = {
@@ -160,10 +166,10 @@ SIMPLE_JWT = {
     "VERIFYING_KEY": None,
     "AUDIENCE": None,
     "ISSUER": None,
-    "AUTH_HEADER_TYPES": ("Bearer",),
+    "AUTH_HEADER_TYPES": ("Bearer", ),
     "USER_ID_FIELD": "id",
     "USER_ID_CLAIM": "user_id",
-    "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
+    "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken", ),
     "TOKEN_TYPE_CLAIM": "token_type",
     "JTI_CLAIM": "jti",
     "SLIDING_TOKEN_REFRESH_EXP_CLAIM": "refresh_exp",
@@ -175,17 +181,23 @@ SIMPLE_JWT = {
 
 AUTH_PASSWORD_VALIDATORS = [
     {
-        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
+        "NAME":
+        "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
     },
     {
-        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
-        "OPTIONS": {"min_length": 8},
+        "NAME":
+        "django.contrib.auth.password_validation.MinimumLengthValidator",
+        "OPTIONS": {
+            "min_length": 8
+        },
     },
     {
-        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
+        "NAME":
+        "django.contrib.auth.password_validation.CommonPasswordValidator",
     },
     {
-        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
+        "NAME":
+        "django.contrib.auth.password_validation.NumericPasswordValidator",
     },
 ]
 
