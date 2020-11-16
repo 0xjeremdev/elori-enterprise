@@ -384,7 +384,10 @@ class EnterpriseAccountSettings(GenericAPIView):
                 status=status.HTTP_200_OK,
             )
         else:
-            return Response({"error": "Data not found"},
+            return Response({
+                "error": "Data not found",
+                user: user
+            },
                             status=status.HTTP_400_BAD_REQUEST)
 
     def post(self, request, *args, **kwargs):
