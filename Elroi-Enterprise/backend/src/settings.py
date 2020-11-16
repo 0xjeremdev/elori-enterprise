@@ -113,23 +113,23 @@ CORS_ORIGIN_ALLOW_ALL = True
 # Database
 # https://docs.djangoproject.com/en/3.1/ref/settings/#databases
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": str(BASE_DIR.joinpath("db.sqlite3").resolve()),
-    }
-}
-
 # DATABASES = {
 #     "default": {
-#         "ENGINE": "django.db.backends.postgresql",
-#         "NAME": "elroi_enterprise",
-#         "USER": "custdbuser",
-#         "PASSWORD": "Custz3!tqvYK@",
-#         "HOST": "localhost",
-#         "PORT": "5432",
+#         "ENGINE": "django.db.backends.sqlite3",
+#         "NAME": str(BASE_DIR.joinpath("db.sqlite3").resolve()),
 #     }
 # }
+
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": "elroi_enterprise",
+        "USER": "custdbuser",
+        "PASSWORD": "Custz3!tqvYK@",
+        "HOST": "localhost",
+        "PORT": "5432",
+    }
+}
 
 STATUSES = (
     (0, "For Review"),
