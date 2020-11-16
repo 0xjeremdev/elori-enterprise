@@ -123,7 +123,7 @@ CORS_ORIGIN_ALLOW_ALL = True
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": "target_project",
+        "NAME": "elroi_enterprise",
         "USER": "entdbuser",
         "PASSWORD": "Ent5gGhcx@",
         "HOST": "localhost",
