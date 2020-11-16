@@ -124,8 +124,8 @@ DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
         "NAME": "elroi_enterprise",
-        "USER": "entdbuser",
-        "PASSWORD": "Ent5gGhcx@",
+        "USER": "custdbuser",
+        "PASSWORD": "Custz3!tqvYK@",
         "HOST": "localhost",
         "PORT": "5432",
     }
