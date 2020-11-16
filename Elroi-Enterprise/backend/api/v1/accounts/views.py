@@ -395,7 +395,8 @@ class SendValidationCodeAPI(LoggingMixin, APIView):
 
 class VerificationCodeConfirmAPI(APIView):
     serializer_class = VerificationCodeSerializer
-    permission_classes = (permissions.IsAuthenticated, )
+
+    # permission_classes = (permissions.IsAuthenticated, )
 
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
