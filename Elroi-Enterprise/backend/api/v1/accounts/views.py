@@ -366,7 +366,8 @@ class PasswordConfirmationAPI(GenericAPIView):
 
 class SendValidationCodeAPI(LoggingMixin, APIView):
     serializer_class = EmailValidationCodeSerializer
-    permission_classes = (permissions.IsAuthenticated, )
+
+    # permission_classes = (permissions.IsAuthenticated, )
 
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
