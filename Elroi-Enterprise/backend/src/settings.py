@@ -26,7 +26,7 @@ def get_env_value(env_variable):
 SECRET_KEY = "nw34t1ljtpz0q+c08&#80ihi%if$9wslxn&g1ad60fj3mdpamr"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ["*"]
 
