@@ -250,6 +250,7 @@ class VerifyEmailAPI(LoggingMixin, APIView):
 # Login Api class
 class LoginAPI(LoggingMixin, GenericAPIView):
     serializer_class = LoginSerializer
+    permission_classes = (permissions.AllowAny, )
 
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data)
