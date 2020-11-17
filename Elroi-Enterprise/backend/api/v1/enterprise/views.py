@@ -226,7 +226,8 @@ class EnterpriseConfiguration(
 ):
     serializer_class = EnterpriseConfigurationSerializer
 
-    # permission_classes = (permissions.IsAuthenticated,)
+    permission_classes = (permissions.IsAuthenticated, )
+
     # parser_classes = (MultiPartParser, FormParser, FileUploadParser)
     def get(self, request, *args, **kwargs):
         try:
@@ -369,7 +370,7 @@ class EnterpriseAccountSettings(GenericAPIView):
     """
 
     serializer_class = EnterpriseAccountSettingsSerializer
-    # permission_classes = (permissions.IsAuthenticated,)
+    permission_classes = (permissions.IsAuthenticated, )
     parser_classes = (MultiPartParser, FormParser, FileUploadParser)
 
     def get(self, request, *args, **kwargs):
@@ -386,7 +387,6 @@ class EnterpriseAccountSettings(GenericAPIView):
         else:
             return Response({
                 "error": "Data not found",
-                user: user
             },
                             status=status.HTTP_400_BAD_REQUEST)
 
