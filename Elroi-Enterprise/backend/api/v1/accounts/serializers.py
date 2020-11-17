@@ -158,6 +158,9 @@ class RegisterEnterpriseSerializer(serializers.ModelSerializer):
         try:
             user = Account.objects.create_front_user(
                 validated_data['email'], validated_data['password'])
+            user.first_name = validated_data['first_name']
+            user.last_name = validated_data['last_name']
+            user.save()
             del validated_data['password']
             enterprise = Enterprise.objects.create(user=user, **validated_data)
             return enterprise
