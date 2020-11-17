@@ -49,7 +49,7 @@ class CustomAccountManager(BaseUserManager):
 
 class Account(AbstractUser):
     email = models.EmailField(verbose_name="Email", max_length=60, unique=True)
-    verification_code = models.IntegerField(blank=True, null=True, default=0)
+    verification_code = models.CharField(max_length=6, blank=True, null=True)
     logo = models.FileField(null=True, blank=True)
     first_name = models.CharField(max_length=80, null=True, blank=True)
     last_name = models.CharField(max_length=80, null=True, blank=True)
@@ -119,13 +119,17 @@ class Customer(models.Model):
         null=True,
         blank=True,
     )
-    elroi_id = models.CharField(
-        max_length=9, db_index=True, unique=True, null=True, blank=True
-    )
+    elroi_id = models.CharField(max_length=9,
+                                db_index=True,
+                                unique=True,
+                                null=True,
+                                blank=True)
     file = models.FileField(blank=True, null=True)
-    email = models.EmailField(
-        verbose_name="Email", max_length=60, unique=True, null=True, blank=True
-    )
+    email = models.EmailField(verbose_name="Email",
+                              max_length=60,
+                              unique=True,
+                              null=True,
+                              blank=True)
     first_name = models.CharField(max_length=40, null=True)
     last_name = models.CharField(max_length=40, null=True)
     state_resident = models.BooleanField(default=False)
@@ -170,7 +174,6 @@ def check_unique_customer_elroi_id(elroi_id):
 
 """call signal to update elroi id when account is created"""
 post_save.connect(update_customer_elroi_id, sender=Customer)
-
 """ enterprises table """
 
 
@@ -182,12 +185,16 @@ class Enterprise(models.Model):
         blank=True,
         null=True,
     )
-    elroi_id = models.CharField(
-        max_length=9, db_index=True, unique=True, blank=True, null=True
-    )
+    elroi_id = models.CharField(max_length=9,
+                                db_index=True,
+                                unique=True,
+                                blank=True,
+                                null=True)
     email = models.EmailField(max_length=80, unique=True)
     name = models.CharField(max_length=255, blank=True, null=True)
-    notification_email = models.EmailField(max_length=80, null=True, blank=True)
+    notification_email = models.EmailField(max_length=80,
+                                           null=True,
+                                           blank=True)
     additional_emails = models.CharField(max_length=255, null=True, blank=True)
     company_name = models.CharField(max_length=80, null=True, blank=True)
     timezone = models.CharField(max_length=20, null=True, blank=True)
@@ -264,7 +271,6 @@ def check_unique_enterprise_elroi_id(check_id):
 
 
 post_save.connect(update_enterprise_elroi_id, sender=Enterprise)
-
 """generate random id ( characters+ digits)"""
 
 
