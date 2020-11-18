@@ -5,6 +5,7 @@ import ReCAPTCHA from "react-google-recaptcha";
 
 import GlobalStyle from "../../../global-styles";
 import target from "../../../assets/images/target.png";
+import noImg from "../../../assets/images/no-img.png";
 import bk1 from "../../../assets/images/bk1.png";
 import bk2 from "../../../assets/images/bk2.png";
 import logo from "../../../assets/images/logo.png";
@@ -223,7 +224,7 @@ class Request extends React.Component {
             <Grid.Column width="3">
               <Image
                 className="logo"
-                src={logoUrl ? logoUrl : target}
+                src={logoUrl ? logoUrl : noImg}
                 size="tiny"
                 centered
               />

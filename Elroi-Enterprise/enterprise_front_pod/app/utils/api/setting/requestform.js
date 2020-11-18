@@ -8,6 +8,7 @@ export const consumerRequestFormApis = {
 };
 
 function setConsumerRequestForm(payload) {
+  const token = localStorage.getItem("access-token");
   const enterprise_id = localStorage.getItem("enterprise_id");
   const {
     logoFile,
