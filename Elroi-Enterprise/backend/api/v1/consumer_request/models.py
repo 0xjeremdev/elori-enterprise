@@ -48,11 +48,11 @@ class ConsumerRequest(models.Model):
         # return self.elroi_id
         return self.email
 
-    def save(self, *args, **kwargs):
-        self.elroi_id = gen_random_id()
-        if self.request_date:
-            self.process_end_date = datetime.utcnow() + timedelta(days=45)
-        super(ConsumerRequest, self).save(*args, **kwargs)
+    # def save(self, *args, **kwargs):
+    #     # self.elroi_id = gen_random_id()
+    #     if self.request_date:
+    #         self.process_end_date = datetime.utcnow() + timedelta(days=45)
+    #     super(ConsumerRequest, self).save(*args, **kwargs)
 
     def remaining_days(self):
         if self.process_end_date:

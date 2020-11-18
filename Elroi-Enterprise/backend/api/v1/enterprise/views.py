@@ -226,13 +226,13 @@ class EnterpriseConfiguration(
 ):
     serializer_class = EnterpriseConfigurationSerializer
 
-    permission_classes = (permissions.IsAuthenticated, )
+    permission_classes = (permissions.AllowAny, )
 
     # parser_classes = (MultiPartParser, FormParser, FileUploadParser)
     def get(self, request, *args, **kwargs):
         try:
             self.queryset = EnterpriseConfigurationModel.objects.filter(
-                enterprise_id__id=request.user.id)
+                enterprise_id__id=kwargs["enterprise_id"])
             return self.list(request, *args, **kwargs)
         except EnterpriseConfigurationModel.DoesNotExist:
             return Response({"error": "Page not found"},

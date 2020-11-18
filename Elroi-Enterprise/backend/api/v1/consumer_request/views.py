@@ -168,12 +168,11 @@ class ConsumerRequestSetStatus(GenericAPIView):
                     status_text = "rejected"
             if "extended" in request.data and request.data["extended"] == True:
                 consumer_request.extend_requested_date = datetime.utcnow()
-                consumer_request.process_end_date = datetime.utcnow(
-                ) + timedelta(days=45)
+                consumer_request.process_end_date = consumer_request.process_end_date + timedelta(
+                    days=45)
                 consumer_request.request_date = datetime.utcnow()
                 status_text = "extended"
             consumer_request.save()
-
             user_full_name = (
                 f"{consumer_request.first_name} {consumer_request.last_name}")
             message_body = render_to_string(

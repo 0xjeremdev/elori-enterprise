@@ -302,6 +302,9 @@ class VerificationCodeSerializer(serializers.Serializer):
         fields = {'email', 'verification_code', 'tokens', 'otp_verified'}
 
     def validate(self, data):
+        # request = self.context.get("request")
+        # user = request.user
+        # user.verification_code
         if Account.objects.filter(
                 verification_code=data.get('verification_code')).exists():
             user = Account.objects.get(

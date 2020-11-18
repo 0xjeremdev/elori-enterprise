@@ -1,4 +1,5 @@
 from django.conf import settings
+from datetime import datetime, timedelta
 from rest_framework import serializers
 from rest_framework.exceptions import AuthenticationFailed, ValidationError
 from rest_framework import serializers, status
@@ -40,7 +41,9 @@ class ConsumerRequestSerializer(serializers.ModelSerializer):
         enterprise = Enterprise.objects.get(
             id=request.data.get("enterprise_id"))
         consumer_request = ConsumerRequest.objects.create(
-            enterprise=enterprise, **validated_data)
+            enterprise=enterprise,
+            **validated_data,
+            process_end_date=datetime.utcnow() + timedelta(days=45))
         return consumer_request
 
 
