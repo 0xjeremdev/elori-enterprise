@@ -7,9 +7,7 @@ export const consumerRequestApis = {
   updateConsumerRequest,
 };
 
-function sendConsumerRequest(payload) {
-  const token = localStorage.getItem("access-token");
-  const enterprise_id = localStorage.getItem("enterprise_id");
+function sendConsumerRequest(payload, enterprise_id) {
   const {
     first_name,
     last_name,
@@ -34,7 +32,6 @@ function sendConsumerRequest(payload) {
     axios
       .post(`${API_ENDPOINT_URL}/consumer/request`, formData, {
         headers: {
-          Authorization: `Bearer ${token}`,
           "Content-Type": "multipart/form-data",
         },
       })

@@ -11,6 +11,6 @@
   "LOGIN": "/login",
   "SIGNUP": "/signup",
   "EMAILCONFIRM": "/email-confirm/:id",
-  "REQUEST": "/request",
+  "REQUEST": "/request/:id?",
   "VERIFYCODE": "/verify-code"
 }

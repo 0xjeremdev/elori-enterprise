@@ -4,9 +4,7 @@ import ReactApexChart from "react-apexcharts";
 class CircularChart extends React.Component {
   constructor(props) {
     super(props);
-
     this.state = {
-      series: [75],
       options: {
         chart: {
           height: 320,
@@ -55,7 +53,7 @@ class CircularChart extends React.Component {
               },
               value: {
                 formatter: function(val) {
-                  return parseInt(val)+"%";
+                  return parseInt(val) + "%";
                 },
                 color: "#111",
                 fontSize: "36px",
@@ -80,17 +78,26 @@ class CircularChart extends React.Component {
         stroke: {
           lineCap: "round",
         },
-        labels: [""],
+        labels: ["0/0 approved"],
       },
     };
   }
 
+  componentDidUpdate(prevPros) {
+    const { total, validCount } = this.props;
+    if (total !== prevPros.total || validCount !== prevPros.validCount) {
+      const label = `${this.props.validCount}/${this.props.total} approved`;
+      this.setState({ options: { ...this.state.options, labels: [label] } });
+    }
+  }
+
   render() {
+    const series = (this.props.validCount / this.props.total) * 100;
     return (
       <div id="chart">
         <ReactApexChart
           options={this.state.options}
-          series={this.state.series}
+          series={[series]}
           type="radialBar"
           height={320}
         />

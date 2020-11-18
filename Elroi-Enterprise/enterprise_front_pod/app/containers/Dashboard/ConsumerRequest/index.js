@@ -1,4 +1,4 @@
-import { map } from "lodash";
+import { map, reject } from "lodash";
 import React from "react";
 import {
   Button,
@@ -88,7 +88,7 @@ class ConsumerRequest extends React.Component {
   };
 
   render() {
-    const { activeMenuItem, consumerList, filterStatus } = this.state;
+    const { consumerList, filterStatus } = this.state;
     const selectOptions = [
       { key: "1", value: "week", text: "This week" },
       { key: "2", value: "month", text: "This month" },
@@ -97,6 +97,16 @@ class ConsumerRequest extends React.Component {
     const consumerRenderList = consumerList.filter(
       (item) => item.status === filterStatus
     );
+    const totalRequestsCount = consumerList.length;
+    const rejectedRequestsCount = consumerList.filter(
+      (item) => item.status === REJECT
+    ).length;
+    const reviewRequestsCount = consumerList.filter(
+      (item) => item.status === REVIEW
+    ).length;
+    const completeRequestsCount = consumerList.filter(
+      (item) => item.status === COMPLETE
+    ).length;
     return (
       <Grid>
         <Grid.Row>
@@ -132,14 +142,27 @@ class ConsumerRequest extends React.Component {
                 <Grid.Row>
                   <Grid.Column>
                     <span className="span-dark-blue">
-                      8 requests <span className="span-green">approved</span>{" "}
-                      out of 10
+                      {totalRequestsCount -
+                        reviewRequestsCount -
+                        rejectedRequestsCount}{" "}
+                      requests <span className="span-green">approved</span> out
+                      of {totalRequestsCount}
                     </span>
                   </Grid.Column>
                 </Grid.Row>
                 <Grid.Row>
                   <Grid.Column>
-                    <Progress percent={80} success size="tiny" />
+                    <Progress
+                      percent={
+                        ((totalRequestsCount -
+                          reviewRequestsCount -
+                          rejectedRequestsCount) /
+                          totalRequestsCount) *
+                        100
+                      }
+                      success
+                      size="tiny"
+                    />
                   </Grid.Column>
                 </Grid.Row>
                 <Grid.Row>
@@ -192,7 +215,7 @@ class ConsumerRequest extends React.Component {
                         this.handleDetailModal(item.id);
                       }}
                     >
-                      <RequestItem percent={96} status="success" data={item} />
+                      <RequestItem status="success" data={item} />
                     </Grid.Column>
                   </Grid.Row>
                 ))}
@@ -203,21 +226,6 @@ class ConsumerRequest extends React.Component {
                     </Grid.Column>
                   </Grid.Row>
                 )}
-                {/* <Grid.Row>
-                  <Grid.Column>
-                    <RequestItem percent={96} status="success" />
-                  </Grid.Column>
-                </Grid.Row>
-                <Grid.Row>
-                  <Grid.Column>
-                    <RequestItem percent={60} status="error" />
-                  </Grid.Column>
-                </Grid.Row>
-                <Grid.Row>
-                  <Grid.Column>
-                    <RequestItem percent={80} status="warning" />
-                  </Grid.Column>
-                </Grid.Row> */}
                 <Button fluid attached="bottom">
                   Next Page
                 </Button>
@@ -241,10 +249,30 @@ class ConsumerRequest extends React.Component {
                 </Grid.Row>
               </Grid>
               <Divider />
-              <CircularChart />
+              <CircularChart
+                total={totalRequestsCount}
+                validCount={
+                  totalRequestsCount -
+                  reviewRequestsCount -
+                  rejectedRequestsCount
+                }
+              />
             </Container>
             <Container>
-              <MultiRadialChart />
+              <MultiRadialChart
+                totalValidCount={
+                  totalRequestsCount -
+                  reviewRequestsCount -
+                  rejectedRequestsCount
+                }
+                progressCount={
+                  totalRequestsCount -
+                  reviewRequestsCount -
+                  rejectedRequestsCount -
+                  completeRequestsCount
+                }
+                completeCount={completeRequestsCount}
+              />
             </Container>
           </Grid.Column>
         </Grid.Row>

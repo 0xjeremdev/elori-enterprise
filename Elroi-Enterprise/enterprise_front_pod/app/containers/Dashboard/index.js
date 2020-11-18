@@ -99,7 +99,6 @@ class Dashboard extends React.Component {
   };
 
   logoUpdate = (logoUrl) => {
-    console.log(logoUrl,"============")
     this.setState({logoUrl});
   }
 

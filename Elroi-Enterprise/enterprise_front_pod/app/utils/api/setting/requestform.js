@@ -8,7 +8,6 @@ export const consumerRequestFormApis = {
 };
 
 function setConsumerRequestForm(payload) {
-  const token = localStorage.getItem("access-token");
   const enterprise_id = localStorage.getItem("enterprise_id");
   const {
     logoFile,
@@ -89,7 +88,6 @@ function updateConsumerRequestForm(payload) {
         formData,
         {
           headers: {
-            Authorization: `Bearer ${token}`,
             "Content-Type": "multipart/form-data",
           },
         }
@@ -99,15 +97,10 @@ function updateConsumerRequestForm(payload) {
   });
 }
 
-function getConsumerRequestForm() {
-  const token = localStorage.getItem("access-token");
+function getConsumerRequestForm(enterprise_id) {
   return new Promise((resolve, reject) => {
     axios
-      .get(`${API_ENDPOINT_URL}/enterprise/consumer-request-config/`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
+      .get(`${API_ENDPOINT_URL}/enterprise/consumer-request-config/${enterprise_id}`)
       .then((res) => {
         if (res.data.success) {
           resolve(res.data.data);

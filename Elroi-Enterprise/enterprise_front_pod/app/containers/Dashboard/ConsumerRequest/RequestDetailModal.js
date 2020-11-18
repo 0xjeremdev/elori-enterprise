@@ -2,7 +2,12 @@ import { map } from "lodash";
 import React from "react";
 import { Button, Grid, Modal } from "semantic-ui-react";
 import styled from "styled-components";
-import { COMPLETE, PROCESS, REJECT } from "../../../constants/constants";
+import {
+  COMPLETE,
+  PROCESS,
+  REJECT,
+  REVIEW,
+} from "../../../constants/constants";
 const Container = styled.div`
   & span {
     color: #707683 !important;
@@ -42,6 +47,7 @@ class RequestDetailModal extends React.Component {
                   </Grid.Column>
                 ))}
                 <Grid.Column>
+                  <img src={data.file} />
                   <a href={data.file} target="_blank">
                     Review File
                   </a>
@@ -49,18 +55,48 @@ class RequestDetailModal extends React.Component {
               </Grid.Row>
               <Grid.Row columns={1}>
                 <Grid.Column textAlign="right">
-                  <Button basic color="yellow" onClick={()=>this.props.onUpdate(data.id, null, true)}>
-                    Extend
-                  </Button>
-                  <Button basic color="red" onClick={()=>this.props.onUpdate(data.id, REJECT, false)}>
-                    Reject
-                  </Button>
-                  <Button basic color="blue" onClick={()=>this.props.onUpdate(data.id, PROCESS, false)}>
-                    Approve
-                  </Button>
-                  <Button basic color="teal" onClick={()=>this.props.onUpdate(data.id, COMPLETE, false)}>
-                    Complete
-                  </Button>
+                  {data.status === PROCESS && (
+                    <Button
+                      basic
+                      color="yellow"
+                      onClick={() => this.props.onUpdate(data.id, null, true)}
+                    >
+                      Extend
+                    </Button>
+                  )}
+                  {data.status === REVIEW && (
+                    <Button
+                      basic
+                      color="red"
+                      onClick={() =>
+                        this.props.onUpdate(data.id, REJECT, false)
+                      }
+                    >
+                      Reject
+                    </Button>
+                  )}
+                  {data.status === REVIEW && (
+                    <Button
+                      basic
+                      color="blue"
+                      onClick={() =>
+                        this.props.onUpdate(data.id, PROCESS, false)
+                      }
+                    >
+                      Approve
+                    </Button>
+                  )}
+                  {data.status === PROCESS && (
+                    <Button
+                      basic
+                      color="teal"
+                      onClick={() =>
+                        this.props.onUpdate(data.id, COMPLETE, false)
+                      }
+                    >
+                      Complete
+                    </Button>
+                  )}
                 </Grid.Column>
               </Grid.Row>
             </Grid>

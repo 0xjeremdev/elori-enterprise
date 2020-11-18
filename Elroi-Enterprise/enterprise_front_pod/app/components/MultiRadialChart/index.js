@@ -6,6 +6,9 @@ class MultiRadialChart extends React.Component {
     super(props);
 
     this.state = {
+      total: 0,
+      progress: 0,
+      complete: 0,
       series: [44, 55],
       options: {
         chart: {
@@ -26,18 +29,47 @@ class MultiRadialChart extends React.Component {
               },
               total: {
                 show: true,
-                label: "Last Request Made",
+                label: "0",
                 formatter: function(w) {
                   // By default this function returns the average of all series. The below is just an example to show the use of custom formatter function
-                  return "8/21/20";
+                  return `Total Valid`;
                 },
               },
             },
           },
         },
-        labels: ["# of Requests Made", "Confirmed Requests"],
+        labels: ["# of Progress", "Completed Requests"],
       },
     };
+  }
+
+  componentDidUpdate(prevPros) {
+    const { totalValidCount, progressCount, completeCount } = this.props;
+    if (
+      totalValidCount !== prevPros.totalValidCount ||
+      progressCount !== prevPros.progressCount ||
+      completeCount !== prevPros.completeCount
+    ) {
+      this.setState({
+        ...this.state,
+        total: totalValidCount,
+        progress: progressCount,
+        complete: completeCount,
+        series: [progressCount, completeCount],
+        options: {
+          ...this.state.options,
+          plotOptions: {
+            ...this.state.options.plotOptions,
+            radialBar: {
+              ...this.state.options.plotOptions.radialBar,
+              dataLabels: { ...this.state.options.plotOptions.radialBar.dataLabels, total: {
+                ...this.state.options.plotOptions.radialBar.dataLabels.total, label: `${totalValidCount}`
+              } },
+            },
+          },
+        },
+      });
+    }
   }
 
   render() {

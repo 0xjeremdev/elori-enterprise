@@ -1,13 +1,22 @@
 import React from "react";
 import { Button, Grid, Progress } from "semantic-ui-react";
 import styled from "styled-components";
-import { COMPLETE, PROCESS, REJECT, REVIEW } from "../../../constants/constants";
+import {
+  COMPLETE,
+  PROCESS,
+  REJECT,
+  REVIEW,
+} from "../../../constants/constants";
 
 const Container = styled.div`
   border-radius: 4px;
   background: #ffffff;
   box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.08);
   cursor: pointer;
+  .title {
+    font-size: 20px;
+    color: #39a5d1;
+  }
   p,
   .span-grey {
     color: #4c5862;
@@ -23,7 +32,7 @@ class RequestItem extends React.Component {
     const receiveDate = new Date(request_date);
     const diffTime = Math.abs(today - receiveDate);
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return 45 - diffDays;
+    return diffDays;
   };
 
   render() {
@@ -34,15 +43,11 @@ class RequestItem extends React.Component {
         <Grid>
           <Grid.Row>
             <Grid.Column width={4} verticalAlign="middle" textAlign="center">
-              <p>
-                {data.first_name} {data.last_name}
-              </p>
-              <Button positive attached="left">
-                YES
-              </Button>
-              <Button negative attached="right">
-                NO
-              </Button>
+              <div>
+                <span className="title">
+                  {data.first_name} {data.last_name}
+                </span>
+              </div>
             </Grid.Column>
             <Grid.Column width={8} verticalAlign="middle">
               <Grid>
@@ -78,7 +83,7 @@ class RequestItem extends React.Component {
                           : data.status === PROCESS
                           ? "yellow"
                           : data.status === COMPLETE
-                          ? "Blue"
+                          ? "blue"
                           : "red"
                       }
                     >
@@ -93,7 +98,7 @@ class RequestItem extends React.Component {
                   <Grid.Column>
                     <span className="span-grey">
                       Days Left to Process:{" "}
-                      {this.calcRemainingDate(data.request_date)}
+                      {this.calcRemainingDate(data.process_end_date)}
                     </span>
                   </Grid.Column>
                 </Grid.Row>

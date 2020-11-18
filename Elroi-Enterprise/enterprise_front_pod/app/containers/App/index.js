@@ -23,7 +23,7 @@ export default function App() {
       <Route exact path={routes.LOGIN} component={Login} />
       <Route exact path={routes.SIGNUP} component={Signup} />
       <Route exact path={routes.EMAILCONFIRM} component={EmailConfirm} />
-      <Route exact path={routes.REQUEST} component={Request} />
+      <Route path={routes.REQUEST} component={Request} />
       <PrivateRoute exact path={routes.VERIFYCODE} component={VerifyCode} />
       <PrivateRoute path={routes.DASHBOARD} component={Dashboard} />
     </Switch>

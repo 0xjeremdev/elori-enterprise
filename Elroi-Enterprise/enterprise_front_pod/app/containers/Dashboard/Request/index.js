@@ -11,7 +11,6 @@ import logo from "../../../assets/images/logo.png";
 import ToggleButton from "../../../components/ToggleButton";
 import Dropzone from "../../../components/Dropzone";
 import { consumerRequestFormApis } from "../../../utils/api/setting/requestform";
-import { map } from "lodash";
 import { consumerRequestApis } from "../../../utils/api/consumer/request";
 import ConfirmModal from "./ConfirmModal";
 
@@ -135,7 +134,8 @@ class Request extends React.Component {
     request_type: "",
     file: null,
     additional_fields: [],
-    confirmModal: false
+    confirmModal: false,
+    sending: false,
   };
 
   onCaptcha = (value) => {
@@ -168,7 +168,8 @@ class Request extends React.Component {
   };
 
   componentDidMount() {
-    consumerRequestFormApis.getConsumerRequestForm().then((res) => {
+    const { id } = this.props.match.params;
+    consumerRequestFormApis.getConsumerRequestForm(id).then((res) => {
       this.initState(res);
     });
   }
@@ -184,9 +185,11 @@ class Request extends React.Component {
   };
 
   handleUpload = () => {
+    const { id } = this.props.match.params;
+    this.setState({ sending: true });
     consumerRequestApis
-      .sendConsumerRequest(this.state)
-      .then((res) => this.setState({confirmModal: true}));
+      .sendConsumerRequest(this.state, id)
+      .then((res) => this.setState({ confirmModal: true, sending: false }));
   };
 
   render() {
@@ -396,6 +399,7 @@ class Request extends React.Component {
                 size="medium"
                 disabled={!this.state.enableSubmit}
                 onClick={this.handleUpload}
+                loading={this.state.sending}
               >
                 Submit!
               </Button>

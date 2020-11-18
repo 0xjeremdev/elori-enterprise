@@ -72,11 +72,11 @@ class ConfigureRequest extends React.Component {
   };
 
   componentDidMount() {
+    const enterprise_id = localStorage.getItem("enterprise_id")
     consumerRequestFormApis
-      .getConsumerRequestForm()
+      .getConsumerRequestForm(enterprise_id)
       .then((res) => {
-        console.log(res)
-          this.initState(res);
+        this.initState(res);
       })
       .catch((err) => console.log("err", err));
   }
@@ -139,6 +139,10 @@ class ConfigureRequest extends React.Component {
       backImgBS64,
       additionalQuestions,
     } = this.state;
+    const enterprise_id = localStorage.getItem("enterprise_id");
+    const fullUrl = window.location.href;
+    const arr = fullUrl.split("/");
+    const requestUrl = `${arr[0]}//${arr[2]}/request/${enterprise_id}`;
     return (
       <Container>
         <Grid.Row verticalAlign="middle">
@@ -224,14 +228,9 @@ class ConfigureRequest extends React.Component {
             <Form>
               <Form.Input
                 label="Website Launched to"
-                onChange={(e, { value }) => this.setState({ lanchUrl: value })}
-                value={this.state.lanchUrl}
+                value={requestUrl}
               />
             </Form>
-          </Grid.Column>
-          <Grid.Column width={6}>
-            <br />
-            <Button color="blue">Submit</Button>
           </Grid.Column>
         </Grid.Row>
         <Grid.Row>
