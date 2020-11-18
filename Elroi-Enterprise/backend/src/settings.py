@@ -229,11 +229,20 @@ MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 UPLOAD_FOLDER = os.path.join(BASE_DIR, "media/requests_docs")
 UPLOAD_USER_GUIDE_FOLDER = os.path.join(BASE_DIR, "media/user_guide")
 
-FRONTEND_URL = get_env_value("FRONTEND_URL")
+# FRONTEND_URL = get_env_value("FRONTEND_URL")
 
-DEFAULT_FROM_EMAIL = get_env_value("DEFAULT_FROM_EMAIL")
-EMAIL_HOST = get_env_value("EMAIL_HOST")
-EMAIL_HOST_USER = get_env_value("EMAIL_HOST_USER")
-EMAIL_HOST_PASSWORD = get_env_value("EMAIL_HOST_PASSWORD")
-EMAIL_PORT = get_env_value("EMAIL_PORT")
-EMAIL_USE_TLS = get_env_value("EMAIL_USE_TLS")
+# DEFAULT_FROM_EMAIL = get_env_value("DEFAULT_FROM_EMAIL")
+# EMAIL_HOST = get_env_value("EMAIL_HOST")
+# EMAIL_HOST_USER = get_env_value("EMAIL_HOST_USER")
+# EMAIL_HOST_PASSWORD = get_env_value("EMAIL_HOST_PASSWORD")
+# EMAIL_PORT = get_env_value("EMAIL_PORT")
+# EMAIL_USE_TLS = get_env_value("EMAIL_USE_TLS")
+
+EMAIL_HOST = "smtp.sendgrid.net"
+EMAIL_HOST_USER = "apikey"
+EMAIL_HOST_PASSWORD = "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"
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+DEFAULT_FROM_EMAIL = "no-reply@elroi.ai"
+
+FRONTEND_URL = "http://52.117.242.243:8084"
