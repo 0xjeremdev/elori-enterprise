@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.template.loader import render_to_string
 
-from api.v1.accounts.models import Customer, Enterprise
+from api.v1.accounts.models import Enterprise
 from api.v1.accounts.utlis import SendUserEmail
 from api.v1.analytics.mixins import LoggingMixin
 from api.v1.consumer_request.models import ConsumerRequest

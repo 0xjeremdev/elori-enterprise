@@ -1,3 +1,4 @@
+import uuid
 from django.contrib.postgres.fields import JSONField
 from django.db import models
 
@@ -5,9 +6,10 @@ from api.v1.accounts.models import Account, Enterprise
 
 
 class UserGuideModel(models.Model):
-    enterprise = models.ForeignKey(
-        Enterprise, on_delete=models.SET_NULL, null=True, blank=True
-    )
+    enterprise = models.ForeignKey(Enterprise,
+                                   on_delete=models.SET_NULL,
+                                   null=True,
+                                   blank=True)
     elroi_id = models.CharField(
         max_length=9,
         null=True,
@@ -15,9 +17,10 @@ class UserGuideModel(models.Model):
     )
     title = models.CharField(max_length=255, blank=True, null=True)
     content = models.TextField(null=True, blank=True)
-    created_by = models.ForeignKey(
-        Account, on_delete=models.SET_NULL, null=True, blank=True
-    )
+    created_by = models.ForeignKey(Account,
+                                   on_delete=models.SET_NULL,
+                                   null=True,
+                                   blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -28,7 +31,8 @@ class UserGuideModel(models.Model):
         if self.enterprise:
             self.elroi_id = self.enterprise.elroi_id
         if not self.enterprise and self.elroi_id:
-            self.enterprise = Enterprise.objects.get(elroi_id__exact=self.elroi_id)
+            self.enterprise = Enterprise.objects.get(
+                elroi_id__exact=self.elroi_id)
         super(UserGuideModel, self).save(*args, **kwargs)
 
     class Meta:
@@ -78,9 +82,9 @@ class CustomerConfiguration(models.Model):
 
 
 class EnterpriseConfigurationModel(models.Model):
-    enterprise_id = models.ForeignKey(
-        Enterprise, related_name="configuration", on_delete=models.CASCADE
-    )
+    enterprise_id = models.ForeignKey(Enterprise,
+                                      related_name="configuration",
+                                      on_delete=models.CASCADE)
     logo = models.FileField()
     site_color = models.JSONField(null=True, blank=True)
     site_theme = models.JSONField(null=True, blank=True)
@@ -97,4 +101,18 @@ class EnterpriseConfigurationModel(models.Model):
 
     class Meta:
         db_table = "enterprise_configuration"
+        ordering = ["-created_at"]
+
+
+class EnterpriseInviteModel(models.Model):
+    invite_key = models.UUIDField(default=uuid.uuid4, editable=False)
+    enterprise = models.ForeignKey(Enterprise, on_delete=models.CASCADE)
+    email = models.EmailField(verbose_name="Email", max_length=60)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.email
+
+    class Meta:
+        db_table = "enterprise_invite"
         ordering = ["-created_at"]

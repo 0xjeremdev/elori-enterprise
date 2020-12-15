@@ -1,7 +1,9 @@
 import pyotp
 import os
+import string
 from django.core.mail import EmailMessage, send_mail
 from django.conf import settings
+from rest_framework.exceptions import AuthenticationFailed, ValidationError
 
 
 class SendUserEmail:
@@ -30,12 +32,11 @@ def validate_password_strength(password):
     flag = False
 
     if len(password) < min_length:
-        errors.append(
-            _("Password must be at least {0} characters "
-              "long.").format(min_length))
+        errors.append(f"Password must be at least {min_length} characters "
+                      "long.")
         flag = True
 
-    # check for 2 digits
+    # check for 1 digits
     if not any(c.isdigit() for c in password):
         errors.append("Password must contain at least 1 digit.")
         flag = True
@@ -48,6 +49,14 @@ def validate_password_strength(password):
     # check for uppercase letter
     if not any(c.islower() for c in password):
         errors.append("Password must contain at least 1 lowecase letter.")
+        flag = True
+
+    # check for special letter
+    special_characters = string.punctuation
+    special_bools = list(map(lambda char: char in special_characters,
+                             password))
+    if not any(special_bools):
+        errors.append("Password must contain at least 1 special letter.")
         flag = True
     if flag:
         raise ValidationError(errors)

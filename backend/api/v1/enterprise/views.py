@@ -4,29 +4,26 @@ from django.conf import settings
 from django.template.loader import render_to_string
 from django.urls import reverse
 from rest_framework import mixins, permissions, status
+from rest_framework.exceptions import AuthenticationFailed, ValidationError
 from rest_framework.generics import GenericAPIView
 from rest_framework.parsers import MultiPartParser, FormParser, FileUploadParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from django.utils.encoding import force_bytes, force_text
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 
 from api.v1.accounts.utlis import SendUserEmail
 from api.v1.analytics.mixins import LoggingMixin
 from api.v1.assessment.models import EnterpriseQuestionnaire, Assessment
 from api.v1.consumer_request.models import ConsumerRequest
-from api.v1.enterprise.models import (
-    UserGuideModel,
-    CustomerConfiguration,
-    EnterpriseConfigurationModel,
-)
+from api.v1.enterprise.models import (UserGuideModel, CustomerConfiguration,
+                                      EnterpriseConfigurationModel,
+                                      EnterpriseInviteModel)
 from api.v1.enterprise.serializers import (
-    UserGuideSerializer,
-    CustomerConfigurationSerializer,
-    CustomerSummarizeSerializer,
-    RequestTrackerSerializer,
-    EnterpriseConfigurationSerializer,
-    FileSerializer,
-    EnterpriseAccountSettingsSerializer,
-)
+    UserGuideSerializer, CustomerConfigurationSerializer,
+    CustomerSummarizeSerializer, RequestTrackerSerializer,
+    EnterpriseConfigurationSerializer, FileSerializer,
+    EnterpriseAccountSettingsSerializer, EnterpriseInviteSerializer)
 
 
 class UserGuide(LoggingMixin, mixins.ListModelMixin, mixins.CreateModelMixin,
@@ -406,3 +403,78 @@ class EnterpriseAccountSettings(GenericAPIView):
         else:
             return Response({"error": "Not allowed to continue"},
                             status=status.HTTP_400_BAD_REQUEST)
+
+
+class EnterpriseInvitation(GenericAPIView):
+    """
+    Send Invitation to Customer
+    """
+    serializer_class = EnterpriseInviteSerializer
+    permission_classes = (permissions.IsAuthenticated, )
+
+    def post(self, request, *args, **kwargs):
+        user = request.user
+        if hasattr(user, "enterprise"):
+            enterprise = user.enterprise
+            serializer = self.serializer_class(
+                data=request.data, context={"enterprise": enterprise})
+            if serializer.is_valid():
+                invite = serializer.save()
+                # message_body = render_to_string(
+                #     "email/enterprise/enterprise_invite.html", {
+                #         "user_full_name": user.full_name,
+                #         "email": invite["email"]
+                #     })
+                # email_data = {
+                #     "email_body": message_body,
+                #     "to_email": user.email,
+                #     "email_subject": "Invitation Sent",
+                # }
+                # SendUserEmail.send_email(email_data)
+                join_url = f"{settings.FRONTEND_URL}/customer-join/{urlsafe_base64_encode(force_bytes(invite.invite_key))}"
+                message_body = render_to_string(
+                    "email/customer/customer_invite.html", {
+                        "url": join_url,
+                    })
+                email_data = {
+                    "email_body": message_body,
+                    "to_email": invite.email,
+                    "email_subject": "Join Invitation",
+                }
+                SendUserEmail.send_email(email_data)
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            else:
+                return Response(serializer.errors,
+                                status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response({"error": "Not allowed to continue"},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+
+class GetInvitationInfo(GenericAPIView):
+    """
+    Get Invitation Info by UUID
+    """
+    permission_classes = (permissions.AllowAny, )
+
+    def get(self, request, *args, **kwargs):
+        invite_key = force_text(urlsafe_base64_decode(kwargs.get("uidb64")))
+        invite = EnterpriseInviteModel.objects.filter(
+            invite_key=invite_key).first()
+        if invite == None:
+            raise ValidationError("Invitation isn't exist",
+                                  code=status.HTTP_400_BAD_REQUEST)
+        enterprise_data = EnterpriseAccountSettingsSerializer(
+            invite.enterprise, context={
+                "request": request
+            }).data
+        data = {
+            "enterprise": {
+                "id": invite.enterprise.pk,
+                "elroi_id": invite.enterprise.elroi_id,
+                "name": invite.enterprise.name,
+                "logo": enterprise_data["logo"]
+            },
+            "email": invite.email
+        }
+        return Response(data, status=status.HTTP_200_OK)

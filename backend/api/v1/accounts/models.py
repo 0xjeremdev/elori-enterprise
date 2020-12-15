@@ -108,72 +108,6 @@ class Account(AbstractUser):
         return f"{self.first_name} {self.last_name}"
 
 
-""" customers table """
-
-
-class Customer(models.Model):
-    user = models.OneToOneField(
-        Account,
-        related_name="customer",
-        on_delete=models.CASCADE,
-        null=True,
-        blank=True,
-    )
-    elroi_id = models.CharField(max_length=9,
-                                db_index=True,
-                                unique=True,
-                                null=True,
-                                blank=True)
-    file = models.FileField(blank=True, null=True)
-    email = models.EmailField(verbose_name="Email",
-                              max_length=60,
-                              unique=True,
-                              null=True,
-                              blank=True)
-    first_name = models.CharField(max_length=40, null=True)
-    last_name = models.CharField(max_length=40, null=True)
-    state_resident = models.BooleanField(default=False)
-    additional_fields = models.JSONField(null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return self.elroi_id
-
-    def profile(self):
-        return "Customer"
-
-    def full_name(self):
-        return f"{self.first_name} {self.last_name}"
-
-    class Meta:
-        db_table = "customers"
-
-
-""" method used to update elroi_id when new user is created """
-
-
-def update_customer_elroi_id(sender, instance, created, **kwargs):
-    if created:
-        token = generate_id(prefix="C")
-        elroi_id = check_unique_customer_elroi_id(token)
-        instance.elroi_id = elroi_id
-        instance.save()
-
-
-""" check and generate unique elroi_id"""
-
-
-def check_unique_customer_elroi_id(elroi_id):
-    try:
-        Customer.objects.get(elroi_id__exact=elroi_id)
-        elroi_id = generate_id(prefix="C")
-        return check_unique_customer_elroi_id(elroi_id)
-    except Customer.DoesNotExist:
-        return elroi_id
-
-
-"""call signal to update elroi id when account is created"""
-post_save.connect(update_customer_elroi_id, sender=Customer)
 """ enterprises table """
 
 
@@ -272,6 +206,78 @@ def check_unique_enterprise_elroi_id(check_id):
 
 post_save.connect(update_enterprise_elroi_id, sender=Enterprise)
 """generate random id ( characters+ digits)"""
+
+"------------------------------------------------------------------"
+""" customers table """
+
+
+class Staff(models.Model):
+    user = models.OneToOneField(
+        Account,
+        related_name="staff",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+    )
+    enterprise = models.OneToOneField(
+        Enterprise,
+        related_name="staff",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+    )
+    elroi_id = models.CharField(max_length=9,
+                                db_index=True,
+                                unique=True,
+                                null=True,
+                                blank=True)
+    email = models.EmailField(verbose_name="Email",
+                              max_length=60,
+                              unique=True,
+                              null=True,
+                              blank=True)
+    first_name = models.CharField(max_length=40, null=True)
+    last_name = models.CharField(max_length=40, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.elroi_id
+
+    def profile(self):
+        return "Staff"
+
+    def full_name(self):
+        return f"{self.first_name} {self.last_name}"
+
+    class Meta:
+        db_table = "staffs"
+
+
+""" method used to update elroi_id when new user is created """
+
+
+def update_staff_elroi_id(sender, instance, created, **kwargs):
+    if created:
+        token = generate_id(prefix="E")
+        elroi_id = check_unique_staff_elroi_id(token)
+        instance.elroi_id = elroi_id
+        instance.save()
+
+
+""" check and generate unique elroi_id"""
+
+
+def check_unique_staff_elroi_id(elroi_id):
+    try:
+        Staff.objects.get(elroi_id__exact=elroi_id)
+        elroi_id = generate_id(prefix="E")
+        return check_unique_staff_elroi_id(elroi_id)
+    except Staff.DoesNotExist:
+        return elroi_id
+
+
+"""call signal to update elroi id when account is created"""
+post_save.connect(update_staff_elroi_id, sender=Staff)
 
 
 def generate_id(prefix="C"):

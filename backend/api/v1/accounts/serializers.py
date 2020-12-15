@@ -14,7 +14,7 @@ from rest_framework.validators import UniqueValidator
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 
-from api.v1.accounts.models import Account, Customer, Enterprise
+from api.v1.accounts.models import Account, Staff, Enterprise
 from .utlis import validate_password_strength
 
 
@@ -100,36 +100,46 @@ class LoginSerializer(serializers.ModelSerializer):
         }
 
 
-class CustomerSerializer(serializers.ModelSerializer):
+class StaffSerializer(serializers.Serializer):
+    enterprise_elroi_id = serializers.CharField(required=True)
     email = serializers.EmailField(
         min_length=6,
         max_length=80,
         required=True,
-        validators=[UniqueValidator(queryset=Customer.objects.all())])
+        validators=[UniqueValidator(queryset=Account.objects.all())])
     first_name = serializers.CharField(required=True)
     last_name = serializers.CharField(required=True)
-    state_resident = serializers.BooleanField(required=True)
     two_fa_valid = serializers.BooleanField(read_only=True, required=False)
     password = serializers.CharField(min_length=8, write_only=True)
-    elroi_id = serializers.CharField(required=False)
-    file = serializers.FileField()
 
     class Meta:
-        model = Customer
+        model = Staff
         fields = '__all__'
         extra_kwargs = {'password': {'write_only': True}}
 
+    def validate(self, data):
+        if validate_password_strength(data.get("password")):
+            return data
+        return None
+
     def create(self, validated_data):
-        try:
-            user = Account.objects.create_front_user(
-                validated_data['email'], validated_data['password'])
-            del validated_data['password']
-            customer = Customer.objects.create(user=user, **validated_data)
-            return customer
-        except IntegrityError as e:
-            raise ValidationError(
-                'This email is already registered in our database.',
-                code=status.HTTP_400_BAD_REQUEST)
+        enterprise = Enterprise.objects.filter(
+            elroi_id=validated_data['enterprise_elroi_id']).first()
+        if enterprise == None:
+            raise ValidationError("Enterprise doesn't exist",
+                                  code=status.HTTP_400_BAD_REQUEST)
+        user = Account.objects.create_front_user(validated_data['email'],
+                                                 validated_data['password'])
+        user.first_name = validated_data['first_name']
+        user.last_name = validated_data['last_name']
+        user.save()
+        del validated_data['password']
+        del validated_data['enterprise_elroi_id']
+
+        staff = Staff.objects.create(user=user,
+                                     enterprise=enterprise,
+                                     **validated_data)
+        return staff
 
 
 """ register enterprise class serializer """
@@ -154,6 +164,11 @@ class RegisterEnterpriseSerializer(serializers.ModelSerializer):
         fields = '__all__'
         extra_kwargs = {'password': {'write_only': True}}
 
+    def validate(self, data):
+        if validate_password_strength(data.get("password")):
+            return True
+        return True
+
     def create(self, validated_data):
         try:
             user = Account.objects.create_front_user(
@@ -168,34 +183,6 @@ class RegisterEnterpriseSerializer(serializers.ModelSerializer):
             raise ValidationError(
                 'This email is already registered in our database.',
                 code=status.HTTP_400_BAD_REQUEST)
-
-
-""" user serializer class """
-
-
-class UserSerializer(serializers.ModelSerializer):
-    email = serializers.EmailField(required=True)
-    state_resident = serializers.BooleanField()
-    first_name = serializers.CharField()
-    last_name = serializers.CharField()
-    password = serializers.CharField(min_length=8,
-                                     write_only=True,
-                                     required=True)
-
-    class Meta:
-        model = Account
-        fields = ('email', 'state_resident', 'first_name', 'last_name',
-                  'password')
-        extra_kwargs = {'password': {'write_only': True}}
-
-    def create(self, validated_data):
-        password = validated_data.pop('password', None)
-        instance = self.Meta.model(**validated_data)
-        if password is not None:
-            instance.set_password(password)
-
-        instance.save()
-        return instance
 
 
 class EmailVerificationSerializer(serializers.ModelSerializer):

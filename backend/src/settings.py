@@ -245,4 +245,4 @@ EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 DEFAULT_FROM_EMAIL = "no-reply@elroi.ai"
 
-FRONTEND_URL = "http://10.209.18.180:8084"
+FRONTEND_URL = get_env_value("FRONTEND_URL")

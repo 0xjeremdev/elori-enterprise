@@ -1,17 +1,10 @@
 from django.urls import path
 
 from api.v1.enterprise.views import (
-    UserGuide,
-    CustomerConfiguration,
-    CustomerSummarize,
-    RequestTracker,
-    NotifyCustomer,
-    ExtendedVsNewRequests,
-    EnterpriseConfiguration,
-    UserGuideUpload,
-    EnterpriseAssessmentShareLink,
-    EnterpriseAccountSettings,
-)
+    UserGuide, CustomerConfiguration, CustomerSummarize, RequestTracker,
+    NotifyCustomer, ExtendedVsNewRequests, EnterpriseConfiguration,
+    UserGuideUpload, EnterpriseAssessmentShareLink, EnterpriseAccountSettings,
+    EnterpriseInvitation, GetInvitationInfo)
 
 urlpatterns = [
     path('user-guide/', UserGuide.as_view(), name="user_guide"),
@@ -41,4 +34,10 @@ urlpatterns = [
     path('settings',
          EnterpriseAccountSettings.as_view(),
          name="enterprise_account_settings"),
+    path('invite',
+         EnterpriseInvitation.as_view(),
+         name="enterprise_invite_post"),
+    path('invite/<uidb64>',
+         GetInvitationInfo.as_view(),
+         name="enterprise_invite_get"),
 ]

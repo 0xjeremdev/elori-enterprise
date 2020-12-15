@@ -1,15 +1,12 @@
 import os
 
-from rest_framework import serializers
-
-from api.v1.accounts.models import Enterprise
+from rest_framework import serializers, status
+from rest_framework.exceptions import AuthenticationFailed, ValidationError
+from api.v1.accounts.models import Enterprise, Account
 from api.v1.consumer_request.models import ConsumerRequest
-from api.v1.enterprise.models import (
-    UserGuideModel,
-    CustomerConfiguration,
-    EnterpriseConfigurationModel,
-    UserGuideUploads,
-)
+from api.v1.enterprise.models import (UserGuideModel, CustomerConfiguration,
+                                      EnterpriseConfigurationModel,
+                                      UserGuideUploads, EnterpriseInviteModel)
 
 
 class UserGuideSerializer(serializers.ModelSerializer):
@@ -71,6 +68,7 @@ class EnterpriseConfigurationSerializer(serializers.ModelSerializer):
     company_name = serializers.CharField(required=False)
     resident_state = serializers.BooleanField(required=False)
     additional_configuration = serializers.JSONField(required=False)
+
     # logo = serializers.SerializerMethodField()
     # background_image = serializers.SerializerMethodField()
 
@@ -108,6 +106,7 @@ class EnterpriseAccountSettingsSerializer(serializers.ModelSerializer):
     address = serializers.CharField(required=False)
     company_name = serializers.CharField(required=False)
     timezone = serializers.CharField(required=False)
+
     # logo_url = serializers.SerializerMethodField(required=False)
 
     # def get_logo_url(self, obj):
@@ -134,3 +133,23 @@ class EnterpriseAccountSettingsSerializer(serializers.ModelSerializer):
             "company_name",
             "timezone",
         ]
+
+
+class EnterpriseInviteSerializer(serializers.ModelSerializer):
+    email = serializers.EmailField(min_length=6, max_length=80, required=True)
+
+    class Meta:
+        model = EnterpriseInviteModel
+        fields = ["email"]
+
+    def validate(self, data):
+        if Account.objects.filter(email__iexact=data.get('email')).exists():
+            raise ValidationError("Email already exist",
+                                  code=status.HTTP_400_BAD_REQUEST)
+        return super().validate(data)
+
+    def create(self, validated_data):
+        enterprise = self.context.get("enterprise")
+        invite = EnterpriseInviteModel.objects.create(enterprise=enterprise,
+                                                      **validated_data)
+        return invite

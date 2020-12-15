@@ -6,7 +6,7 @@ from django.conf import settings
 from django.db import models
 from django.utils.timezone import utc
 
-from api.v1.accounts.models import Account, Enterprise, Customer
+from api.v1.accounts.models import Account, Enterprise
 from api.v1.consumer_request.utils import gen_random_id
 
 
