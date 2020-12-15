@@ -11,6 +11,7 @@
   "LOGIN": "/login",
   "SIGNUP": "/signup",
   "EMAILCONFIRM": "/email-confirm/:id",
+  "STAFFINVITE": "/customer-join/:id",
   "REQUEST": "/request/:id?",
   "VERIFYCODE": "/verify-code"
 }

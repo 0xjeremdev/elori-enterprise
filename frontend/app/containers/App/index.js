@@ -13,6 +13,7 @@ import Login from '../LoginPage';
 import Request from '../Dashboard/Request';
 import Signup from '../LoginPage/SignupPage';
 import EmailConfirm from '../LoginPage/EmailConfirm';
+import StaffConfirm from '../LoginPage/StaffConfirm';
 import VerifyCode from '../LoginPage/VerifyCode';
 import Dashboard from '../Dashboard';
 import PrivateRoute from '../../components/PrivateRoute';
@@ -23,6 +24,7 @@ export default function App() {
       <Route exact path={routes.LOGIN} component={Login} />
       <Route exact path={routes.SIGNUP} component={Signup} />
       <Route exact path={routes.EMAILCONFIRM} component={EmailConfirm} />
+      <Route exact path={routes.STAFFINVITE} component={StaffConfirm} />
       <Route path={routes.REQUEST} component={Request} />
       <PrivateRoute exact path={routes.VERIFYCODE} component={VerifyCode} />
       <PrivateRoute path={routes.DASHBOARD} component={Dashboard} />

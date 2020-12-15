@@ -21,13 +21,18 @@ const register = ({
   newUserPwd,
 }) => {
   try {
+    const enterprise_elroi_id = localStorage.getItem("enterprise_elroi_id");
+    const apiUrl = enterprise_elroi_id
+      ? `${API_ENDPOINT_URL}/register/staff/`
+      : `${API_ENDPOINT_URL}/register/enterprise/`;
     return axios
-      .post(`${API_ENDPOINT_URL}/register/enterprise/`, {
+      .post(apiUrl, {
         email: newUserEmail,
         password: newUserPwd,
         name: newUserName,
         first_name: newUserFName,
         last_name: newUserLName,
+        enterprise_elroi_id: enterprise_elroi_id || undefined,
         state_resident: true,
       })
       .then((res) => {
@@ -61,6 +66,7 @@ const login = (email, password) => {
           elroi_id: res.data.elroi_id,
           enterprise_id: res.data.enterprise_id,
           full_name: res.data.full_name,
+          profile: res.data.profile,
         });
         setToken(res.data.tokens);
         return Promise.resolve({ success: true, data: res.data });
@@ -123,6 +129,7 @@ const setUserData = ({
   enterprise_id,
   full_name,
   state_resident,
+  profile,
 }) => {
   try {
     console.log(email, elroi_id, full_name, state_resident);
@@ -131,6 +138,7 @@ const setUserData = ({
     localStorage.setItem("enterprise_id", enterprise_id);
     localStorage.setItem("full_name", full_name);
     localStorage.setItem("state_resident", state_resident);
+    localStorage.setItem("profile", profile);
     return true;
   } catch (error) {
     return false;
@@ -156,6 +164,7 @@ const clearUserData = () => {
     localStorage.removeItem("elroi_id");
     localStorage.removeItem("access-token");
     localStorage.removeItem("refresh-token");
+    localStorage.removeItem("enterprise_elroi_id");
     return true;
   } catch (error) {
     return false;
@@ -164,6 +173,9 @@ const clearUserData = () => {
 
 export const emailVerify = (token) =>
   axios.get(`${API_ENDPOINT_URL}/email-verify/?token=${token}`);
+
+export const customerVerify = (token) =>
+  axios.get(`${API_ENDPOINT_URL}/enterprise/invite/${token}`);
 
 export const sendVerifyCode = () => {
   const token = localStorage.getItem("access-token");

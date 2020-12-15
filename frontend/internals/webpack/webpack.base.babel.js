@@ -115,8 +115,8 @@ module.exports = (options) => ({
       NODE_ENV: "development",
       API_ENDPOINT:
         options.mode === "development"
-          ? "http://192.168.0.146:8082/api/v1"
-          : "http://10.209.18.180:8082/api/v1",
+          ? "http://192.168.0.147:8082/api/v1"
+          : "https://api.enterprise.com/api/v1",
     }),
   ]),
   resolve: {

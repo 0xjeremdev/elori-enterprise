@@ -5,6 +5,7 @@ import noImage from "../../../../assets/images/no-img.png";
 import ColorPicker from "../../../../components/ColorPicker";
 import { timezoneOptions } from "../../../../constants/types";
 import { enterpriseSettingApis } from "../../../../utils/api/setting/enterprise";
+import AddUserModal from "./AddUserModal";
 
 const Container = styled(Grid)`
   label,
@@ -38,6 +39,7 @@ class AccountSetting extends React.Component {
     companyName: "",
     address: "",
     timezone: "",
+    addUserModal: false,
   };
 
   componentDidMount() {
@@ -95,6 +97,11 @@ class AccountSetting extends React.Component {
     enterpriseSettingApis
       .setEnterpriseSetting(this.state)
       .then((res) => this.initState(res.data));
+  };
+
+  onInvite = (email) => {
+    this.setState({ addUserModal: false });
+    enterpriseSettingApis.sendUserInvite(email).then((res) => console.log(res));
   };
 
   render() {
@@ -182,7 +189,10 @@ class AccountSetting extends React.Component {
             </label>
           </Grid.Column>
           <Grid.Column width={4}>
-            <Button color="blue">
+            <Button
+              color="blue"
+              onClick={() => this.setState({ addUserModal: true })}
+            >
               <Icon name="plus" /> Add User
             </Button>
           </Grid.Column>
@@ -230,6 +240,11 @@ class AccountSetting extends React.Component {
             </Button>
           </Grid.Column>
         </Grid.Row>
+        <AddUserModal
+          open={this.state.addUserModal}
+          onInvite={this.onInvite}
+          onClose={() => this.setState({ addUserModal: false })}
+        />
       </Container>
     );
   }
