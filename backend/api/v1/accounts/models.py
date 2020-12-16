@@ -58,6 +58,7 @@ class Account(AbstractUser):
     company_name = models.CharField(max_length=255, null=True, blank=True)
     timezone = models.CharField(max_length=20, null=True, blank=True)
     otp_verified = models.BooleanField(default=False)
+    is_2fa_active = models.BooleanField(default=False)
     is_admin = models.BooleanField(default=False)
     is_active = models.BooleanField(default=False)
     is_verified = models.BooleanField(default=False)
@@ -139,6 +140,10 @@ class Enterprise(models.Model):
     first_name = models.CharField(max_length=40, null=True)
     last_name = models.CharField(max_length=40, null=True)
     web = models.CharField(max_length=255, blank=True, null=True)
+    time_frame = models.CharField(max_length=255,
+                                  null=True,
+                                  blank=True,
+                                  default="both")
     trial_start = models.DateTimeField(blank=True, null=True)
     trial_end = models.DateTimeField(blank=True, null=True)
     current_plan_end = models.DateTimeField(blank=True, null=True)

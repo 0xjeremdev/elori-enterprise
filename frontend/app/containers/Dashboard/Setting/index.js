@@ -4,6 +4,7 @@ import { Container, Tab } from "semantic-ui-react";
 import styled from "styled-components";
 import AccountSetting from "./AccountSetting";
 import ConfigureRequest from "./ConfigureRequest";
+import EmailCampaign from "./EmailCampaign";
 import UserSetting from "./UserSetting";
 
 const ContentContainer = styled(Container)`
@@ -67,6 +68,14 @@ class Setting extends React.Component {
         render: () => (
           <Tab.Pane>
             <ConfigureRequest />
+          </Tab.Pane>
+        ),
+      },
+      {
+        menuItem: "Email Campaign",
+        render: () => (
+          <Tab.Pane>
+            <EmailCampaign />
           </Tab.Pane>
         ),
       },

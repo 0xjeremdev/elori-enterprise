@@ -3,7 +3,7 @@ import { Button, Form, Grid, Icon, Image } from "semantic-ui-react";
 import styled from "styled-components";
 import noImage from "../../../../assets/images/no-img.png";
 import ColorPicker from "../../../../components/ColorPicker";
-import { timezoneOptions } from "../../../../constants/types";
+import { timeframeOptions, timezoneOptions } from "../../../../constants/types";
 import { enterpriseSettingApis } from "../../../../utils/api/setting/enterprise";
 import AddUserModal from "./AddUserModal";
 
@@ -39,6 +39,7 @@ class AccountSetting extends React.Component {
     companyName: "",
     address: "",
     timezone: "",
+    time_frame: "",
     addUserModal: false,
   };
 
@@ -57,6 +58,7 @@ class AccountSetting extends React.Component {
     address,
     company_name,
     timezone,
+    time_frame,
   }) => {
     this.props.logoUpdate(logo);
     this.setState({
@@ -67,6 +69,7 @@ class AccountSetting extends React.Component {
       address,
       companyName: company_name,
       timezone,
+      time_frame
     });
   };
 
@@ -226,6 +229,17 @@ class AccountSetting extends React.Component {
                 label="Timezone"
                 value={this.state.timezone || ""}
                 onChange={(e, { value }) => this.setState({ timezone: value })}
+              />
+            </Form>
+          </Grid.Column>
+          <Grid.Column width={3}>
+            <Form>
+              <Form.Dropdown
+                selection
+                options={timeframeOptions}
+                label="Timeframe"
+                value={this.state.time_frame || ""}
+                onChange={(e, { value }) => this.setState({ time_frame: value })}
               />
             </Form>
           </Grid.Column>

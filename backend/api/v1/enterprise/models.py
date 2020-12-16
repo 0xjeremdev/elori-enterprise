@@ -81,6 +81,36 @@ class CustomerConfiguration(models.Model):
         ordering = ["-created_at"]
 
 
+class EnterpriseEmailTemplateModel(models.Model):
+    enterprise = models.OneToOneField(Enterprise,
+                                      related_name="email_template",
+                                      on_delete=models.CASCADE)
+    confirm_request = models.TextField(null=True,
+                                       blank=True,
+                                       default="Your request was approved")
+    update_extension = models.TextField(null=True,
+                                        blank=True,
+                                        default="Your request was extended")
+    reject_request = models.TextField(null=True,
+                                      blank=True,
+                                      default="Your request was rejected")
+    accept_request = models.TextField(null=True,
+                                      blank=True,
+                                      default="Your request was completed")
+    disposal_completed = models.TextField(null=True, blank=True, default="")
+    data_modified = models.TextField(null=True, blank=True, default="")
+    data_returned = models.TextField(null=True, blank=True, default="")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.enterprise
+
+    class Meta:
+        db_table = "enterprise_email_template"
+        ordering = ["-created_at"]
+
+
 class EnterpriseConfigurationModel(models.Model):
     enterprise_id = models.ForeignKey(Enterprise,
                                       related_name="configuration",

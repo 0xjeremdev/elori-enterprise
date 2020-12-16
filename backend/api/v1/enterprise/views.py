@@ -23,7 +23,8 @@ from api.v1.enterprise.serializers import (
     UserGuideSerializer, CustomerConfigurationSerializer,
     CustomerSummarizeSerializer, RequestTrackerSerializer,
     EnterpriseConfigurationSerializer, FileSerializer,
-    EnterpriseAccountSettingsSerializer, EnterpriseInviteSerializer)
+    EnterpriseAccountSettingsSerializer, EnterpriseInviteSerializer,
+    EnterpriseEmailTemplateSerializer)
 
 
 class UserGuide(LoggingMixin, mixins.ListModelMixin, mixins.CreateModelMixin,
@@ -403,6 +404,49 @@ class EnterpriseAccountSettings(GenericAPIView):
         else:
             return Response({"error": "Not allowed to continue"},
                             status=status.HTTP_400_BAD_REQUEST)
+
+
+# class EnterpriseEmailTemplate(GenericAPIView):
+#     """
+#     Account settings
+#     """
+
+#     serializer_class = EnterpriseEmailTemplateSerializer
+#     permission_classes = (permissions.IsAuthenticated, )
+
+#     def get(self, request, *args, **kwargs):
+#         user = request.user
+#         if hasattr(user, "enterprise"):
+#             enterprise = user.enterprise
+#             return Response(
+#                 EnterpriseEmailTemplateSerializer(enterprise,
+#                                                     context={
+#                                                         "request": request
+#                                                     }).data,
+#                 status=status.HTTP_200_OK,
+#             )
+#         else:
+#             return Response({
+#                 "error": "Data not found",
+#             },
+#                             status=status.HTTP_400_BAD_REQUEST)
+
+#     def post(self, request, *args, **kwargs):
+#         user = request.user
+#         if hasattr(user, "enterprise"):
+#             enterprise = user.enterprise
+#             serializer = self.serializer_class(enterprise,
+#                                                data=request.data,
+#                                                context={"request": request})
+#             if serializer.is_valid():
+#                 serializer.save()
+#                 return Response(serializer.data, status=status.HTTP_200_OK)
+#             else:
+#                 return Response(serializer.errors,
+#                                 status=status.HTTP_400_BAD_REQUEST)
+#         else:
+#             return Response({"error": "Not allowed to continue"},
+#                             status=status.HTTP_400_BAD_REQUEST)
 
 
 class EnterpriseInvitation(GenericAPIView):

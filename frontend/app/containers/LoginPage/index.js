@@ -62,7 +62,7 @@ class Login extends React.Component {
         <Grid>
           <Grid.Row textAlign="right">
             <Grid.Column>
-              <img src={logo} />
+              <img src={logo} alt="No Img"/>
             </Grid.Column>
           </Grid.Row>
         </Grid>

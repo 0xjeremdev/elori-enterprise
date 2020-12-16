@@ -6,7 +6,8 @@ from api.v1.accounts.models import Enterprise, Account
 from api.v1.consumer_request.models import ConsumerRequest
 from api.v1.enterprise.models import (UserGuideModel, CustomerConfiguration,
                                       EnterpriseConfigurationModel,
-                                      UserGuideUploads, EnterpriseInviteModel)
+                                      UserGuideUploads, EnterpriseInviteModel,
+                                      EnterpriseEmailTemplateModel)
 
 
 class UserGuideSerializer(serializers.ModelSerializer):
@@ -106,6 +107,7 @@ class EnterpriseAccountSettingsSerializer(serializers.ModelSerializer):
     address = serializers.CharField(required=False)
     company_name = serializers.CharField(required=False)
     timezone = serializers.CharField(required=False)
+    time_frame = serializers.CharField(required=False)
 
     # logo_url = serializers.SerializerMethodField(required=False)
 
@@ -132,6 +134,30 @@ class EnterpriseAccountSettingsSerializer(serializers.ModelSerializer):
             "address",
             "company_name",
             "timezone",
+            "time_frame"
+        ]
+
+
+class EnterpriseEmailTemplateSerializer(serializers.ModelSerializer):
+
+    confirm_request = serializers.CharField(required=False)
+    update_extension = serializers.CharField(required=False)
+    reject_request = serializers.CharField(required=False)
+    accept_request = serializers.CharField(required=False)
+    disposal_completed = serializers.CharField(required=False)
+    data_modified = serializers.CharField(required=False)
+    data_returned = serializers.CharField(required=False)
+
+    class Meta:
+        model = EnterpriseEmailTemplateModel
+        fields = [
+            "confirm_request",
+            "update_extension",
+            "reject_request",
+            "accept_request",
+            "disposal_completed",
+            "data_modified",
+            "data_returned",
         ]
 
 

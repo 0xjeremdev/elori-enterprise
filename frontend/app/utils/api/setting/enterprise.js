@@ -17,6 +17,7 @@ function setEnterpriseSetting(payload) {
     companyName,
     address,
     timezone,
+    time_frame
   } = payload;
   const formData = new FormData();
   if (logoFile) {
@@ -28,6 +29,7 @@ function setEnterpriseSetting(payload) {
   formData.append("company_name", companyName);
   formData.append("address", address);
   formData.append("timezone", timezone);
+  formData.append("time_frame", time_frame);
   return new Promise((resolve, reject) => {
     axios
       .post(`${API_ENDPOINT_URL}/enterprise/settings`, formData, {

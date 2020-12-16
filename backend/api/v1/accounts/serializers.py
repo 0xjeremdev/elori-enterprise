@@ -318,10 +318,11 @@ class AccountProfileSettingsSerializer(serializers.ModelSerializer):
     phone_number = serializers.CharField(required=False)
     company_name = serializers.CharField(required=False)
     timezone = serializers.CharField(required=False)
+    is_2fa_active = serializers.BooleanField(required=False)
 
     class Meta:
         model = Account
         fields = [
             'id', 'email', 'logo', 'first_name', 'last_name', 'company_email',
-            'phone_number', 'company_name', 'timezone'
+            'phone_number', 'company_name', 'timezone', 'is_2fa_active'
         ]

@@ -208,7 +208,7 @@ class LoginAPI(LoggingMixin, GenericAPIView):
             "elroi_id": account.elroi_id,
             "email": account.email,
             "full_name": account.full_name(),
-            "two_fa_valid": user.is_2fa_on(),
+            "is_2fa_active": user.is_2fa_active,
             "profile": account.profile(),
             "tokens": user.tokens(),
         }

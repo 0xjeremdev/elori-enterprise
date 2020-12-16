@@ -47,7 +47,7 @@ class RequestDetailModal extends React.Component {
                   </Grid.Column>
                 ))}
                 <Grid.Column>
-                  <img src={data.file} />
+                  <img src={data.file} alt="No Img"/>
                   <a href={data.file} target="_blank">
                     Review File
                   </a>
