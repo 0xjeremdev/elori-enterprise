@@ -1,6 +1,6 @@
 import React from "react";
 import styled from "styled-components";
-import { Form, Grid, Button } from "semantic-ui-react";
+import { Form, Grid, Button, Input } from "semantic-ui-react";
 import { emailApis } from "../../../../utils/api/setting/email";
 
 const Container = styled(Grid)`
@@ -13,6 +13,14 @@ const Container = styled(Grid)`
   .ui.form .dropdown {
     font-size: 14px;
   }
+  & .upload-button {
+    border-radius: 20px;
+    padding: 7px 25px;
+    background-color: #5fa1fc;
+    color: white !important;
+    box-shadow: 0px 3px 6px #0000005a;
+    cursor: pointer;
+  }
   padding-bottom: 30px !important;
 `;
 
@@ -21,6 +29,8 @@ class EmailCampaign extends React.Component {
     emailTypes: [],
     activeEmail: {},
     activeEmailType: null,
+    selectFile: null,
+    sentSaveRequest: false,
   };
 
   componentDidMount() {
@@ -28,16 +38,31 @@ class EmailCampaign extends React.Component {
   }
 
   selectEmailType = (type) => {
-    emailApis
-      .getEmailContent(type)
-      .then((res) =>
-        this.setState({ activeEmailType: type, activeEmail: res })
-      );
+    emailApis.getEmailContent(type).then((res) =>
+      this.setState({
+        activeEmailType: type,
+        activeEmail: { content: res.content, attachment: res.attachment },
+      })
+    );
+  };
+
+  onFileChange = (e) => {
+    this.setState({
+      selectFile: e.target.files[0],
+      activeEmail: {
+        ...this.state.activeEmail,
+        attachment: e.target.files[0].name,
+      },
+    });
   };
 
   handleSave = () => {
-    
-  }
+    const { activeEmail, activeEmailType, selectFile } = this.state;
+    this.setState({ sentSaveRequest: true });
+    emailApis
+      .updateEmail(activeEmailType, activeEmail.content, selectFile)
+      .then((res) => this.setState({ sentSaveRequest: false }));
+  };
 
   render() {
     const { emailTypes, activeEmail } = this.state;
@@ -66,9 +91,35 @@ class EmailCampaign extends React.Component {
               <Form.TextArea
                 label="Email Content"
                 rows={10}
-                content={activeEmail.content || ""}
+                value={activeEmail.content || ""}
+                onChange={(e, { value }) =>
+                  this.setState({
+                    activeEmail: { ...this.state.activeEmail, content: value },
+                  })
+                }
               />
             </Form>
+          </Grid.Column>
+        </Grid.Row>
+        <Grid.Row verticalAlign="middle">
+          <Grid.Column width={4}>
+            <label>
+              <b>File Attachment</b>
+            </label>
+            <br />
+            <Input value={activeEmail.attachment || ""} />
+            <input
+              type="file"
+              id="fileAttach"
+              hidden
+              onChange={this.onFileChange}
+            />
+          </Grid.Column>
+          <Grid.Column width={12}>
+            <br />
+            <label htmlFor="fileAttach" className="upload-button">
+              Choose File
+            </label>
           </Grid.Column>
         </Grid.Row>
         <Grid.Row textAlign="right">
@@ -76,7 +127,12 @@ class EmailCampaign extends React.Component {
             <Button size="large" color="yellow">
               Cancel
             </Button>
-            <Button size="large" color="blue" onClick={() => this.handleSave()}>
+            <Button
+              size="large"
+              color="blue"
+              onClick={() => this.handleSave()}
+              loading={this.state.sentSaveRequest}
+            >
               Save
             </Button>
           </Grid.Column>

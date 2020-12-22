@@ -35,13 +35,19 @@ function getEmailContent(type) {
   });
 }
 
-function updateEmail(type, data) {
+function updateEmail(type, content, attachment) {
   const token = localStorage.getItem("access-token");
+  const formData = new FormData();
+  if (attachment) {
+    formData.append("attachment", attachment);
+  }
+  formData.append("content", content);
   return new Promise((resolve, reject) => {
     axios
-      .post(`${API_ENDPOINT_URL}/enterprise/email/${type}`, data, {
+      .post(`${API_ENDPOINT_URL}/enterprise/email/${type}`, formData, {
         headers: {
           Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data",
         },
       })
       .then((res) => resolve(res.data))

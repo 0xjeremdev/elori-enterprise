@@ -27,6 +27,7 @@ from api.v1.enterprise.serializers import (
     EnterpriseConfigurationSerializer, FileSerializer,
     EnterpriseAccountSettingsSerializer, EnterpriseInviteSerializer,
     EnterpriseEmailTypeSerializer, EnterpriseEmailTemplateSerializer)
+from .constants import Const_Email_Templates
 
 
 class UserGuide(LoggingMixin, mixins.ListModelMixin, mixins.CreateModelMixin,
@@ -435,6 +436,17 @@ class EnterpriseEmailTemplate(GenericAPIView):
         user = request.user
         if hasattr(user, "enterprise"):
             enterprise = user.enterprise
+            email_type = EnterpriseEmailType.objects.filter(
+                email_id=kwargs["email_type"]).first()
+            if email_type == None:
+                return Response({"error": "Wrong email type."},
+                                status=status.HTTP_400_BAD_REQUEST)
+            if not EnterpriseEmailTemplateModel.objects.filter(
+                    enterprise=enterprise, email_type=email_type).exists():
+                EnterpriseEmailTemplateModel.objects.create(
+                    enterprise=enterprise,
+                    email_type=email_type,
+                    content=Const_Email_Templates[kwargs["email_type"] - 1])
             emailTemp = EnterpriseEmailTemplateModel.objects.filter(
                 enterprise=enterprise,
                 email_type=kwargs["email_type"]).first()
