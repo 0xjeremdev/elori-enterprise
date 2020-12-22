@@ -175,6 +175,8 @@ class RegisterEnterpriseSerializer(serializers.ModelSerializer):
                 validated_data['email'], validated_data['password'])
             user.first_name = validated_data['first_name']
             user.last_name = validated_data['last_name']
+            user.is_verified = True
+            user.is_active = True
             user.save()
             del validated_data['password']
             enterprise = Enterprise.objects.create(user=user, **validated_data)
