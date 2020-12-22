@@ -12,6 +12,7 @@ import ConsumerRequest from "./ConsumerRequest";
 import ConsumerDetail from "./ConsumerDetail";
 import { accountSettingApis } from "../../utils/api/setting/account";
 import { enterpriseSettingApis } from "../../utils/api/setting/enterprise";
+import NotFound from "../NotFound";
 
 const AppWrapper = styled("div")`
   min-height: calc(100vh);
@@ -47,9 +48,9 @@ class Dashboard extends React.Component {
     visible: true,
     contactBox: false,
     activeMenuItem: {
-      key: "dashboard",
-      to: routes.DASHBOARD,
-      content: "Dashboard",
+      key: "consumer",
+      to: routes.CONSUMER,
+      content: "Consumer Request",
     },
     avatarUrl: null,
     logoUrl: null,
@@ -78,6 +79,36 @@ class Dashboard extends React.Component {
       this.setState({
         activeMenuItem: adminRoutes.filter(
           (item) => item.to === routes.SETTING
+        )[0],
+      });
+    } else if (item.to === routes.PRIVACY) {
+      this.setState({
+        activeMenuItem: adminRoutes.filter(
+          (item) => item.to === routes.PRIVACY
+        )[0],
+      });
+    } else if (item.to === routes.REGISTER) {
+      this.setState({
+        activeMenuItem: adminRoutes.filter(
+          (item) => item.to === routes.REGISTER
+        )[0],
+      });
+    } else if (item.to === routes.DISPOSAL) {
+      this.setState({
+        activeMenuItem: adminRoutes.filter(
+          (item) => item.to === routes.DISPOSAL
+        )[0],
+      });
+    } else if (item.to === routes.USERS) {
+      this.setState({
+        activeMenuItem: adminRoutes.filter(
+          (item) => item.to === routes.USERS
+        )[0],
+      });
+    } else if (item.to === routes.RESOURCES) {
+      this.setState({
+        activeMenuItem: adminRoutes.filter(
+          (item) => item.to === routes.RESOURCES
         )[0],
       });
     }
@@ -157,6 +188,7 @@ class Dashboard extends React.Component {
                       />
                     )}
                   />
+                  <Route component={NotFound} />
                 </Switch>
               </ContentWrapper>
             </RightWrapper>

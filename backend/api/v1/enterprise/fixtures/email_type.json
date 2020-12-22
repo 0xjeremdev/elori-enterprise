@@ -1,0 +1,65 @@
+[
+    {
+        "model": "enterprise.EnterpriseEmailType",
+        "pk": 1,
+        "fields": {
+            "email_type": "Confirmation"
+        }
+    },
+    {
+        "model": "enterprise.EnterpriseEmailType",
+        "pk": 2,
+        "fields": {
+            "email_type": "Reject/ No Obligation/ Foreign Citizen"
+        }
+    },
+    {
+        "model": "enterprise.EnterpriseEmailType",
+        "pk": 3,
+        "fields": {
+            "email_type": "Reject for business/commercial purpose"
+        }
+    },
+    {
+        "model": "enterprise.EnterpriseEmailType",
+        "pk": 4,
+        "fields": {
+            "email_type": "Reject - do not have information"
+        }
+    },
+    {
+        "model": "enterprise.EnterpriseEmailType",
+        "pk": 5,
+        "fields": {
+            "email_type": "Acceptance (Modification, Disposal Request, Return of Data)"
+        }
+    },
+    {
+        "model": "enterprise.EnterpriseEmailType",
+        "pk": 6,
+        "fields": {
+            "email_type": "Request for Extension(CCPA)"
+        }
+    },
+    {
+        "model": "enterprise.EnterpriseEmailType",
+        "pk": 7,
+        "fields": {
+            "email_type": "Request for Extension(GDPR)"
+        }
+    },
+    {
+        "model": "enterprise.EnterpriseEmailType",
+        "pk": 8,
+        "fields": {
+            "email_type": "Complete Request(Dispose or Modify Request)"
+        }
+    },
+    {
+        "model": "enterprise.EnterpriseEmailType",
+        "pk": 9,
+        "fields": {
+            "email_type": "Complete Request(Return of Data)"
+        }
+    }
+]

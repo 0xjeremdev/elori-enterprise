@@ -4,7 +4,8 @@ from api.v1.enterprise.views import (
     UserGuide, CustomerConfiguration, CustomerSummarize, RequestTracker,
     NotifyCustomer, ExtendedVsNewRequests, EnterpriseConfiguration,
     UserGuideUpload, EnterpriseAssessmentShareLink, EnterpriseAccountSettings,
-    EnterpriseInvitation, GetInvitationInfo)
+    EnterpriseInvitation, GetInvitationInfo, EnterpriseEmailTemplate,
+    EnterpriseEmailTypeView)
 
 urlpatterns = [
     path('user-guide/', UserGuide.as_view(), name="user_guide"),
@@ -40,4 +41,10 @@ urlpatterns = [
     path('invite/<uidb64>',
          GetInvitationInfo.as_view(),
          name="enterprise_invite_get"),
+    path('email/<int:email_type>',
+         EnterpriseEmailTemplate.as_view(),
+         name="enterprise_email_template"),
+    path('email/type',
+         EnterpriseEmailTypeView.as_view(),
+         name="enterprise_email_type"),
 ]

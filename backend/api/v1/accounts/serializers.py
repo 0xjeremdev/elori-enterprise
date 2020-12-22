@@ -28,7 +28,7 @@ def generate_auth_code():
 
 # Register Serializer, used when new account is created
 class RegisterSerializer(serializers.ModelSerializer):
-    email = serializers.EmailField(
+    email = serializers.CharField(
         min_length=6,
         max_length=80,
         required=True,
@@ -72,7 +72,7 @@ class RegisterSerializer(serializers.ModelSerializer):
 
 # Login Serializer, validate and login existing users
 class LoginSerializer(serializers.ModelSerializer):
-    email = serializers.EmailField(min_length=6, max_length=80, required=True)
+    email = serializers.CharField(min_length=6, max_length=80, required=True)
     password = serializers.CharField(min_length=8, write_only=True)
     two_fa_valid = serializers.BooleanField(read_only=True, required=False)
     enterprise_id = serializers.IntegerField(read_only=True)
@@ -102,7 +102,7 @@ class LoginSerializer(serializers.ModelSerializer):
 
 class StaffSerializer(serializers.Serializer):
     enterprise_elroi_id = serializers.CharField(required=True)
-    email = serializers.EmailField(
+    email = serializers.CharField(
         min_length=6,
         max_length=80,
         required=True,
@@ -146,7 +146,7 @@ class StaffSerializer(serializers.Serializer):
 
 
 class RegisterEnterpriseSerializer(serializers.ModelSerializer):
-    email = serializers.EmailField(
+    email = serializers.CharField(
         min_length=6,
         max_length=80,
         required=True,
@@ -166,8 +166,8 @@ class RegisterEnterpriseSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         if validate_password_strength(data.get("password")):
-            return True
-        return True
+            return data
+        return data
 
     def create(self, validated_data):
         try:
@@ -194,7 +194,7 @@ class EmailVerificationSerializer(serializers.ModelSerializer):
 
 
 class ResetPasswordEmailRequestSerializer(serializers.Serializer):
-    email = serializers.EmailField(min_length=6)
+    email = serializers.CharField(min_length=6)
 
     redirect_url = serializers.CharField(max_length=500, required=False)
 
@@ -218,7 +218,7 @@ class LogoutSerializer(serializers.Serializer):
 
 
 class PasswordResetSerializer(serializers.Serializer):
-    email = serializers.EmailField(min_length=8)
+    email = serializers.CharField(min_length=8)
     redirect_url = serializers.CharField(max_length=500, required=False)
 
     class Meta:
@@ -256,7 +256,7 @@ class PasswordCofirmationSerializer(serializers.Serializer):
 
 
 class EmailValidationCodeSerializer(serializers.Serializer):
-    email = serializers.EmailField(required=True)
+    email = serializers.CharField(required=True)
     tokens = serializers.JSONField(required=False, read_only=True)
 
     class Meta:
@@ -280,7 +280,7 @@ class EmailValidationCodeSerializer(serializers.Serializer):
 
 class VerificationCodeSerializer(serializers.Serializer):
     verification_code = serializers.CharField(min_length=6, write_only=True)
-    email = serializers.EmailField(required=False, read_only=True)
+    email = serializers.CharField(required=False, read_only=True)
     tokens = serializers.JSONField(required=False, read_only=True)
     otp_verified = serializers.BooleanField(required=False, read_only=True)
 
@@ -310,11 +310,11 @@ class UserTokenSerializer(TokenObtainPairSerializer):
 
 class AccountProfileSettingsSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(read_only=True)
-    email = serializers.EmailField(read_only=True)
+    email = serializers.CharField(read_only=True)
     logo = serializers.FileField(required=False)
     first_name = serializers.CharField(required=False)
     last_name = serializers.CharField(required=False)
-    company_email = serializers.EmailField(required=False)
+    company_email = serializers.CharField(required=False)
     phone_number = serializers.CharField(required=False)
     company_name = serializers.CharField(required=False)
     timezone = serializers.CharField(required=False)

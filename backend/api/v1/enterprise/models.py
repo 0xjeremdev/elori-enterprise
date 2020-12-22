@@ -81,25 +81,23 @@ class CustomerConfiguration(models.Model):
         ordering = ["-created_at"]
 
 
+class EnterpriseEmailType(models.Model):
+    email_id = models.IntegerField(primary_key=True)
+    email_type = models.CharField(max_length=255)
+
+    class Meta:
+        db_table = "enterprise_email_type"
+
+
 class EnterpriseEmailTemplateModel(models.Model):
-    enterprise = models.OneToOneField(Enterprise,
-                                      related_name="email_template",
-                                      on_delete=models.CASCADE)
-    confirm_request = models.TextField(null=True,
-                                       blank=True,
-                                       default="Your request was approved")
-    update_extension = models.TextField(null=True,
-                                        blank=True,
-                                        default="Your request was extended")
-    reject_request = models.TextField(null=True,
-                                      blank=True,
-                                      default="Your request was rejected")
-    accept_request = models.TextField(null=True,
-                                      blank=True,
-                                      default="Your request was completed")
-    disposal_completed = models.TextField(null=True, blank=True, default="")
-    data_modified = models.TextField(null=True, blank=True, default="")
-    data_returned = models.TextField(null=True, blank=True, default="")
+    enterprise = models.ForeignKey(Enterprise,
+                                   related_name="enterprise_email_template",
+                                   on_delete=models.CASCADE)
+    email_type = models.ForeignKey(EnterpriseEmailType,
+                                   related_name="email_type_content",
+                                   on_delete=models.CASCADE)
+    content = models.TextField(null=True, blank=True, default="")
+    attachment = models.FileField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -137,7 +135,7 @@ class EnterpriseConfigurationModel(models.Model):
 class EnterpriseInviteModel(models.Model):
     invite_key = models.UUIDField(default=uuid.uuid4, editable=False)
     enterprise = models.ForeignKey(Enterprise, on_delete=models.CASCADE)
-    email = models.EmailField(verbose_name="Email", max_length=60)
+    email = models.CharField(verbose_name="Email", max_length=60)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

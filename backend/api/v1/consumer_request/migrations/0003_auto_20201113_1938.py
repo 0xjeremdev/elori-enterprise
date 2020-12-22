@@ -12,10 +12,6 @@ class Migration(migrations.Migration):
     operations = [
         migrations.RemoveField(
             model_name='consumerrequest',
-            name='customer',
-        ),
-        migrations.RemoveField(
-            model_name='consumerrequest',
             name='description',
         ),
         migrations.RemoveField(
@@ -38,7 +34,11 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='consumerrequest',
             name='email',
-            field=models.EmailField(blank=True, max_length=60, null=True, unique=True, verbose_name='Email'),
+            field=models.EmailField(blank=True,
+                                    max_length=60,
+                                    null=True,
+                                    unique=True,
+                                    verbose_name='Email'),
         ),
         migrations.AddField(
             model_name='consumerrequest',

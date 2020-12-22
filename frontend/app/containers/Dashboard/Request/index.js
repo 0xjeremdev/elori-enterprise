@@ -5,7 +5,6 @@ import ReCAPTCHA from "react-google-recaptcha";
 
 import GlobalStyle from "../../../global-styles";
 import noImg from "../../../assets/images/no-img.png";
-import bk1 from "../../../assets/images/bk1.png";
 import bk2 from "../../../assets/images/bk2.png";
 import logo from "../../../assets/images/logo.png";
 import ToggleButton from "../../../components/ToggleButton";
@@ -66,13 +65,6 @@ const RequestFormContainer = styled.div`
   }
   .captcha > div > div {
     margin: auto;
-  }
-  .column.bk-upside {
-    -webkit-transform: rotate(180deg);
-    -moz-transform: rotate(180deg);
-    -o-transform: rotate(180deg);
-    -ms-transform: rotate(180deg);
-    transform: rotate(180deg);
   }
   .desc-center {
     color: #067cd3;
@@ -247,19 +239,16 @@ class Request extends React.Component {
               </p>
               <div style={{ textAlign: "center", padding: "30px" }}>
                 <Button className="yellow" size="medium">
-                  Get Started
+                  <a href="#started">Get Started</a>
                 </Button>
               </div>
             </Grid.Column>
           </Grid.Row>
-          <Grid.Row>
-            <Grid.Column width="16">
-              <Image src={bk1} fluid />
-            </Grid.Column>
-          </Grid.Row>
           <Grid.Row textAlign="center">
             <Grid.Column width="16">
-              <p className="title">LET’S GET STARTED!</p>
+              <p className="title" id="started">
+                LET’S GET STARTED!
+              </p>
             </Grid.Column>
           </Grid.Row>
           <Grid.Row className="form-row">
@@ -325,44 +314,47 @@ class Request extends React.Component {
               />
             </Grid.Column>
           </Grid.Row>
-          {additionalQuestions.map((item, index) => (
-            <Grid.Row className="form-row">
-              <Grid.Column>
-                <p className="control-label">* {item.question}</p>
-                {item.value === "boolean" && (
-                  <Dropdown
-                    fluid
-                    selection
-                    className="form-select"
-                    options={booleanTypeOptions}
-                    onChange={(e, { value }) =>
-                      this.handleStateChange(value, index)
-                    }
-                  />
-                )}
-                {item.value === "text" && (
-                  <Input
-                    className="form-input"
-                    fluid
-                    onChange={(e, { value }) =>
-                      this.handleStateChange(value, index)
-                    }
-                  />
-                )}
-                {item.value === "file" && (
-                  <Input
-                    className="form-input"
-                    type="file"
-                    accept="image/x-png,image/jpg,image/jpeg" 
-                    fluid
-                    onChange={(e, { value }) =>
-                      this.handleStateChange(value, index)
-                    }
-                  />
-                )}
-              </Grid.Column>
-            </Grid.Row>
-          ))}
+          {additionalQuestions.map(
+            (item, index) =>
+              item.value && (
+                <Grid.Row className="form-row" key={`input-${index}`}>
+                  <Grid.Column>
+                    <p className="control-label">* {item.question}</p>
+                    {item.value === "boolean" && (
+                      <Dropdown
+                        fluid
+                        selection
+                        className="form-select"
+                        options={booleanTypeOptions}
+                        onChange={(e, { value }) =>
+                          this.handleStateChange(value, index)
+                        }
+                      />
+                    )}
+                    {item.value === "text" && (
+                      <Input
+                        className="form-input"
+                        fluid
+                        onChange={(e, { value }) =>
+                          this.handleStateChange(value, index)
+                        }
+                      />
+                    )}
+                    {item.value === "file" && (
+                      <Input
+                        className="form-input"
+                        type="file"
+                        accept="image/x-png,image/jpg,image/jpeg"
+                        fluid
+                        onChange={(e, { value }) =>
+                          this.handleStateChange(value, index)
+                        }
+                      />
+                    )}
+                  </Grid.Column>
+                </Grid.Row>
+              )
+          )}
           <Grid.Row>
             <Grid.Column width="16">
               <ReCAPTCHA
@@ -371,11 +363,6 @@ class Request extends React.Component {
                 onExpired={() => this.setState({ enableSubmit: false })}
                 className="captcha"
               />
-            </Grid.Column>
-          </Grid.Row>
-          <Grid.Row>
-            <Grid.Column className="bk-upside" width="16">
-              <Image src={bk1} fluid />
             </Grid.Column>
           </Grid.Row>
           <Grid.Row textAlign="center" centered>
@@ -421,11 +408,6 @@ class Request extends React.Component {
               <p className="desc-center">
                 This site is intended for United States Residents only
               </p>
-            </Grid.Column>
-          </Grid.Row>
-          <Grid.Row>
-            <Grid.Column width="16">
-              <Image src={bk2} fluid />
             </Grid.Column>
           </Grid.Row>
         </Grid>

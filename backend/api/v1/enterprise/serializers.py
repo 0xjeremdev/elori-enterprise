@@ -7,7 +7,8 @@ from api.v1.consumer_request.models import ConsumerRequest
 from api.v1.enterprise.models import (UserGuideModel, CustomerConfiguration,
                                       EnterpriseConfigurationModel,
                                       UserGuideUploads, EnterpriseInviteModel,
-                                      EnterpriseEmailTemplateModel)
+                                      EnterpriseEmailTemplateModel,
+                                      EnterpriseEmailType)
 
 
 class UserGuideSerializer(serializers.ModelSerializer):
@@ -102,7 +103,7 @@ class EnterpriseAccountSettingsSerializer(serializers.ModelSerializer):
     logo = serializers.FileField(required=False)
     site_color = serializers.JSONField(required=False)
     second_color = serializers.JSONField(required=False)
-    notification_email = serializers.EmailField(required=False)
+    notification_email = serializers.CharField(required=False)
     additional_emails = serializers.CharField(required=False)
     address = serializers.CharField(required=False)
     company_name = serializers.CharField(required=False)
@@ -138,31 +139,31 @@ class EnterpriseAccountSettingsSerializer(serializers.ModelSerializer):
         ]
 
 
+class EnterpriseEmailTypeSerializer(serializers.ModelSerializer):
+    email_type = serializers.CharField(required=False)
+
+    class Meta:
+        model = EnterpriseEmailType
+        fields = [
+            "email_type",
+        ]
+
+
 class EnterpriseEmailTemplateSerializer(serializers.ModelSerializer):
 
-    confirm_request = serializers.CharField(required=False)
-    update_extension = serializers.CharField(required=False)
-    reject_request = serializers.CharField(required=False)
-    accept_request = serializers.CharField(required=False)
-    disposal_completed = serializers.CharField(required=False)
-    data_modified = serializers.CharField(required=False)
-    data_returned = serializers.CharField(required=False)
+    content = serializers.CharField(required=False)
+    attachment = serializers.FileField(required=False)
 
     class Meta:
         model = EnterpriseEmailTemplateModel
         fields = [
-            "confirm_request",
-            "update_extension",
-            "reject_request",
-            "accept_request",
-            "disposal_completed",
-            "data_modified",
-            "data_returned",
+            "content",
+            "attachment",
         ]
 
 
 class EnterpriseInviteSerializer(serializers.ModelSerializer):
-    email = serializers.EmailField(min_length=6, max_length=80, required=True)
+    email = serializers.CharField(min_length=6, max_length=80, required=True)
 
     class Meta:
         model = EnterpriseInviteModel

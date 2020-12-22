@@ -1,7 +1,7 @@
 import React from "react";
-import { Form, Grid, Button } from "semantic-ui-react";
 import styled from "styled-components";
-import { emailCampaignOptions } from "../../../../constants/types";
+import { Form, Grid, Button } from "semantic-ui-react";
+import { emailApis } from "../../../../utils/api/setting/email";
 
 const Container = styled(Grid)`
   label,
@@ -17,7 +17,35 @@ const Container = styled(Grid)`
 `;
 
 class EmailCampaign extends React.Component {
+  state = {
+    emailTypes: [],
+    activeEmail: {},
+    activeEmailType: null,
+  };
+
+  componentDidMount() {
+    emailApis.getEmailTypes().then((res) => this.setState({ emailTypes: res }));
+  }
+
+  selectEmailType = (type) => {
+    emailApis
+      .getEmailContent(type)
+      .then((res) =>
+        this.setState({ activeEmailType: type, activeEmail: res })
+      );
+  };
+
+  handleSave = () => {
+    
+  }
+
   render() {
+    const { emailTypes, activeEmail } = this.state;
+    const emailCampaignOptions = emailTypes.map((type) => ({
+      key: type.email_id,
+      value: type.email_id,
+      text: type.email_type,
+    }));
     return (
       <Container>
         <Grid.Row>
@@ -27,6 +55,7 @@ class EmailCampaign extends React.Component {
                 selection
                 options={emailCampaignOptions}
                 label="Email Type"
+                onChange={(e, { value }) => this.selectEmailType(value)}
               />
             </Form>
           </Grid.Column>
@@ -34,7 +63,11 @@ class EmailCampaign extends React.Component {
         <Grid.Row>
           <Grid.Column>
             <Form>
-              <Form.TextArea label="Email Content" rows={10} />
+              <Form.TextArea
+                label="Email Content"
+                rows={10}
+                content={activeEmail.content || ""}
+              />
             </Form>
           </Grid.Column>
         </Grid.Row>

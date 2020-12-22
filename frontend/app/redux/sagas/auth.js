@@ -110,7 +110,7 @@ export function* loginFlow() {
     // If `authorize` was the winner...
     if (winner.auth) {
       yield put({ type: SENDING_VERIFY_CODE })
-      forwardTo("/"); // Go to Verify code
+      forwardTo("/consumer-request"); // Go to Verify code
     } else if (winner.logout) {
       // ...we send Redux appropiate action
       yield put({ type: SET_AUTH, newAuthState: {} }); // User is not logged in (not authorized)

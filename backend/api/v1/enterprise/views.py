@@ -18,13 +18,15 @@ from api.v1.assessment.models import EnterpriseQuestionnaire, Assessment
 from api.v1.consumer_request.models import ConsumerRequest
 from api.v1.enterprise.models import (UserGuideModel, CustomerConfiguration,
                                       EnterpriseConfigurationModel,
-                                      EnterpriseInviteModel)
+                                      EnterpriseInviteModel,
+                                      EnterpriseEmailTemplateModel,
+                                      EnterpriseEmailType)
 from api.v1.enterprise.serializers import (
     UserGuideSerializer, CustomerConfigurationSerializer,
     CustomerSummarizeSerializer, RequestTrackerSerializer,
     EnterpriseConfigurationSerializer, FileSerializer,
     EnterpriseAccountSettingsSerializer, EnterpriseInviteSerializer,
-    EnterpriseEmailTemplateSerializer)
+    EnterpriseEmailTypeSerializer, EnterpriseEmailTemplateSerializer)
 
 
 class UserGuide(LoggingMixin, mixins.ListModelMixin, mixins.CreateModelMixin,
@@ -406,47 +408,73 @@ class EnterpriseAccountSettings(GenericAPIView):
                             status=status.HTTP_400_BAD_REQUEST)
 
 
-# class EnterpriseEmailTemplate(GenericAPIView):
-#     """
-#     Account settings
-#     """
+class EnterpriseEmailTypeView(GenericAPIView):
 
-#     serializer_class = EnterpriseEmailTemplateSerializer
-#     permission_classes = (permissions.IsAuthenticated, )
+    serializer_class = EnterpriseEmailTypeSerializer
+    permission_classes = (permissions.AllowAny, )
 
-#     def get(self, request, *args, **kwargs):
-#         user = request.user
-#         if hasattr(user, "enterprise"):
-#             enterprise = user.enterprise
-#             return Response(
-#                 EnterpriseEmailTemplateSerializer(enterprise,
-#                                                     context={
-#                                                         "request": request
-#                                                     }).data,
-#                 status=status.HTTP_200_OK,
-#             )
-#         else:
-#             return Response({
-#                 "error": "Data not found",
-#             },
-#                             status=status.HTTP_400_BAD_REQUEST)
+    def get(self, request, *args, **kwargs):
+        email_types = EnterpriseEmailType.objects.all()
+        print(email_types)
+        return Response(
+            list(email_types.values()),
+            status=status.HTTP_200_OK,
+        )
 
-#     def post(self, request, *args, **kwargs):
-#         user = request.user
-#         if hasattr(user, "enterprise"):
-#             enterprise = user.enterprise
-#             serializer = self.serializer_class(enterprise,
-#                                                data=request.data,
-#                                                context={"request": request})
-#             if serializer.is_valid():
-#                 serializer.save()
-#                 return Response(serializer.data, status=status.HTTP_200_OK)
-#             else:
-#                 return Response(serializer.errors,
-#                                 status=status.HTTP_400_BAD_REQUEST)
-#         else:
-#             return Response({"error": "Not allowed to continue"},
-#                             status=status.HTTP_400_BAD_REQUEST)
+
+class EnterpriseEmailTemplate(GenericAPIView):
+    """
+    Account settings
+    """
+
+    serializer_class = EnterpriseEmailTemplateSerializer
+    permission_classes = (permissions.IsAuthenticated, )
+    parser_classes = (MultiPartParser, FormParser, FileUploadParser)
+
+    def get(self, request, *args, **kwargs):
+        user = request.user
+        if hasattr(user, "enterprise"):
+            enterprise = user.enterprise
+            emailTemp = EnterpriseEmailTemplateModel.objects.filter(
+                enterprise=enterprise,
+                email_type=kwargs["email_type"]).first()
+            return Response(
+                EnterpriseEmailTemplateSerializer(emailTemp).data,
+                status=status.HTTP_200_OK,
+            )
+        else:
+            return Response({
+                "error": "Data not found",
+            },
+                            status=status.HTTP_400_BAD_REQUEST)
+
+    def post(self, request, *args, **kwargs):
+        user = request.user
+        if hasattr(user, "enterprise"):
+            enterprise = user.enterprise
+            email_type = EnterpriseEmailType.objects.filter(
+                email_id=kwargs["email_type"]).first()
+            if email_type == None:
+                return Response({"error": "Wrong email type."},
+                                status=status.HTTP_400_BAD_REQUEST)
+            if not EnterpriseEmailTemplateModel.objects.filter(
+                    enterprise=enterprise, email_type=email_type).exists():
+                EnterpriseEmailTemplateModel.objects.create(
+                    enterprise=enterprise, email_type=email_type)
+            emailTemp = EnterpriseEmailTemplateModel.objects.filter(
+                enterprise=enterprise, email_type=email_type).first()
+            serializer = self.serializer_class(emailTemp,
+                                               data=request.data,
+                                               context={"request": request})
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            else:
+                return Response(serializer.errors,
+                                status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response({"error": "Not allowed to continue"},
+                            status=status.HTTP_400_BAD_REQUEST)
 
 
 class EnterpriseInvitation(GenericAPIView):

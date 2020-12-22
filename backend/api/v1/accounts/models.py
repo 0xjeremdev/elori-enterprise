@@ -48,12 +48,12 @@ class CustomAccountManager(BaseUserManager):
 
 
 class Account(AbstractUser):
-    email = models.EmailField(verbose_name="Email", max_length=60, unique=True)
+    email = models.CharField(verbose_name="Email", max_length=60, unique=True)
     verification_code = models.CharField(max_length=6, blank=True, null=True)
     logo = models.FileField(null=True, blank=True)
     first_name = models.CharField(max_length=80, null=True, blank=True)
     last_name = models.CharField(max_length=80, null=True, blank=True)
-    company_email = models.EmailField(max_length=60, null=True, blank=True)
+    company_email = models.CharField(max_length=60, null=True, blank=True)
     phone_number = models.CharField(max_length=20, null=True, blank=True)
     company_name = models.CharField(max_length=255, null=True, blank=True)
     timezone = models.CharField(max_length=20, null=True, blank=True)
@@ -125,11 +125,9 @@ class Enterprise(models.Model):
                                 unique=True,
                                 blank=True,
                                 null=True)
-    email = models.EmailField(max_length=80, unique=True)
+    email = models.CharField(max_length=80, unique=True)
     name = models.CharField(max_length=255, blank=True, null=True)
-    notification_email = models.EmailField(max_length=80,
-                                           null=True,
-                                           blank=True)
+    notification_email = models.CharField(max_length=80, null=True, blank=True)
     additional_emails = models.CharField(max_length=255, null=True, blank=True)
     company_name = models.CharField(max_length=80, null=True, blank=True)
     timezone = models.CharField(max_length=20, null=True, blank=True)
@@ -236,11 +234,11 @@ class Staff(models.Model):
                                 unique=True,
                                 null=True,
                                 blank=True)
-    email = models.EmailField(verbose_name="Email",
-                              max_length=60,
-                              unique=True,
-                              null=True,
-                              blank=True)
+    email = models.CharField(verbose_name="Email",
+                             max_length=60,
+                             unique=True,
+                             null=True,
+                             blank=True)
     first_name = models.CharField(max_length=40, null=True)
     last_name = models.CharField(max_length=40, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
