@@ -15,6 +15,8 @@ from api.v1.consumer_request.serializers import (
     ConsumerRequestSerializer,
     PeriodParameterSerializer,
 )
+from api.v1.enterprise.constants import Const_Email_Templates
+from api.v1.enterprise.models import EnterpriseEmailType, EnterpriseEmailTemplateModel
 
 
 class ConsumerRequestAPI(
@@ -87,9 +89,21 @@ class ConsumerRequestAPI(
                 user_full_name = (
                     f"{serializer.data['first_name']} {serializer.data['last_name']}"
                 )
+                email_type = EnterpriseEmailType.objects.filter(
+                    email_id=1).first()
+                email_template = EnterpriseEmailTemplateModel.objects.filter(
+                    enterprise=enterprise, email_type=email_type).first()
                 message_body = render_to_string(
                     "email/customer/new_request_created.html",
-                    {"user_full_name": user_full_name},
+                    {
+                        "user_full_name":
+                        user_full_name,
+                        "content":
+                        Const_Email_Templates[0]
+                        if email_template == None else email_template.content,
+                        "company":
+                        enterprise.company_name
+                    },
                 )
                 email_data = {
                     "email_body": message_body,
