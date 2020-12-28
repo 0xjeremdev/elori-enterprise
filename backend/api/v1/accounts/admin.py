@@ -1,14 +1,15 @@
 from django import forms
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from django.contrib.auth.forms import ReadOnlyPasswordHashField
+from django.contrib.auth.forms import ReadOnlyPasswordHashField, UserChangeForm
 
 from api.v1.accounts.models import Account
 
 
 class UserCreationForm(forms.ModelForm):
     password1 = forms.CharField(label="Password", widget=forms.PasswordInput)
-    password2 = forms.CharField(label="Password confirmation", widget=forms.PasswordInput)
+    password2 = forms.CharField(label="Password confirmation",
+                                widget=forms.PasswordInput)
 
     class Meta:
         model = Account
@@ -29,22 +30,40 @@ class UserCreationForm(forms.ModelForm):
         return user
 
 
-class UserChangeForm(forms.ModelForm):
-    password = ReadOnlyPasswordHashField()
+# class UserChangeForm(forms.ModelForm):
+#     # password = ReadOnlyPasswordHashField()
 
-    class Meta:
+#     class Meta:
+#         model = Account
+#         fields = [
+#             'email', 'username', 'password', 'is_active', 'is_admin',
+#             'is_staff'
+#         ]
+
+
+#     def clean_password(self):
+#         return self.initial['password']
+class MyUserChangeForm(UserChangeForm):
+    class Meta(UserChangeForm.Meta):
         model = Account
-        fields = ['email', 'username', 'password', 'is_active', 'is_admin', 'is_staff']
+        fields = [
+            'email', 'username', 'password', 'is_active', 'is_admin',
+            'is_staff'
+        ]
 
-    def clean_password(self):
-        return self.initial['password']
+    def save_modal(self, request, obj, form, change):
+        if obj.pk == request.user.pk:
+            print("equal")
+        super().save(request, obj, form, change)
 
 
 class AccountAdmin(UserAdmin):
-    form = UserChangeForm
+    form = MyUserChangeForm
     add_form = UserCreationForm
 
-    list_display = ['id', 'username', 'email', 'created_at', 'is_admin', 'is_active']
+    list_display = [
+        'id', 'username', 'email', 'created_at', 'is_admin', 'is_active'
+    ]
     search_fields = ['email', 'username']
     list_display_links = ['username']
     readonly_fields = ['created_at', 'last_login']
