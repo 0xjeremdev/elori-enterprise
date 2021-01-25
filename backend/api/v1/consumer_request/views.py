@@ -1,20 +1,22 @@
+import csv
+import pdfkit
 from datetime import datetime, timedelta
-
 from rest_framework import mixins, status
 from rest_framework import permissions
 from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.template.loader import render_to_string
-
+from django.db.models import Q
+from django.http import HttpResponse
+from django.views import View
 from api.v1.accounts.models import Enterprise
 from api.v1.accounts.utlis import SendUserEmail
 from api.v1.analytics.mixins import LoggingMixin
 from api.v1.consumer_request.models import ConsumerRequest
-from api.v1.consumer_request.serializers import (
-    ConsumerRequestSerializer,
-    PeriodParameterSerializer,
-)
+from api.v1.consumer_request.serializers import (ConsumerRequestSerializer,
+                                                 PeriodParameterSerializer,
+                                                 ConsumerReportSerializer)
 from api.v1.enterprise.constants import Const_Email_Templates
 from api.v1.enterprise.models import EnterpriseEmailType, EnterpriseEmailTemplateModel
 
@@ -90,7 +92,7 @@ class ConsumerRequestAPI(
                     f"{serializer.data['first_name']} {serializer.data['last_name']}"
                 )
                 email_type = EnterpriseEmailType.objects.filter(
-                    email_id=1).first()
+                    type_name="confirm").first()
                 email_template = EnterpriseEmailTemplateModel.objects.filter(
                     enterprise=enterprise, email_type=email_type).first()
                 message_body = render_to_string(
@@ -99,7 +101,7 @@ class ConsumerRequestAPI(
                         "user_full_name":
                         user_full_name,
                         "content":
-                        Const_Email_Templates[0]
+                        Const_Email_Templates["confirm"]
                         if email_template == None else email_template.content,
                         "company":
                         enterprise.company_name
@@ -170,36 +172,60 @@ class ConsumerRequestSetStatus(GenericAPIView):
         try:
             consumer_request = ConsumerRequest.objects.get(
                 id=request.data["id"])
-            status_text = ""
+            comment = ""
+            if "comment" in request.data:
+                comment = request.data["comment"]
+            email_type_name = ""
             if "status" in request.data:
                 consumer_request.status = request.data["status"]
                 if consumer_request.status == 1:
                     consumer_request.approved_date = datetime.utcnow()
-                    status_text = "approved"
+                    email_type_name = "acceptance"
                 elif consumer_request.status == 3:
-                    status_text = "completed"
+                    email_type_name = "complete_dispose"
                 elif consumer_request.status == 4:
-                    status_text = "rejected"
-            if "extended" in request.data and request.data["extended"] == True:
+                    email_type_name = "reject_noinfo"
+            if "extended" in request.data and request.data[
+                    "extended"] == True and consumer_request.is_extended == False:
+                consumer_request.is_extended = True
                 consumer_request.extend_requested_date = datetime.utcnow()
+                timeframe = consumer_request.timeframe
+                consumer_request.extend_requested_days += 30 if timeframe == 0 else 45
                 consumer_request.process_end_date = consumer_request.process_end_date + timedelta(
-                    days=45)
+                    days=30 if timeframe == 0 else 45)
                 consumer_request.request_date = datetime.utcnow()
-                status_text = "extended"
+                email_type_name = "extension_GDPR" if consumer_request.timeframe == 0 else "extension_CCPA"
+            if email_type_name == "":
+                raise Exception()
             consumer_request.save()
+            email_type = EnterpriseEmailType.objects.filter(
+                type_name=email_type_name).first()
+            email_template = EnterpriseEmailTemplateModel.objects.filter(
+                enterprise=consumer_request.enterprise,
+                email_type=email_type).first()
             user_full_name = (
                 f"{consumer_request.first_name} {consumer_request.last_name}")
             message_body = render_to_string(
                 "email/customer/request_status_update.html",
                 {
-                    "user_full_name": user_full_name,
-                    "status_text": status_text
+                    "user_full_name":
+                    user_full_name,
+                    "content":
+                    Const_Email_Templates[email_type_name]
+                    if email_template == None else email_template.content,
+                    "comment":
+                    comment
                 },
             )
             email_data = {
-                "email_body": message_body,
-                "to_email": consumer_request.email,
-                "email_subject": "Your request status was updated",
+                "email_body":
+                message_body,
+                "to_email":
+                consumer_request.email,
+                "email_subject":
+                "Your request status was updated",
+                "email_template":
+                None if email_template is None else email_template
             }
             SendUserEmail.send_email(email_data)
             return Response({
@@ -211,6 +237,81 @@ class ConsumerRequestSetStatus(GenericAPIView):
                 {"error": "Parameter error."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+
+
+class ConsumerReport(View):
+    def get(self, request, *args, **kwargs):
+        try:
+            enterprise = Enterprise.objects.get(id=kwargs["enterprise_id"])
+            start_date = request.GET.get("start_date")
+            end_date = request.GET.get("end_date")
+            timeframe = request.GET.get("timeframe")
+            status = request.GET.get("status")
+            queryset = ConsumerRequest.objects.filter(enterprise=enterprise)
+            if start_date != None and end_date != None:
+                queryset &= ConsumerRequest.objects.filter(
+                    request_date__range=[start_date, end_date])
+            if timeframe != None:
+                queryset &= ConsumerRequest.objects.filter(timeframe=timeframe)
+            if status != None:
+                queryset &= ConsumerRequest.objects.filter(status=status)
+            data = list(queryset.values())
+            keys = [
+                "Email", "First Name", "Last Name", "State Resident",
+                "Timeframe", "Status", "Request Type", "Request Date",
+                "End Date", "Approved Date", "Extended Date", "Extended Days"
+            ]
+            report_type = request.GET.get("report_type")
+            if report_type == "csv":
+                return self.GetCSV(data, keys)
+            elif report_type == "pdf":
+                return self.GetPDF(data, keys)
+            else:
+                return HttpResponse(content="Invaid parameter")
+
+        except:
+            return HttpResponse(content="Invaid parameter")
+
+    def GetCSV(self, data, keys):
+        reponse = HttpResponse(content_type="text/csv")
+        file_name = 'compliance_report' + datetime.today().strftime('%Y-%m-%d')
+        reponse[
+            'Content-Disposition'] = 'attachement; filename="{0}.csv"'.format(
+                file_name)
+        writer = csv.writer(reponse)
+        writer.writerow(keys)
+        for item in data:
+            serializer = ConsumerReportSerializer(data=item)
+            serializer.is_valid()
+            writer.writerow(serializer.get_list())
+        return reponse
+
+    def GetPDF(self, data, keys):
+        list_data = []
+        for item in data:
+            serializer = ConsumerReportSerializer(data=item)
+            serializer.is_valid()
+            list_data.append(serializer.get_list())
+        html = render_to_string("report/report_pdf.html", {
+            "data": list_data,
+            "keys": keys
+        })
+        pdf_settings = {
+            'page-size': 'Letter',
+            'margin-top': '0.75in',
+            'margin-right': '0.75in',
+            'margin-bottom': '0.75in',
+            'margin-left': '0.75in',
+            'encoding': "UTF-8",
+            'no-outline': None,
+        }
+        pdf = pdfkit.from_string(html, False, options=pdf_settings)
+        response = HttpResponse(pdf, content_type="application/pdf")
+        file_name = 'compliance_report' + datetime.today().strftime('%Y-%m-%d')
+        response[
+            'Content-Disposition'] = 'attachement; filename="{0}.pdf"'.format(
+                file_name)
+        return response
 
 
 class ConsumerRequestProgressAPI(LoggingMixin, APIView):

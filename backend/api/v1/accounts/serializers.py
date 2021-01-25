@@ -219,37 +219,21 @@ class LogoutSerializer(serializers.Serializer):
 
 class PasswordResetSerializer(serializers.Serializer):
     email = serializers.CharField(min_length=8)
-    redirect_url = serializers.CharField(max_length=500, required=False)
 
     class Meta:
         fields = ['email']
 
 
 class PasswordCofirmationSerializer(serializers.Serializer):
-    password = serializers.CharField(min_length=8, write_only=True)
-    token = serializers.CharField(write_only=True, min_length=8)
-    uidb64 = serializers.CharField(write_only=True)
+    password = serializers.CharField(write_only=True)
 
     class Meta:
-        fields = ['password', 'token', 'uidb64']
+        fields = ['password']
 
-    def validate(self, attrs):
-        try:
-            password = attrs.get('password')
-            token = attrs.get('token')
-            uidb64 = attrs.get('uidb64')
-            id = force_str(urlsafe_base64_decode(uidb64))
-            user = Account.objects.get(id=id)
-            if not PasswordResetTokenGenerator().check_token(user, token):
-                raise AuthenticationFailed('The reset link is invalid')
-            user.set_password(password)
-            user.save()
-
-            return user
-        except Exception as e:
-            raise AuthenticationFailed('The reset link is invalid')
-
-        return super().validate(attrs)
+    def validate(self, data):
+        password = data.get('password')
+        validate_password_strength(password)
+        return data
 
 
 """ Serializer used to generate and send verification code for 2FA, to the user."""

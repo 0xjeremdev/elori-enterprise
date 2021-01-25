@@ -16,6 +16,8 @@ import loginBk from "../../assets/images/login-bk.png";
 import { PortalWrapper } from "./style";
 import { loginRequest } from "../../redux/actions/auth";
 
+import routes from "../../constants/routes.json";
+
 const PrivacyBtn = styled.span`
   cursor: pointer;
   color: #6b6c6f;
@@ -40,6 +42,13 @@ class Login extends React.Component {
     const { history } = this.props;
     history.push("/signup");
   };
+
+  handleResetPwd = () => {
+    const { history } = this.props;
+    console.log("reset password");
+    history.push("/forget-password");
+  };
+
   handleResend = () => {};
 
   togglePwd = () => {
@@ -62,7 +71,7 @@ class Login extends React.Component {
         <Grid>
           <Grid.Row textAlign="right">
             <Grid.Column>
-              <img src={logo} alt="No Img"/>
+              <img src={logo} alt="No Img" />
             </Grid.Column>
           </Grid.Row>
         </Grid>
@@ -142,7 +151,9 @@ class Login extends React.Component {
                       <Checkbox className="remember-me" label="Remember Me" />
                     </Grid.Column>
                     <Grid.Column>
-                      <span className="span-btn">Forgot Password?</span>
+                      <span className="span-btn" onClick={this.handleResetPwd}>
+                        Forgot Password?
+                      </span>
                     </Grid.Column>
                   </Grid.Row>
                 </Grid>

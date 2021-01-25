@@ -12,10 +12,12 @@ function sendConsumerRequest(payload, enterprise_id) {
     first_name,
     last_name,
     email,
-    state_resident,
     request_type,
     file,
     additional_fields,
+    country,
+    state,
+    timeframe,
   } = payload;
   const formData = new FormData();
   if (file) {
@@ -24,9 +26,10 @@ function sendConsumerRequest(payload, enterprise_id) {
   formData.append("first_name", first_name);
   formData.append("last_name", last_name);
   formData.append("email", email);
-  formData.append("state_resident", state_resident);
+  formData.append("state_resident", JSON.stringify({ country, state }));
   formData.append("request_type", request_type);
   formData.append("enterprise_id", enterprise_id);
+  formData.append("timeframe", timeframe);
   formData.append("additional_fields", JSON.stringify(additional_fields));
   return new Promise((resolve, reject) => {
     axios
@@ -55,7 +58,7 @@ function getConsumerRequest() {
   });
 }
 
-function updateConsumerRequest(id, newStatus, extendStatus) {
+function updateConsumerRequest({ id, status, extend, comment }) {
   const token = localStorage.getItem("access-token");
   return new Promise((resolve, reject) => {
     axios
@@ -63,8 +66,9 @@ function updateConsumerRequest(id, newStatus, extendStatus) {
         `${API_ENDPOINT_URL}/consumer/set-status`,
         {
           id,
-          status: newStatus ? newStatus : undefined,
-          extended: extendStatus,
+          status: status ? status : undefined,
+          extended: extend,
+          comment: comment ? comment : undefined,
         },
         {
           headers: {

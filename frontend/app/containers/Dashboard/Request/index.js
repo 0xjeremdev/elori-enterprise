@@ -1,17 +1,18 @@
 import React from "react";
-import { Button, Dropdown, Grid, Image, Input } from "semantic-ui-react";
+import faker from "faker";
 import styled from "styled-components";
 import ReCAPTCHA from "react-google-recaptcha";
+import { Button, Dropdown, Grid, Image, Input } from "semantic-ui-react";
 
 import GlobalStyle from "../../../global-styles";
 import noImg from "../../../assets/images/no-img.png";
-import bk2 from "../../../assets/images/bk2.png";
 import logo from "../../../assets/images/logo.png";
 import ToggleButton from "../../../components/ToggleButton";
 import Dropzone from "../../../components/Dropzone";
 import { consumerRequestFormApis } from "../../../utils/api/setting/requestform";
 import { consumerRequestApis } from "../../../utils/api/consumer/request";
 import ConfirmModal from "./ConfirmModal";
+import { EUList } from "../../../constants/constants";
 
 const RequestFormContainer = styled.div`
   p.title {
@@ -122,8 +123,9 @@ class Request extends React.Component {
     first_name: "",
     last_name: "",
     email: "",
-    state_resident: true,
     request_type: "",
+    country: "",
+    state: "",
     file: null,
     additional_fields: [],
     confirmModal: false,
@@ -178,10 +180,15 @@ class Request extends React.Component {
 
   handleUpload = () => {
     const { id } = this.props.match.params;
+    let timeframe = 1;
     this.setState({ sending: true });
+    if (EUList.findIndex((ele) => ele === this.state.country) > -1) {
+      timeframe = 0;
+    }
     consumerRequestApis
-      .sendConsumerRequest(this.state, id)
-      .then((res) => this.setState({ confirmModal: true, sending: false }));
+      .sendConsumerRequest({ ...this.state, timeframe }, id)
+      .then((res) => this.setState({ confirmModal: true, sending: false }))
+      .catch((err) => this.setState({ sending: false }));
   };
 
   render() {
@@ -201,6 +208,20 @@ class Request extends React.Component {
       { key: "1", text: "Yes", value: true },
       { key: "2", text: "No", value: false },
     ];
+    const countryOptions = faker.definitions.address.country.map(
+      (country, index) => ({
+        key: `country-${index}`,
+        text: country,
+        value: country,
+      })
+    );
+    const stateOptions = faker.definitions.address.state.map(
+      (state, index) => ({
+        key: `state-${index}`,
+        text: state,
+        value: state,
+      })
+    );
     return (
       <RequestFormContainer fontColor={siteColor}>
         <GlobalStyle />
@@ -253,12 +274,30 @@ class Request extends React.Component {
           </Grid.Row>
           <Grid.Row className="form-row">
             <Grid.Column>
-              <p className="control-label">* I am a STATE resident</p>
-              <ToggleButton
-                fontColor={siteColor}
-                value={this.state.state_resident}
-                onActive={(active) => this.setState({ state_resident: active })}
+              <p className="control-label">* I am a Resident of</p>
+              <Dropdown
+                className="form-select"
+                fluid
+                selection
+                options={countryOptions}
+                search
+                onChange={(e, { value }) => {
+                  this.setState({ country: value });
+                }}
               />
+              <br />
+              {this.state.country === "United States of America" && (
+                <Dropdown
+                  className="form-select"
+                  fluid
+                  selection
+                  options={stateOptions}
+                  search
+                  onChange={(e, { value }) => {
+                    this.setState({ state: value });
+                  }}
+                />
+              )}
             </Grid.Column>
           </Grid.Row>
           <Grid.Row className="form-row">

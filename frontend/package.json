@@ -74,6 +74,7 @@
     "cross-env": "5.2.0",
     "eslint-plugin-json": "^2.1.1",
     "express": "4.16.4",
+    "faker": "^5.1.0",
     "fontfaceobserver": "2.1.0",
     "history": "4.9.0",
     "hoist-non-react-statics": "3.3.0",

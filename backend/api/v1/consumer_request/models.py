@@ -21,15 +21,17 @@ class ConsumerRequest(models.Model):
     )
     ###########
     file = models.FileField(blank=True, null=True)
-    email = models.EmailField(verbose_name="Email",
-                              max_length=60,
-                              unique=False,
-                              null=True,
-                              blank=True)
+    email = models.CharField(verbose_name="Email",
+                             max_length=60,
+                             unique=False,
+                             null=True,
+                             blank=True)
     first_name = models.CharField(max_length=40, null=True)
     last_name = models.CharField(max_length=40, null=True)
-    state_resident = models.BooleanField(default=False)
+    state_resident = models.JSONField(null=True, blank=True)
     additional_fields = models.JSONField(null=True, blank=True)
+    timeframe = models.IntegerField(choices=settings.TIMEFRAME_TYPE,
+                                    default=1)  # 1: CCPA, 0: GDPR
     ###############3
     request_type = models.CharField(max_length=40, null=True)
     is_data_subject_name = models.BooleanField(default=False)
@@ -41,6 +43,7 @@ class ConsumerRequest(models.Model):
     approved_date = models.DateTimeField(blank=True, null=True)
     extend_requested_date = models.DateTimeField(blank=True, null=True)
     extend_requested_days = models.IntegerField(default=0)
+    is_extended = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

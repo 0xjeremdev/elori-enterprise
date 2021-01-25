@@ -135,7 +135,7 @@ class AccountSetting extends React.Component {
             </label>
           </Grid.Column>
         </Grid.Row>
-        <Grid.Row>
+        {/* <Grid.Row>
           <Grid.Column width={8}>
             <Grid>
               <Grid.Row columns={2} verticalAlign="middle">
@@ -170,7 +170,7 @@ class AccountSetting extends React.Component {
               </Grid.Row>
             </Grid>
           </Grid.Column>
-        </Grid.Row>
+        </Grid.Row> */}
         <Grid.Row>
           <Grid.Column>
             <Form>
@@ -186,19 +186,19 @@ class AccountSetting extends React.Component {
           </Grid.Column>
         </Grid.Row>
         <Grid.Row verticalAlign="middle">
-          <Grid.Column width={2}>
+          {/*<Grid.Column width={2}>
             <label>
               <b>Add Users</b>
             </label>
           </Grid.Column>
-          <Grid.Column width={4}>
+           <Grid.Column width={4}>
             <Button
               color="blue"
               onClick={() => this.setState({ addUserModal: true })}
             >
               <Icon name="plus" /> Add User
             </Button>
-          </Grid.Column>
+          </Grid.Column> */}
         </Grid.Row>
         <Grid.Row>
           <Grid.Column width={6}>

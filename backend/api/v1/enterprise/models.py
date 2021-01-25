@@ -84,6 +84,7 @@ class CustomerConfiguration(models.Model):
 class EnterpriseEmailType(models.Model):
     email_id = models.IntegerField(primary_key=True)
     email_type = models.CharField(max_length=255)
+    type_name = models.CharField(max_length=255, default="")
 
     class Meta:
         db_table = "enterprise_email_type"
@@ -98,6 +99,14 @@ class EnterpriseEmailTemplateModel(models.Model):
                                    on_delete=models.CASCADE)
     content = models.TextField(null=True, blank=True, default="")
     attachment = models.FileField()
+    file_name = models.CharField(max_length=255,
+                                 null=True,
+                                 blank=True,
+                                 default="")
+    file_type = models.CharField(max_length=255,
+                                 null=True,
+                                 blank=True,
+                                 default="")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

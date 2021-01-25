@@ -10,13 +10,25 @@ class SendUserEmail:
     @staticmethod
     def send_email(data):
         try:
-            send_mail(
-                subject=data["email_subject"],
-                html_message=data["email_body"],
-                message="",
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[data["to_email"]],
-            )
+            # send_mail(
+            #     subject=data["email_subject"],
+            #     html_message=data["email_body"],
+            #     message="",
+            #     from_email=settings.DEFAULT_FROM_EMAIL,
+            #     recipient_list=[data["to_email"]],
+            # )
+            mail = EmailMessage(subject=data["email_subject"],
+                                from_email=settings.DEFAULT_FROM_EMAIL,
+                                to=[data["to_email"]],
+                                body=data["email_body"])
+            mail.content_subtype = "html"
+            if "email_template" in data and data[
+                    "email_template"] is not None and data[
+                        "email_template"].attachment is not None:
+                mail.attach(data["email_template"].file_name,
+                            data["email_template"].attachment.read(),
+                            data["email_template"].file_type)
+            mail.send()
         except Exception as e:
             print(e)
 

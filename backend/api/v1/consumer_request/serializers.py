@@ -16,7 +16,8 @@ class ConsumerRequestSerializer(serializers.ModelSerializer):
     email = serializers.CharField(required=True)
     first_name = serializers.CharField(required=False)
     last_name = serializers.CharField(required=False)
-    state_resident = serializers.BooleanField(required=False)
+    timeframe = serializers.IntegerField(required=True)  # 0: GDPR, 1: CCPA
+    state_resident = serializers.JSONField(required=False)
     request_type = serializers.CharField(required=False)
     file = serializers.FileField(required=False)
     additional_fields = serializers.JSONField(required=False)
@@ -40,11 +41,46 @@ class ConsumerRequestSerializer(serializers.ModelSerializer):
         request = self.context.get("request")
         enterprise = Enterprise.objects.get(
             id=request.data.get("enterprise_id"))
+        timeframe = request.data.get("timeframe")
         consumer_request = ConsumerRequest.objects.create(
             enterprise=enterprise,
             **validated_data,
-            process_end_date=datetime.utcnow() + timedelta(days=45))
+            process_end_date=datetime.utcnow() +
+            timedelta(days=30 if timeframe == 0 else 45))
         return consumer_request
+
+
+class ConsumerReportSerializer(serializers.ModelSerializer):
+    status_text = serializers.SerializerMethodField()
+    timeframe_text = serializers.SerializerMethodField()
+    email = serializers.CharField()
+    first_name = serializers.CharField()
+    last_name = serializers.CharField()
+    state_resident = serializers.JSONField()
+    timeframe = serializers.IntegerField()
+    status = serializers.IntegerField()
+    request_type = serializers.CharField()
+    request_date = serializers.DateTimeField()
+    process_end_date = serializers.DateTimeField()
+    approved_date = serializers.DateTimeField()
+    extend_requested_date = serializers.DateTimeField()
+    extend_requested_days = serializers.IntegerField()
+
+    class Meta:
+        model = ConsumerRequest
+        exclude = [
+            "enterprise", "id", "file", "is_data_subject_name", "is_extended",
+            "created_at", "updated_at", "additional_fields"
+        ]
+
+    def get_list(self):
+        values_list = []
+        data = self.data
+        data["status"] = settings.STATUSES[data["status"]][1]
+        data["timeframe"] = settings.TIMEFRAME_TYPE[data["timeframe"]][1]
+        for key in data.keys():
+            values_list.append(data[key])
+        return values_list
 
 
 class PeriodParameterSerializer(serializers.Serializer):

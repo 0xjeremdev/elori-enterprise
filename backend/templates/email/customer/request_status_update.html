@@ -133,10 +133,16 @@
                                             style='font-size:0px;padding:10px 25px;word-break:break-word;'>
                                             <div
                                                 style="color:#187272;font-family:'Droid Sans', 'Helvetica Neue', Arial, sans-serif;font-size:16px;line-height:20px;text-align:center;">
-                                                Your request was {{ status_text }}.
+                                                {{ content }}
                                             </div>
+                                            {% if comment != "" %}
+                                                <div
+                                                    style="color:#187272;font-family:'Droid Sans', 'Helvetica Neue', Arial, sans-serif;font-size:16px;line-height:20px;text-align:center; padding:7px 0px">
+                                                    comment: {{comment}}.
+                                                </div>
+                                            {% endif %}
                                             <div
-                                                style="color:#187272;font-family:'Droid Sans', 'Helvetica Neue', Arial, sans-serif;font-size:16px;line-height:20px;text-align:center;">
+                                                style="color:#187272;font-family:'Droid Sans', 'Helvetica Neue', Arial, sans-serif;font-size:16px;line-height:20px;text-align:center;padding:7px 0px">
                                                 Thank you.
                                             </div>
                                         </td>

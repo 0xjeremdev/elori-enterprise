@@ -446,7 +446,7 @@ class EnterpriseEmailTemplate(GenericAPIView):
                 EnterpriseEmailTemplateModel.objects.create(
                     enterprise=enterprise,
                     email_type=email_type,
-                    content=Const_Email_Templates[kwargs["email_type"] - 1])
+                    content=Const_Email_Templates[email_type.type_name])
             emailTemp = EnterpriseEmailTemplateModel.objects.filter(
                 enterprise=enterprise,
                 email_type=kwargs["email_type"]).first()
@@ -475,6 +475,9 @@ class EnterpriseEmailTemplate(GenericAPIView):
                     enterprise=enterprise, email_type=email_type)
             emailTemp = EnterpriseEmailTemplateModel.objects.filter(
                 enterprise=enterprise, email_type=email_type).first()
+            attachment = request.FILES["attachment"]
+            emailTemp.file_name = attachment.name
+            emailTemp.file_type = attachment.content_type
             serializer = self.serializer_class(emailTemp,
                                                data=request.data,
                                                context={"request": request})

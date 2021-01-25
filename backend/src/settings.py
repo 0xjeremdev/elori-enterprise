@@ -139,6 +139,11 @@ STATUSES = (
     (4, "Rejected"),
 )
 
+TIMEFRAME_TYPE = (
+    (0, "GDPR"),
+    (1, "CCPA"),
+)
+
 REQUEST_TYPES = (
     (0, "Return"),
     (1, "Modify"),

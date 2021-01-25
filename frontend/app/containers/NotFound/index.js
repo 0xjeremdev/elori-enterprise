@@ -6,7 +6,7 @@ const NotFound = () => {
     <Grid verticalAlign="middle">
       <Grid.Row textAlign="center">
         <Grid.Column>
-          <div class="middle">
+          <div className="middle">
             <br />
             <h1>COMING SOON</h1>
             <hr />

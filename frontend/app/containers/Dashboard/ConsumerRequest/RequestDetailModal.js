@@ -41,13 +41,17 @@ class RequestDetailModal extends React.Component {
                 <Grid.Column>
                   <span>Status: {data.status_text}</span>
                 </Grid.Column>
-                {map(data.additional_fields, (item) => (
-                  <Grid.Column key={item.question}>
-                    {item.question}:{item.value}
-                  </Grid.Column>
-                ))}
+                {map(
+                  data.additional_fields,
+                  (item) =>
+                    item.value && (
+                      <Grid.Column key={item.question}>
+                        {item.question}:{item.value}
+                      </Grid.Column>
+                    )
+                )}
                 <Grid.Column>
-                  <img src={data.file} alt="No Img"/>
+                  <img src={data.file} alt="No Img" />
                   <a href={data.file} target="_blank">
                     Review File
                   </a>
@@ -59,6 +63,7 @@ class RequestDetailModal extends React.Component {
                     <Button
                       basic
                       color="yellow"
+                      disabled={data.is_extended}
                       onClick={() => this.props.onUpdate(data.id, null, true)}
                     >
                       Extend

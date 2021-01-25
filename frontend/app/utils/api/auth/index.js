@@ -230,6 +230,32 @@ export const validateVerifyCode = (code) => {
     );
 };
 
+export const sendPasswordReset = (email) => {
+  return axios
+    .post(`${API_ENDPOINT_URL}/password-reset/`, { email })
+    .then((res) => {
+      if (res.data.success) {
+        return Promise.resolve({ success: true, msg: res.data.message });
+      }
+      return Promise.resolve({ success: false, msg: res.data.message });
+    })
+    .catch((err) => Promise.reject({ success: false }));
+};
+
+export const resetPassword = (password, token, uidb64) => {
+  return axios
+    .post(`${API_ENDPOINT_URL}/password-confirmation/${uidb64}/${token}`, {
+      password,
+    })
+    .then((res) => {
+      if (res.data.success) {
+        return Promise.resolve({ success: true, msg: res.data.message });
+      }
+      return Promise.resolve({ success: false, msg: res.data.error });
+    })
+    .catch((err) => Promise.reject({ success: false, err }));
+};
+
 export default {
   login,
   register,

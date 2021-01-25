@@ -48,7 +48,7 @@ class MyUserChangeForm(UserChangeForm):
         model = Account
         fields = [
             'email', 'username', 'password', 'is_active', 'is_admin',
-            'is_staff'
+            'is_staff', 'is_verified'
         ]
 
     def save_modal(self, request, obj, form, change):
@@ -62,7 +62,8 @@ class AccountAdmin(UserAdmin):
     add_form = UserCreationForm
 
     list_display = [
-        'id', 'username', 'email', 'created_at', 'is_admin', 'is_active'
+        'id', 'username', 'email', 'created_at', 'is_admin', 'is_active',
+        'is_verified'
     ]
     search_fields = ['email', 'username']
     list_display_links = ['username']

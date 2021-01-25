@@ -1,18 +1,20 @@
 import { map, reject } from "lodash";
-import React from "react";
+import React, { useCallback, useState } from "react";
 import {
   Button,
   Divider,
   Dropdown,
+  Form,
   Grid,
   Input,
   Menu,
+  Modal,
   Progress,
   Segment,
+  TextArea,
 } from "semantic-ui-react";
 import styled from "styled-components";
 import CircularChart from "../../../components/CircularChart";
-import MultiRadialChart from "../../../components/MultiRadialChart";
 import {
   COMPLETE,
   PROCESS,
@@ -49,6 +51,41 @@ const Container = styled(Segment)`
     opacity: 0.7;
   }
 `;
+const CommentModal = ({ open, onClose, onSubmit }) => {
+  const [comment, setComment] = useState();
+  const handleChangeComment = useCallback((event, { value }) => {
+    setComment(value);
+  }, []);
+
+  const submitComment = useCallback(() => {
+    onSubmit(comment);
+  }, [comment]);
+
+  return (
+    <Modal open={open}>
+      <Modal.Header>Add Comment</Modal.Header>
+      <Modal.Content>
+        <Grid>
+          <Grid.Row>
+            <Grid.Column>
+              <Form>
+                <TextArea
+                  rows={5}
+                  value={comment}
+                  onChange={handleChangeComment}
+                />
+              </Form>
+            </Grid.Column>
+          </Grid.Row>
+        </Grid>
+      </Modal.Content>
+      <Modal.Actions>
+        <Button onClick={onClose}>Cancel</Button>
+        <Button onClick={submitComment}>Okay</Button>
+      </Modal.Actions>
+    </Modal>
+  );
+};
 
 class ConsumerRequest extends React.Component {
   state = {
@@ -58,6 +95,7 @@ class ConsumerRequest extends React.Component {
     selRequestItem: {},
     detailModal: false,
     filterStatus: REVIEW,
+    commentModal: false,
   };
 
   handleDetailModal = (id) => {
@@ -79,9 +117,28 @@ class ConsumerRequest extends React.Component {
   }
 
   updateRequestItem = (id, status, extend) => {
-    this.setState({ detailModal: false });
+    if (status === PROCESS || status === REJECT) {
+      this.setState({
+        commentModal: true,
+        nextStatus: status,
+        selectedId: id,
+        nextExtend: extend,
+      });
+    } else {
+      this.setState({ detailModal: false });
+      consumerRequestApis
+        .updateConsumerRequest({ id, status, extend })
+        .then((res) => {
+          this.initState();
+        });
+    }
+  };
+
+  submitComment = (comment) => {
+    const { nextStatus, selectedId, nextExtend } = this.state;
+    this.setState({ detailModal: false, commentModal: false });
     consumerRequestApis
-      .updateConsumerRequest(id, status, extend)
+      .updateConsumerRequest({ id:selectedId, status: nextStatus, extend: nextExtend, comment })
       .then((res) => {
         this.initState();
       });
@@ -258,7 +315,7 @@ class ConsumerRequest extends React.Component {
                 }
               />
             </Container>
-            <Container>
+            {/* <Container>
               <MultiRadialChart
                 totalValidCount={
                   totalRequestsCount -
@@ -273,7 +330,7 @@ class ConsumerRequest extends React.Component {
                 }
                 completeCount={completeRequestsCount}
               />
-            </Container>
+            </Container> */}
           </Grid.Column>
         </Grid.Row>
         <RequestDetailModal
@@ -283,6 +340,11 @@ class ConsumerRequest extends React.Component {
             this.updateRequestItem(id, status, extend)
           }
           onClose={() => this.setState({ detailModal: false })}
+        />
+        <CommentModal
+          open={this.state.commentModal}
+          onSubmit={this.submitComment}
+          onClose={() => this.setState({ commentModal: false })}
         />
       </Grid>
     );
