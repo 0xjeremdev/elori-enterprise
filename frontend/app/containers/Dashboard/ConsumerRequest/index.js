@@ -1,5 +1,6 @@
 import { map, reject } from "lodash";
 import React, { useCallback, useState } from "react";
+import { BrowserRouter } from "react-router-dom";
 import {
   Button,
   Divider,
@@ -16,11 +17,16 @@ import {
 import styled from "styled-components";
 import CircularChart from "../../../components/CircularChart";
 import {
+  CCPA,
   COMPLETE,
+  GDPR,
   PROCESS,
   REJECT,
   REVIEW,
 } from "../../../constants/constants";
+import { API_ENDPOINT_URL } from "../../../constants/defaults";
+
+import { consumerReportApis } from "../../../utils/api/consumer/report";
 import { consumerRequestApis } from "../../../utils/api/consumer/request";
 import RequestDetailModal from "./RequestDetailModal";
 import RequestItem from "./RequestItem";
@@ -96,6 +102,7 @@ class ConsumerRequest extends React.Component {
     detailModal: false,
     filterStatus: REVIEW,
     commentModal: false,
+    reportDataQuery: {},
   };
 
   handleDetailModal = (id) => {
@@ -138,10 +145,39 @@ class ConsumerRequest extends React.Component {
     const { nextStatus, selectedId, nextExtend } = this.state;
     this.setState({ detailModal: false, commentModal: false });
     consumerRequestApis
-      .updateConsumerRequest({ id:selectedId, status: nextStatus, extend: nextExtend, comment })
+      .updateConsumerRequest({
+        id: selectedId,
+        status: nextStatus,
+        extend: nextExtend,
+        comment,
+      })
       .then((res) => {
         this.initState();
       });
+  };
+
+  handleFetchReport = () => {
+    const { reportDataQuery } = this.state;
+    const enterprise_id = localStorage.getItem("enterprise_id");
+    const {
+      start_date,
+      end_date,
+      report_type,
+      timeframe,
+      status,
+    } = reportDataQuery;
+    const url = `${API_ENDPOINT_URL}/consumer/report/${enterprise_id}?start_date=${start_date}&end_date=${end_date}&report_type=${report_type}&timeframe=${timeframe}&status=${status}`;
+    // window.open(url, "_blank", "noopener");
+    const tempLink = document.createElement("a");
+    tempLink.href = url;
+    tempLink.target = "_blank";
+    tempLink.download = `report.${report_type}`;
+    // tempLink.setAttribute('download', 'report');
+    tempLink.click();
+
+    // consumerReportApis
+    //   .downloadConsumerReport(reportDataQuery)
+    //   .then((res) => console.log(res));
   };
 
   render() {
@@ -164,6 +200,21 @@ class ConsumerRequest extends React.Component {
     const completeRequestsCount = consumerList.filter(
       (item) => item.status === COMPLETE
     ).length;
+    const statusOptions = [
+      { key: 1, value: REVIEW, text: "Review" },
+      { key: 2, value: PROCESS, text: "Process" },
+      { key: 3, value: COMPLETE, text: "Complete" },
+      { key: 4, value: REJECT, text: "Reject" },
+    ];
+    const reportOptions = [
+      { key: 1, value: "pdf", text: "PDF" },
+      { key: 2, value: "csv", text: "CSV" },
+    ];
+    const timeframeOptions = [
+      { key: 1, value: CCPA, text: "CCPA" },
+      { key: 2, value: GDPR, text: "GDPR" },
+    ];
+
     return (
       <Grid>
         <Grid.Row>
@@ -222,6 +273,110 @@ class ConsumerRequest extends React.Component {
                     />
                   </Grid.Column>
                 </Grid.Row>
+                <Grid.Row>
+                  <Grid.Column width={4}>
+                    <Form>
+                      <Form.Input
+                        type="date"
+                        size="mini"
+                        label="Start Date"
+                        value={this.state.reportDataQuery.start_date || ""}
+                        onChange={(e, { value }) =>
+                          this.setState({
+                            reportDataQuery: {
+                              ...this.state.reportDataQuery,
+                              start_date: value,
+                            },
+                          })
+                        }
+                      />
+                    </Form>
+                  </Grid.Column>
+                  <Grid.Column width={4}>
+                    <Form>
+                      <Form.Input
+                        type="date"
+                        size="mini"
+                        label="End Date"
+                        value={this.state.reportDataQuery.end_date || ""}
+                        onChange={(e, { value }) =>
+                          this.setState({
+                            reportDataQuery: {
+                              ...this.state.reportDataQuery,
+                              end_date: value,
+                            },
+                          })
+                        }
+                      />
+                    </Form>
+                  </Grid.Column>
+                </Grid.Row>
+                <Grid.Row>
+                  <Grid.Column width={4}>
+                    <Form>
+                      <Form.Dropdown
+                        selection
+                        label="Status"
+                        options={statusOptions}
+                        value={this.state.reportDataQuery.status}
+                        onChange={(e, { value }) =>
+                          this.setState({
+                            reportDataQuery: {
+                              ...this.state.reportDataQuery,
+                              status: value,
+                            },
+                          })
+                        }
+                      />
+                    </Form>
+                  </Grid.Column>
+                  <Grid.Column width={4}>
+                    <Form>
+                      <Form.Dropdown
+                        selection
+                        label="Report Type"
+                        options={reportOptions}
+                        value={this.state.reportDataQuery.report_type || ""}
+                        onChange={(e, { value }) =>
+                          this.setState({
+                            reportDataQuery: {
+                              ...this.state.reportDataQuery,
+                              report_type: value,
+                            },
+                          })
+                        }
+                      />
+                    </Form>
+                  </Grid.Column>
+                  <Grid.Column width={4}>
+                    <Form>
+                      <Form.Dropdown
+                        selection
+                        label="Timeframe"
+                        options={timeframeOptions}
+                        value={this.state.reportDataQuery.timeframe}
+                        onChange={(e, { value }) =>
+                          this.setState({
+                            reportDataQuery: {
+                              ...this.state.reportDataQuery,
+                              timeframe: value,
+                            },
+                          })
+                        }
+                      />
+                    </Form>
+                  </Grid.Column>
+                  <Grid.Column width={4}>
+                    <br />
+                    <Button
+                      className="request-btn"
+                      onClick={this.handleFetchReport}
+                    >
+                      Submit
+                    </Button>
+                  </Grid.Column>
+                </Grid.Row>
+                <Divider />
                 <Grid.Row>
                   <Grid.Column>
                     <Menu secondary>

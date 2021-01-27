@@ -164,7 +164,7 @@ class ConsumerRequestAPI(
             )
 
 
-class ConsumerRequestSetStatus(GenericAPIView):
+class ConsumerRequestSetStatus(LoggingMixin, GenericAPIView):
     # serializer_class = ConsumerRequestSerializer
     permission_classes = (permissions.IsAuthenticated, )
 

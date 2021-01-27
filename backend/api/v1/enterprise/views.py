@@ -365,7 +365,7 @@ class EnterpriseAssessmentShareLink(LoggingMixin, GenericAPIView):
                             status=status.HTTP_404_NOT_FOUND)
 
 
-class EnterpriseAccountSettings(GenericAPIView):
+class EnterpriseAccountSettings(LoggingMixin, GenericAPIView):
     """
     Account settings
     """
@@ -423,7 +423,7 @@ class EnterpriseEmailTypeView(GenericAPIView):
         )
 
 
-class EnterpriseEmailTemplate(GenericAPIView):
+class EnterpriseEmailTemplate(LoggingMixin, GenericAPIView):
     """
     Account settings
     """
@@ -475,9 +475,10 @@ class EnterpriseEmailTemplate(GenericAPIView):
                     enterprise=enterprise, email_type=email_type)
             emailTemp = EnterpriseEmailTemplateModel.objects.filter(
                 enterprise=enterprise, email_type=email_type).first()
-            attachment = request.FILES["attachment"]
-            emailTemp.file_name = attachment.name
-            emailTemp.file_type = attachment.content_type
+            if "attachment" in request.FILES:
+                attachment = request.FILES["attachment"]
+                emailTemp.file_name = attachment.name
+                emailTemp.file_type = attachment.content_type
             serializer = self.serializer_class(emailTemp,
                                                data=request.data,
                                                context={"request": request})
@@ -492,7 +493,7 @@ class EnterpriseEmailTemplate(GenericAPIView):
                             status=status.HTTP_400_BAD_REQUEST)
 
 
-class EnterpriseInvitation(GenericAPIView):
+class EnterpriseInvitation(LoggingMixin, GenericAPIView):
     """
     Send Invitation to Customer
     """
@@ -538,7 +539,7 @@ class EnterpriseInvitation(GenericAPIView):
                             status=status.HTTP_400_BAD_REQUEST)
 
 
-class GetInvitationInfo(GenericAPIView):
+class GetInvitationInfo(LoggingMixin, GenericAPIView):
     """
     Get Invitation Info by UUID
     """

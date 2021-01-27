@@ -71,3 +71,6 @@ export const REVIEW = 0;
 export const PROCESS = 1;
 export const COMPLETE = 3;
 export const REJECT = 4;
+
+export const CCPA = 0;
+export const GDPR = 1;

@@ -281,7 +281,7 @@ class PasswordResetAPI(LoggingMixin, GenericAPIView):
             )
 
 
-class PasswordConfirmationAPI(GenericAPIView):
+class PasswordConfirmationAPI(GenericAPIView, LoggingMixin):
     serializer_class = PasswordCofirmationSerializer
 
     def get(self, request, *args, **kwargs):
@@ -358,7 +358,7 @@ class SendValidationCodeAPI(LoggingMixin, APIView):
 """ This view is used to confirm verification code and update database"""
 
 
-class VerificationCodeConfirmAPI(APIView):
+class VerificationCodeConfirmAPI(LoggingMixin, APIView):
     serializer_class = VerificationCodeSerializer
 
     permission_classes = (permissions.IsAuthenticated, )
