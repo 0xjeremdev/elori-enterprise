@@ -293,36 +293,36 @@ class ConsumerRequestSend(LoggingMixin, GenericAPIView):
 
 class ConsumerReport(View):
     def get(self, request, *args, **kwargs):
-        # try:
-        enterprise = Enterprise.objects.get(id=kwargs["enterprise_id"])
-        start_date = request.GET.get("start_date")
-        end_date = request.GET.get("end_date")
-        timeframe = request.GET.get("timeframe")
-        status = request.GET.get("status")
-        queryset = ConsumerRequest.objects.filter(enterprise=enterprise)
-        if start_date != None and end_date != None:
-            queryset &= ConsumerRequest.objects.filter(
-                request_date__range=[start_date, end_date])
-        if timeframe != None:
-            queryset &= ConsumerRequest.objects.filter(timeframe=timeframe)
-        if status != None:
-            queryset &= ConsumerRequest.objects.filter(status=status)
-        data = list(queryset.values())
-        keys = [
-            "Email", "First Name", "Last Name", "State Resident", "Timeframe",
-            "Status", "Request Type", "Request Date", "End Date",
-            "Approved Date", "Extended Date", "Extended Days"
-        ]
-        report_type = request.GET.get("report_type")
-        if report_type == "csv":
-            return self.GetCSV(data, keys)
-        elif report_type == "pdf":
-            return self.GetPDF(data, keys)
-        else:
-            return HttpResponse(content="Invaid parameter")
+        try:
+            enterprise = Enterprise.objects.get(id=kwargs["enterprise_id"])
+            start_date = request.GET.get("start_date")
+            end_date = request.GET.get("end_date")
+            timeframe = request.GET.get("timeframe")
+            status = request.GET.get("status")
+            queryset = ConsumerRequest.objects.filter(enterprise=enterprise)
+            if start_date != None and end_date != None:
+                queryset &= ConsumerRequest.objects.filter(
+                    request_date__range=[start_date, end_date])
+            if timeframe != None:
+                queryset &= ConsumerRequest.objects.filter(timeframe=timeframe)
+            if status != None:
+                queryset &= ConsumerRequest.objects.filter(status=status)
+            data = list(queryset.values())
+            keys = [
+                "Email", "First Name", "Last Name", "State Resident",
+                "Timeframe", "Status", "Request Type", "Request Date",
+                "End Date", "Approved Date", "Extended Date", "Extended Days"
+            ]
+            report_type = request.GET.get("report_type")
+            if report_type == "csv":
+                return self.GetCSV(data, keys)
+            elif report_type == "pdf":
+                return self.GetPDF(data, keys)
+            else:
+                return HttpResponse(content="Invaid parameter")
 
-    # except:
-    #     return HttpResponse(content="Invaid parameter")
+        except:
+            return HttpResponse(content="Invaid parameter")
 
     def GetCSV(self, data, keys):
         reponse = HttpResponse(content_type="text/csv")
