@@ -47,7 +47,7 @@ function sendConsumerRequest(payload, enterprise_id) {
 function sendProcessingEmail({ id, file, email_type }) {
   const token = localStorage.getItem("access-token");
   const formData = new FormData();
-  formData.append("file", file);
+  formData.append("attachment", file);
   formData.append("id", id);
   formData.append("email_type", email_type);
   return new Promise((resolve, reject) => {

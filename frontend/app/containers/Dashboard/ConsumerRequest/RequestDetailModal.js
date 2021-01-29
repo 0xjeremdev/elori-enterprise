@@ -115,7 +115,7 @@ class RequestDetailModal extends React.Component {
               <Divider />
               {data.status === PROCESS && (
                 <Grid.Row>
-                  <Grid.Column width={10}>
+                  <Grid.Column width={8}>
                     <Container>
                       <Form>
                         <Form.Dropdown
@@ -129,7 +129,7 @@ class RequestDetailModal extends React.Component {
                       </Form>
                     </Container>
                   </Grid.Column>
-                  <Grid.Column width={6}>
+                  <Grid.Column width={7}>
                     <Container>
                       <label>
                         <b>File Attachment</b>
