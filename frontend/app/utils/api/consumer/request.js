@@ -5,6 +5,7 @@ export const consumerRequestApis = {
   sendConsumerRequest,
   getConsumerRequest,
   updateConsumerRequest,
+  sendProcessingEmail,
 };
 
 function sendConsumerRequest(payload, enterprise_id) {
@@ -35,6 +36,25 @@ function sendConsumerRequest(payload, enterprise_id) {
     axios
       .post(`${API_ENDPOINT_URL}/consumer/request`, formData, {
         headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      })
+      .then((res) => resolve(res))
+      .catch((e) => reject(e));
+  });
+}
+
+function sendProcessingEmail({ id, file, email_type }) {
+  const token = localStorage.getItem("access-token");
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("id", id);
+  formData.append("email_type", email_type);
+  return new Promise((resolve, reject) => {
+    axios
+      .post(`${API_ENDPOINT_URL}/consumer/request/send`, formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
           "Content-Type": "multipart/form-data",
         },
       })

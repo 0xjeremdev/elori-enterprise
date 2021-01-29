@@ -22,7 +22,10 @@ class SendUserEmail:
                                 to=[data["to_email"]],
                                 body=data["email_body"])
             mail.content_subtype = "html"
-            if "email_template" in data and data[
+            if "attachment" in data and data["attachment"] is not None:
+                mail.attach(data["attachment"].name, data["attachment"].read(),
+                            data["attachment"].content_type)
+            elif "email_template" in data and data[
                     "email_template"] is not None and data[
                         "email_template"].attachment is not None:
                 mail.attach(data["email_template"].file_name,

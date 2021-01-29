@@ -5,6 +5,7 @@ from rest_framework.exceptions import AuthenticationFailed, ValidationError
 from rest_framework import serializers, status
 from api.v1.consumer_request.models import ConsumerRequest
 from api.v1.enterprise.models import Enterprise
+from ..enterprise.models import EnterpriseEmailType
 
 
 class ConsumerRequestSerializer(serializers.ModelSerializer):
@@ -48,6 +49,20 @@ class ConsumerRequestSerializer(serializers.ModelSerializer):
             process_end_date=datetime.utcnow() +
             timedelta(days=30 if timeframe == 0 else 45))
         return consumer_request
+
+
+class ConsumerRequestSendSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    attachment = serializers.FileField(required=False)
+    email_type = serializers.CharField(default="")
+
+    def validate(self, data):
+        if not EnterpriseEmailType.objects.filter(
+                type_name=data.get("email_type")).exists():
+            raise Exception("Invalid EmailType")
+        if not ConsumerRequest.objects.filter(pk=data.get("id")).exists():
+            raise Exception("Invalid ConsumerRequest ID")
+        return super().validate(data)
 
 
 class ConsumerReportSerializer(serializers.ModelSerializer):

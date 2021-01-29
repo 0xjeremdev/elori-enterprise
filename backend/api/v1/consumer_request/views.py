@@ -6,6 +6,7 @@ from rest_framework import permissions
 from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.parsers import MultiPartParser, FormParser, FileUploadParser
 from django.template.loader import render_to_string
 from django.db.models import Q
 from django.http import HttpResponse
@@ -16,7 +17,8 @@ from api.v1.analytics.mixins import LoggingMixin
 from api.v1.consumer_request.models import ConsumerRequest
 from api.v1.consumer_request.serializers import (ConsumerRequestSerializer,
                                                  PeriodParameterSerializer,
-                                                 ConsumerReportSerializer)
+                                                 ConsumerReportSerializer,
+                                                 ConsumerRequestSendSerializer)
 from api.v1.enterprise.constants import Const_Email_Templates
 from api.v1.enterprise.models import EnterpriseEmailType, EnterpriseEmailTemplateModel
 
@@ -226,6 +228,56 @@ class ConsumerRequestSetStatus(LoggingMixin, GenericAPIView):
                 "Your request status was updated",
                 "email_template":
                 None if email_template is None else email_template
+            }
+            SendUserEmail.send_email(email_data)
+            return Response({
+                "success": True,
+            }, status=status.HTTP_200_OK)
+
+        except:
+            return Response(
+                {"error": "Parameter error."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+
+class ConsumerRequestSend(LoggingMixin, GenericAPIView):
+    serializer_class = ConsumerRequestSendSerializer
+    permission_classes = (permissions.IsAuthenticated, )
+
+    def post(self, request):
+        try:
+            serializer = self.serializer_class(data=request.data,
+                                               context={"request": request})
+            serializer.is_valid(raise_exception=True)
+            data = serializer.data
+            consumer_request = ConsumerRequest.objects.get(id=data.get("id"))
+            email_type = EnterpriseEmailType.objects.filter(
+                type_name=data.get("email_type")).first()
+            email_template = EnterpriseEmailTemplateModel.objects.filter(
+                enterprise=consumer_request.enterprise,
+                email_type=email_type).first()
+            user_full_name = (
+                f"{consumer_request.first_name} {consumer_request.last_name}")
+            message_body = render_to_string(
+                "email/customer/request_status_update.html",
+                {
+                    "user_full_name":
+                    user_full_name,
+                    "content":
+                    Const_Email_Templates[data.get("email_type")]
+                    if email_template == None else email_template.content,
+                    "comment":
+                    ""
+                },
+            )
+            email_data = {
+                "email_body": message_body,
+                "to_email": consumer_request.email,
+                "email_subject": "Your request was processed",
+                "email_template":
+                None if email_template is None else email_template,
+                "attachment": request.FILES.get("attachment")
             }
             SendUserEmail.send_email(email_data)
             return Response({

@@ -167,17 +167,11 @@ class ConsumerRequest extends React.Component {
       status,
     } = reportDataQuery;
     const url = `${API_ENDPOINT_URL}/consumer/report/${enterprise_id}?start_date=${start_date}&end_date=${end_date}&report_type=${report_type}&timeframe=${timeframe}&status=${status}`;
-    // window.open(url, "_blank", "noopener");
     const tempLink = document.createElement("a");
     tempLink.href = url;
     tempLink.target = "_blank";
     tempLink.download = `report.${report_type}`;
-    // tempLink.setAttribute('download', 'report');
     tempLink.click();
-
-    // consumerReportApis
-    //   .downloadConsumerReport(reportDataQuery)
-    //   .then((res) => console.log(res));
   };
 
   render() {
