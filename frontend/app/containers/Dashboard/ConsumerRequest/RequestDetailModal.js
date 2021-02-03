@@ -1,6 +1,14 @@
 import { map } from "lodash";
 import React from "react";
-import { Button, Divider, Form, Grid, Input, Modal } from "semantic-ui-react";
+import {
+  Button,
+  Divider,
+  Form,
+  Grid,
+  Input,
+  Modal,
+  Popup,
+} from "semantic-ui-react";
 import styled from "styled-components";
 import {
   COMPLETE,
@@ -27,6 +35,14 @@ const Container = styled.div`
     color: #959494;
     margin-left: 10px;
   }
+`;
+
+const ConfirmContainer = styled.div`
+  margin: 3px 5px;
+  width: 245px;
+  color: #959494;
+  font-weight: bold;
+  text-align: right;
 `;
 
 class RequestDetailModal extends React.Component {
@@ -75,7 +91,7 @@ class RequestDetailModal extends React.Component {
     return (
       <Container>
         <Modal dimmer={true} open={this.props.open} onClose={this.onClose}>
-          <Modal.Header>Consumer Requst Detail</Modal.Header>
+          <Modal.Header>Consumer Request Detail</Modal.Header>
           <Modal.Content>
             <Grid>
               <Grid.Row columns={2}>
@@ -153,14 +169,41 @@ class RequestDetailModal extends React.Component {
               <Grid.Row columns={1}>
                 <Grid.Column textAlign="right">
                   {data.status === PROCESS && (
-                    <Button
-                      basic
-                      color="yellow"
-                      disabled={data.is_extended}
-                      onClick={() => this.props.onUpdate(data.id, null, true)}
+                    <Popup
+                      trigger={
+                        <Button
+                          basic
+                          color="yellow"
+                          disabled={data.is_extended}
+                        >
+                          Extend
+                        </Button>
+                      }
+                      on="click"
                     >
-                      Extend
-                    </Button>
+                      <ConfirmContainer>
+                        <Grid.Row>
+                          <h3>Are you sure to update status?</h3>
+                          <br />
+                        </Grid.Row>
+                        <Grid.Row>
+                          <Grid.Column>
+                            <Button.Group>
+                              <Button>Cancel</Button>
+                              <Button.Or />
+                              <Button
+                                positive
+                                onClick={() =>
+                                  this.props.onUpdate(data.id, null, true)
+                                }
+                              >
+                                Confirm
+                              </Button>
+                            </Button.Group>
+                          </Grid.Column>
+                        </Grid.Row>
+                      </ConfirmContainer>
+                    </Popup>
                   )}
                   {data.status === REVIEW && (
                     <Button
@@ -194,16 +237,37 @@ class RequestDetailModal extends React.Component {
                     </Button>
                   )}
                   {data.status === PROCESS && (
-                    <Button
-                      basic
-                      color="teal"
-                      disabled={completeDisable}
-                      onClick={() =>
-                        this.props.onUpdate(data.id, COMPLETE, false)
+                    <Popup
+                      trigger={
+                        <Button basic color="teal" disabled={completeDisable}>
+                          Complete
+                        </Button>
                       }
+                      on="click"
                     >
-                      Complete
-                    </Button>
+                      <ConfirmContainer>
+                        <Grid.Row>
+                          <h3>Are you sure to update status?</h3>
+                          <br />
+                        </Grid.Row>
+                        <Grid.Row>
+                          <Grid.Column>
+                            <Button.Group>
+                              <Button>Cancel</Button>
+                              <Button.Or />
+                              <Button
+                                positive
+                                onClick={() =>
+                                  this.props.onUpdate(data.id, COMPLETE, false)
+                                }
+                              >
+                                Confirm
+                              </Button>
+                            </Button.Group>
+                          </Grid.Column>
+                        </Grid.Row>
+                      </ConfirmContainer>
+                    </Popup>
                   )}
                 </Grid.Column>
               </Grid.Row>

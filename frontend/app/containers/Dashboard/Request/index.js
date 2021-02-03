@@ -187,7 +187,19 @@ class Request extends React.Component {
     }
     consumerRequestApis
       .sendConsumerRequest({ ...this.state, timeframe }, id)
-      .then((res) => this.setState({ confirmModal: true, sending: false }))
+      .then((res) =>
+        this.setState({
+          confirmModal: true,
+          sending: false,
+          first_name: "",
+          last_name: "",
+          email: "",
+          request_type: "",
+          country: "",
+          state: "",
+          file: null,
+        })
+      )
       .catch((err) => this.setState({ sending: false }));
   };
 
@@ -280,10 +292,12 @@ class Request extends React.Component {
                 fluid
                 selection
                 options={countryOptions}
+                selectOnBlur={false}
                 search
                 onChange={(e, { value }) => {
                   this.setState({ country: value });
                 }}
+                value={this.state.country}
               />
               <br />
               {this.state.country === "United States of America" && (
@@ -291,7 +305,9 @@ class Request extends React.Component {
                   className="form-select"
                   fluid
                   selection
+                  value={this.state.state}
                   options={stateOptions}
+                  selectOnBlur={false}
                   search
                   onChange={(e, { value }) => {
                     this.setState({ state: value });
