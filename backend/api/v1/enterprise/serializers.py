@@ -8,7 +8,8 @@ from api.v1.enterprise.models import (UserGuideModel, CustomerConfiguration,
                                       EnterpriseConfigurationModel,
                                       UserGuideUploads, EnterpriseInviteModel,
                                       EnterpriseEmailTemplateModel,
-                                      EnterpriseEmailType)
+                                      EnterpriseEmailType,
+                                      EnterpriseQuestionModel)
 
 
 class UserGuideSerializer(serializers.ModelSerializer):
@@ -69,7 +70,6 @@ class EnterpriseConfigurationSerializer(serializers.ModelSerializer):
     website_launched_to = serializers.CharField(required=False)
     company_name = serializers.CharField(required=False)
     resident_state = serializers.BooleanField(required=False)
-    additional_configuration = serializers.JSONField(required=False)
 
     # logo = serializers.SerializerMethodField()
     # background_image = serializers.SerializerMethodField()
@@ -96,6 +96,18 @@ class EnterpriseConfigurationSerializer(serializers.ModelSerializer):
     class Meta:
         model = EnterpriseConfigurationModel
         fields = "__all__"
+
+
+class EnterpriseQuestionSerializer(serializers.ModelSerializer):
+    content = serializers.CharField(required=True)
+    question_type = serializers.IntegerField(required=True)
+
+    class Meta:
+        model = EnterpriseQuestionModel
+        fields = [
+            "content",
+            "question_type",
+        ]
 
 
 class EnterpriseAccountSettingsSerializer(serializers.ModelSerializer):

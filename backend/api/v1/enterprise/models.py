@@ -1,7 +1,7 @@
 import uuid
 from django.contrib.postgres.fields import JSONField
 from django.db import models
-
+from django.conf import settings
 from api.v1.accounts.models import Account, Enterprise
 
 
@@ -138,6 +138,22 @@ class EnterpriseConfigurationModel(models.Model):
 
     class Meta:
         db_table = "enterprise_configuration"
+        ordering = ["-created_at"]
+
+
+class EnterpriseQuestionModel(models.Model):
+    enterprise = models.ForeignKey(Enterprise,
+                                   related_name="question",
+                                   on_delete=models.CASCADE)
+    content = models.CharField(max_length=500, blank=False, null=False)
+    question_type = models.IntegerField(
+        choices=settings.QUESTION_TYPES,
+        default=0)  # 0: Text, 1: Yes/No, 2: File
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "enterprise_questions"
         ordering = ["-created_at"]
 
 

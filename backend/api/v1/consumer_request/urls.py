@@ -1,13 +1,17 @@
 from django.urls import path
 from .views import (ConsumerRequestAPI, ConsumerRequestProgressAPI,
                     ConsumerRequestSetStatus, ConsumerRequestMade,
-                    ConsumerReport, ConsumerRequestSend)
+                    ConsumerReport, ConsumerRequestSend,
+                    ConsumerRequestQuestionView)
 
 urlpatterns = [
     path('request', ConsumerRequestAPI.as_view(), name="consumer_request"),
     path('request/<int:enterprise_id>',
          ConsumerRequestAPI.as_view(),
          name="consumer_request_get"),
+    path('questions',
+         ConsumerRequestQuestionView.as_view(),
+         name="consumer_request_question"),
     path('request/send',
          ConsumerRequestSend.as_view(),
          name="consumer_request_complete"),

@@ -3,8 +3,8 @@ from datetime import datetime, timedelta
 from rest_framework import serializers
 from rest_framework.exceptions import AuthenticationFailed, ValidationError
 from rest_framework import serializers, status
-from api.v1.consumer_request.models import ConsumerRequest
-from api.v1.enterprise.models import Enterprise
+from api.v1.consumer_request.models import ConsumerRequest, ConsumerReqeustQuestionModel
+from api.v1.enterprise.models import Enterprise, EnterpriseQuestionModel
 from ..enterprise.models import EnterpriseEmailType
 
 
@@ -21,7 +21,6 @@ class ConsumerRequestSerializer(serializers.ModelSerializer):
     state_resident = serializers.JSONField(required=False)
     request_type = serializers.CharField(required=False)
     file = serializers.FileField(required=False)
-    additional_fields = serializers.JSONField(required=False)
 
     def get_elroi_id(self, obj):
         return obj.enterprise.elroi_id
@@ -49,6 +48,47 @@ class ConsumerRequestSerializer(serializers.ModelSerializer):
             process_end_date=datetime.utcnow() +
             timedelta(days=30 if timeframe == 0 else 45))
         return consumer_request
+
+
+class ConsumerRequestQuestionSerializer(serializers.ModelSerializer):
+    question_id = serializers.IntegerField(required=True)
+    request_id = serializers.IntegerField(required=True)
+    text_answer = serializers.CharField(required=False)
+    boolean_answer = serializers.BooleanField(required=False)
+    file_answer = serializers.FileField(required=False)
+
+    class Meta:
+        model = ConsumerReqeustQuestionModel
+        fields = "__all__"
+        # exclude = ["enterprise"]
+
+    def validate(self, data):
+        question = EnterpriseQuestionModel.objects.filter(
+            id=data.get("question_id")).first()
+        if question == None:
+            raise Exception("Invalid Question ID")
+        consumer_request = ConsumerRequest.objects.filter(
+            id=data.get("request_id")).first()
+        if consumer_request == None:
+            raise Exception("Invalid Request ID")
+        if consumer_request.enterprise != question.enterprise:
+            raise Exception("Question and Request doesn't match")
+        return super().validate(data)
+
+    def create(self, validated_data):
+        request = self.context.get("request")
+        question = EnterpriseQuestionModel.objects.get(
+            id=request.data.get("question_id"))
+        consumer_request = ConsumerRequest.objects.get(
+            id=request.data.get("request_id"))
+        del validated_data["question_id"]
+        del validated_data["request_id"]
+        consumer_question = ConsumerReqeustQuestionModel.objects.create(
+            consumer_request=consumer_request,
+            question=question,
+            **validated_data)
+        print(consumer_question)
+        return consumer_question
 
 
 class ConsumerRequestSendSerializer(serializers.Serializer):

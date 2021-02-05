@@ -20,13 +20,16 @@ from api.v1.enterprise.models import (UserGuideModel, CustomerConfiguration,
                                       EnterpriseConfigurationModel,
                                       EnterpriseInviteModel,
                                       EnterpriseEmailTemplateModel,
-                                      EnterpriseEmailType)
+                                      EnterpriseEmailType,
+                                      EnterpriseQuestionModel)
+from ..accounts.models import Enterprise
 from api.v1.enterprise.serializers import (
     UserGuideSerializer, CustomerConfigurationSerializer,
     CustomerSummarizeSerializer, RequestTrackerSerializer,
     EnterpriseConfigurationSerializer, FileSerializer,
     EnterpriseAccountSettingsSerializer, EnterpriseInviteSerializer,
-    EnterpriseEmailTypeSerializer, EnterpriseEmailTemplateSerializer)
+    EnterpriseEmailTypeSerializer, EnterpriseEmailTemplateSerializer,
+    EnterpriseQuestionSerializer)
 from .constants import Const_Email_Templates
 
 
@@ -284,6 +287,125 @@ class EnterpriseConfiguration(
             enterprise_id__elroi_id=request.data.get("elroi_id"),
         )
         return self.destroy(request, *args, **kwargs)
+
+
+class EnterpriseQuestionView(GenericAPIView):
+
+    serializer_class = EnterpriseQuestionSerializer
+    permission_classes = (permissions.AllowAny, )
+
+    def get(self, request, *args, **kwargs):
+        enterprise = Enterprise.objects.filter(
+            pk=kwargs["enterprise_id"]).first()
+        if enterprise == None:
+            return Response(
+                {
+                    "success": False,
+                    "error": "You are not allowed to continue",
+                },
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+        questions = EnterpriseQuestionModel.objects.filter(
+            enterprise=enterprise).order_by("pk")
+        return Response(
+            {
+                "success": True,
+                "data": list(questions.values()),
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    def post(self, request, *args, **kwargs):
+        user = request.user
+        try:
+            enterprise = Enterprise.objects.filter(
+                pk=kwargs["enterprise_id"]).first()
+            if enterprise == None:
+                return Response(
+                    {
+                        "success": False,
+                        "error": "You are not allowed to continue",
+                    },
+                    status=status.HTTP_401_UNAUTHORIZED,
+                )
+            serializer = self.serializer_class(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            question = EnterpriseQuestionModel.objects.create(
+                enterprise=enterprise,
+                content=request.data["content"],
+                question_type=request.data["question_type"])
+            return Response(
+                {"success": True},
+                status=status.HTTP_200_OK,
+            )
+        except:
+            return Response(
+                {
+                    "success": False,
+                    "error": "Parameter error"
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+    def patch(self, request, *args, **kwargs):
+        user = request.user
+        try:
+            enterprise = Enterprise.objects.filter(
+                pk=kwargs["enterprise_id"]).first()
+            if enterprise == None:
+                return Response(
+                    {
+                        "success": False,
+                        "error": "You are not allowed to continue",
+                    },
+                    status=status.HTTP_401_UNAUTHORIZED,
+                )
+            question = EnterpriseQuestionModel.objects.filter(
+                enterprise=enterprise, pk=request.data["question_id"])
+            question.update(enterprise=enterprise,
+                            content=request.data["content"],
+                            question_type=request.data["question_type"])
+            return Response(
+                {"success": True},
+                status=status.HTTP_200_OK,
+            )
+        except:
+            return Response(
+                {
+                    "success": False,
+                    "error": "Parameter error"
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+    def delete(self, request, *args, **kwargs):
+        user = request.user
+        try:
+            enterprise = Enterprise.objects.filter(
+                pk=kwargs["enterprise_id"]).first()
+            if enterprise == None:
+                return Response(
+                    {
+                        "success": False,
+                        "error": "You are not allowed to continue",
+                    },
+                    status=status.HTTP_401_UNAUTHORIZED,
+                )
+            question = EnterpriseQuestionModel.objects.filter(
+                enterprise=enterprise, pk=request.data["question_id"])
+            question.delete()
+            return Response(
+                {"success": True},
+                status=status.HTTP_200_OK,
+            )
+        except:
+            return Response(
+                {
+                    "success": False,
+                    "error": "Parameter error"
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
 
 def validate_email_format(email):

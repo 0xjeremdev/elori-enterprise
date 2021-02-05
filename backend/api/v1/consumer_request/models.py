@@ -8,6 +8,7 @@ from django.utils.timezone import utc
 
 from api.v1.accounts.models import Account, Enterprise
 from api.v1.consumer_request.utils import gen_random_id
+from ..enterprise.models import EnterpriseQuestionModel
 
 
 class ConsumerRequest(models.Model):
@@ -29,7 +30,6 @@ class ConsumerRequest(models.Model):
     first_name = models.CharField(max_length=40, null=True)
     last_name = models.CharField(max_length=40, null=True)
     state_resident = models.JSONField(null=True, blank=True)
-    additional_fields = models.JSONField(null=True, blank=True)
     timeframe = models.IntegerField(choices=settings.TIMEFRAME_TYPE,
                                     default=1)  # 1: CCPA, 0: GDPR
     ###############3
@@ -64,4 +64,30 @@ class ConsumerRequest(models.Model):
 
     class Meta:
         db_table = "consumer_requests"
+        ordering = ["-created_at"]
+
+
+class ConsumerReqeustQuestionModel(models.Model):
+    consumer_request = models.ForeignKey(
+        ConsumerRequest,
+        on_delete=models.CASCADE,
+        related_name="consumer_request",
+        null=True,
+        blank=True,
+    )
+    question = models.ForeignKey(
+        EnterpriseQuestionModel,
+        on_delete=models.CASCADE,
+        related_name="request_question",
+        null=True,
+        blank=True,
+    )
+    text_answer = models.CharField(max_length=500, blank=True, null=True)
+    boolean_answer = models.BooleanField(blank=True, null=True)
+    file_answer = models.FileField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "consumer_request_questions"
         ordering = ["-created_at"]

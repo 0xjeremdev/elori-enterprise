@@ -114,11 +114,7 @@ class Request extends React.Component {
     lanchUrl: "",
     companyName: "",
     residentState: "",
-    additionalQuestions: [
-      { key: 1, question: "", value: "" },
-      { key: 2, question: "", value: "" },
-      { key: 3, question: "", value: "" },
-    ],
+    additionalQuestions: [],
     enableSubmit: false,
     first_name: "",
     last_name: "",
@@ -145,8 +141,12 @@ class Request extends React.Component {
     site_color,
     site_theme,
   }) => {
+    const additionalConfiguration =
+      typeof additional_configuration === "string"
+        ? JSON.parse(additional_configuration)
+        : additional_configuration;
     this.setState({
-      additionalQuestions: additional_configuration,
+      additionalQuestions: additionalConfiguration,
       backUrl: background_image,
       companyName: company_name,
       lanchUrl: website_launched_to,
@@ -155,7 +155,7 @@ class Request extends React.Component {
       siteTheme: site_theme,
     });
     let additional_fields = [];
-    additional_configuration.forEach((item) => {
+    additionalConfiguration.forEach((item) => {
       additional_fields.push({ question: item.question, value: "" });
     });
     this.setState({ ...this.state, additional_fields: [...additional_fields] });
@@ -187,7 +187,11 @@ class Request extends React.Component {
     }
     consumerRequestApis
       .sendConsumerRequest({ ...this.state, timeframe }, id)
-      .then((res) =>
+      .then((res) => {
+        let initFields = [];
+        this.state.additional_fields.map((field) => {
+          initFields.push({ question: field.question, value: "" });
+        });
         this.setState({
           confirmModal: true,
           sending: false,
@@ -198,8 +202,9 @@ class Request extends React.Component {
           country: "",
           state: "",
           file: null,
-        })
-      )
+          additional_fields: [...initFields],
+        });
+      })
       .catch((err) => this.setState({ sending: false }));
   };
 
@@ -380,15 +385,17 @@ class Request extends React.Component {
                         fluid
                         selection
                         className="form-select"
+                        value={this.state.additional_fields[index] && this.state.additional_fields[index].value}
                         options={booleanTypeOptions}
                         onChange={(e, { value }) =>
                           this.handleStateChange(value, index)
                         }
                       />
                     )}
-                    {item.value === "text" && (
+                    {(item.value === "text" || item.value === "email") && (
                       <Input
                         className="form-input"
+                        value={this.state.additional_fields[index] && this.state.additional_fields[index].value}
                         fluid
                         onChange={(e, { value }) =>
                           this.handleStateChange(value, index)

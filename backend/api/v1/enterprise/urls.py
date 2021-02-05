@@ -5,7 +5,7 @@ from api.v1.enterprise.views import (
     NotifyCustomer, ExtendedVsNewRequests, EnterpriseConfiguration,
     UserGuideUpload, EnterpriseAssessmentShareLink, EnterpriseAccountSettings,
     EnterpriseInvitation, GetInvitationInfo, EnterpriseEmailTemplate,
-    EnterpriseEmailTypeView)
+    EnterpriseEmailTypeView, EnterpriseQuestionView)
 
 urlpatterns = [
     path('user-guide/', UserGuide.as_view(), name="user_guide"),
@@ -47,4 +47,7 @@ urlpatterns = [
     path('email/type',
          EnterpriseEmailTypeView.as_view(),
          name="enterprise_email_type"),
+    path('questions/<int:enterprise_id>',
+         EnterpriseQuestionView.as_view(),
+         name="enterprise_questions"),
 ]

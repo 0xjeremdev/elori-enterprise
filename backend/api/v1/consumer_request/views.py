@@ -15,10 +15,10 @@ from api.v1.accounts.models import Enterprise
 from api.v1.accounts.utlis import SendUserEmail
 from api.v1.analytics.mixins import LoggingMixin
 from api.v1.consumer_request.models import ConsumerRequest
-from api.v1.consumer_request.serializers import (ConsumerRequestSerializer,
-                                                 PeriodParameterSerializer,
-                                                 ConsumerReportSerializer,
-                                                 ConsumerRequestSendSerializer)
+from api.v1.consumer_request.serializers import (
+    ConsumerRequestSerializer, ConsumerRequestQuestionSerializer,
+    PeriodParameterSerializer, ConsumerReportSerializer,
+    ConsumerRequestSendSerializer)
 from api.v1.enterprise.constants import Const_Email_Templates
 from api.v1.enterprise.models import EnterpriseEmailType, EnterpriseEmailTemplateModel
 
@@ -164,6 +164,27 @@ class ConsumerRequestAPI(
                 {"error": "ConsumerRequest was not found."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+
+
+class ConsumerRequestQuestionView(GenericAPIView):
+    serializer_class = ConsumerRequestQuestionSerializer
+    permission_classes = (permissions.AllowAny, )
+    parser_classes = (MultiPartParser, FormParser, FileUploadParser)
+
+    def post(self, request):
+        serializer = self.serializer_class(data=request.data,
+                                           context={"request": request})
+        try:
+            if serializer.is_valid(raise_exception=True):
+                data = serializer.save()
+                return Response({"success": True},
+                                status=status.HTTP_201_CREATED)
+        except Exception as e:
+            return Response({
+                "success": False,
+                "error": str(e)
+            },
+                            status=status.HTTP_400_BAD_REQUEST)
 
 
 class ConsumerRequestSetStatus(LoggingMixin, GenericAPIView):

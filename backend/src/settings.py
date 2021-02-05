@@ -149,6 +149,11 @@ REQUEST_TYPES = (
     (1, "Modify"),
     (2, "Delete"),
 )
+QUESTION_TYPES = (
+    (0, "Text"),
+    (1, "Yes/No"),
+    (2, "File"),
+)
 
 REST_FRAMEWORK = {
     "DEFAULT_PAGINATION_CLASS":

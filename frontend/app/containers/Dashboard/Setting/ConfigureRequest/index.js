@@ -44,11 +44,7 @@ class ConfigureRequest extends React.Component {
     lanchUrl: "",
     companyName: "",
     residentState: "",
-    additionalQuestions: [
-      { key: 1, question: "", value: "" },
-      { key: 2, question: "", value: "" },
-      { key: 3, question: "", value: "" },
-    ],
+    additionalQuestions: [],
   };
 
   initState = ({
@@ -61,7 +57,10 @@ class ConfigureRequest extends React.Component {
     site_theme,
   }) => {
     this.setState({
-      additionalQuestions: additional_configuration,
+      additionalQuestions:
+        typeof additional_configuration === "string"
+          ? JSON.parse(additional_configuration)
+          : additional_configuration,
       backUrl: background_image,
       companyName: company_name,
       lanchUrl: website_launched_to,
@@ -127,6 +126,22 @@ class ConfigureRequest extends React.Component {
     consumerRequestFormApis
       .setConsumerRequestForm(this.state)
       .then((res) => console.log(res));
+  };
+
+  removeQues = (index) => {
+    const { additionalQuestions } = this.state;
+    additionalQuestions.splice(index, 1);
+    this.setState({ additionalQuestions });
+  };
+
+  addQues = () => {
+    const { additionalQuestions } = this.state;
+    additionalQuestions.push({
+      key: additionalQuestions.length + 1,
+      question: "",
+      value: "",
+    });
+    this.setState({ additionalQuestions });
   };
 
   render() {
@@ -213,7 +228,7 @@ class ConfigureRequest extends React.Component {
                   <input
                     type="file"
                     id="backImg"
-                    accept="image/x-png,image/jpg,image/jpeg" 
+                    accept="image/x-png,image/jpg,image/jpeg"
                     hidden
                     onChange={this.onBackImgChange}
                   />
@@ -266,82 +281,50 @@ class ConfigureRequest extends React.Component {
             <Divider horizontal>Verification Questions</Divider>
           </Grid.Column>
         </Grid.Row>
+        {additionalQuestions.map((ques, index) => (
+          <Grid.Row>
+            <Grid.Column width={6}>
+              <Form>
+                <Form.Input
+                  label={`Question ${index + 1}`}
+                  value={ques.question}
+                  onChange={(e, { value }) =>
+                    this.setAdditionalQuestion(index, "question", value)
+                  }
+                />
+              </Form>
+            </Grid.Column>
+            <Grid.Column width={4}>
+              <Form>
+                <Form.Dropdown
+                  label="Value"
+                  selection
+                  options={formAnswerTypeOptions}
+                  value={ques.value}
+                  onChange={(e, { value }) =>
+                    this.setAdditionalQuestion(index, "value", value)
+                  }
+                />
+              </Form>
+            </Grid.Column>
+            <Grid.Column width={2}>
+              <br />
+              <Button
+                basic
+                circular
+                icon="close"
+                color="red"
+                size="tiny"
+                onClick={() => this.removeQues(index)}
+              />
+            </Grid.Column>
+          </Grid.Row>
+        ))}
         <Grid.Row>
-          <Grid.Column width={6}>
-            <Form>
-              <Form.Input
-                label="Question 1"
-                value={additionalQuestions[0].question}
-                onChange={(e, { value }) =>
-                  this.setAdditionalQuestion(0, "question", value)
-                }
-              />
-            </Form>
-          </Grid.Column>
-          <Grid.Column width={4}>
-            <Form>
-              <Form.Dropdown
-                label="Value"
-                selection
-                options={formAnswerTypeOptions}
-                value={additionalQuestions[0].value}
-                onChange={(e, { value }) =>
-                  this.setAdditionalQuestion(0, "value", value)
-                }
-              />
-            </Form>
-          </Grid.Column>
-        </Grid.Row>
-        <Grid.Row>
-          <Grid.Column width={6}>
-            <Form>
-              <Form.Input
-                label="Question 2"
-                value={additionalQuestions[1].question}
-                onChange={(e, { value }) =>
-                  this.setAdditionalQuestion(1, "question", value)
-                }
-              />
-            </Form>
-          </Grid.Column>
-          <Grid.Column width={4}>
-            <Form>
-              <Form.Dropdown
-                label="Value"
-                selection
-                options={formAnswerTypeOptions}
-                value={additionalQuestions[1].value}
-                onChange={(e, { value }) =>
-                  this.setAdditionalQuestion(1, "value", value)
-                }
-              />
-            </Form>
-          </Grid.Column>
-        </Grid.Row>
-        <Grid.Row>
-          <Grid.Column width={6}>
-            <Form>
-              <Form.Input
-                label="Question 3"
-                value={additionalQuestions[2].question}
-                onChange={(e, { value }) =>
-                  this.setAdditionalQuestion(2, "question", value)
-                }
-              />
-            </Form>
-          </Grid.Column>
-          <Grid.Column width={4}>
-            <Form>
-              <Form.Dropdown
-                label="Value"
-                selection
-                options={formAnswerTypeOptions}
-                value={additionalQuestions[2].value}
-                onChange={(e, { value }) =>
-                  this.setAdditionalQuestion(2, "value", value)
-                }
-              />
-            </Form>
+          <Grid.Column>
+            <Button circular color="blue" onClick={() => this.addQues()}>
+              <Icon name="plus" /> Add Verification Question
+            </Button>
           </Grid.Column>
         </Grid.Row>
         <Grid.Row textAlign="right">
