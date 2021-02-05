@@ -20,6 +20,7 @@ class ConsumerRequestSerializer(serializers.ModelSerializer):
     timeframe = serializers.IntegerField(required=True)  # 0: GDPR, 1: CCPA
     state_resident = serializers.JSONField(required=False)
     request_type = serializers.CharField(required=False)
+    additional_fields = serializers.JSONField(required=False)
     file = serializers.FileField(required=False)
 
     def get_elroi_id(self, obj):
