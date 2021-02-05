@@ -33,7 +33,7 @@ class ConsumerRequest(models.Model):
     timeframe = models.IntegerField(choices=settings.TIMEFRAME_TYPE,
                                     default=1)  # 1: CCPA, 0: GDPR
     ###############3
-    additional_fields = models.JSONField(null=True, blank=True)
+    # additional_fields = models.JSONField(null=True, blank=True)
     request_type = models.CharField(max_length=40, null=True)
     is_data_subject_name = models.BooleanField(default=False)
     status = models.IntegerField(choices=settings.STATUSES, default=0)
