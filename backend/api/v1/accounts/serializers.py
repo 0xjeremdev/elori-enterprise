@@ -86,8 +86,21 @@ class LoginSerializer(serializers.ModelSerializer):
         email = data.get('email', '')
         password = data.get('password', '')
         user = authenticate(email=email, password=password)
+        account = Account.objects.filter(email=email).first()
+        if account != None and account.is_locked:
+            raise AuthenticationFailed('This accunt is locked.')
         if not user:
-            raise AuthenticationFailed('Invalid credentials, try again.')
+            if account != None:
+                account.login_failed += 1
+                account.save()
+                if account.login_failed == 4:
+                    account.is_locked = True
+                    account.save()
+                    raise AuthenticationFailed('This accunt is locked.')
+                raise AuthenticationFailed(
+                    "The password isn't correct. You can try more " +
+                    str(4 - account.login_failed) + " times.")
+            raise AuthenticationFailed("This email doesn't exist.")
         if not user.is_active:
             raise AuthenticationFailed('Account disabled, contact admin.')
         if not user.is_verified:
