@@ -116,7 +116,7 @@ module.exports = (options) => ({
       API_ENDPOINT:
         options.mode === "development"
           ? "http://192.168.0.163:8082/api/v1"
-          : "https://mm6yuzwgi9.pzero.perimeter81.com/api/v1",
+          : "http://10.209.18.180:8082/api/v1",
     }),
   ]),
   resolve: {
