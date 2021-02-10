@@ -93,7 +93,7 @@ class LoginSerializer(serializers.ModelSerializer):
             if account != None:
                 account.login_failed += 1
                 account.save()
-                if account.login_failed == 4:
+                if account.login_failed >= 4:
                     account.login_failed = 0
                     account.is_locked = True
                     account.save()
