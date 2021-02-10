@@ -1,6 +1,6 @@
 import { map, reject } from "lodash";
+import styled from "styled-components";
 import React, { useCallback, useState } from "react";
-import { BrowserRouter } from "react-router-dom";
 import {
   Button,
   Divider,
@@ -14,7 +14,6 @@ import {
   Segment,
   TextArea,
 } from "semantic-ui-react";
-import styled from "styled-components";
 import CircularChart from "../../../components/CircularChart";
 import {
   CCPA,
@@ -25,8 +24,6 @@ import {
   REVIEW,
 } from "../../../constants/constants";
 import { API_ENDPOINT_URL } from "../../../constants/defaults";
-
-import { consumerReportApis } from "../../../utils/api/consumer/report";
 import { consumerRequestApis } from "../../../utils/api/consumer/request";
 import RequestDetailModal from "./RequestDetailModal";
 import RequestItem from "./RequestItem";
@@ -65,8 +62,14 @@ const CommentModal = ({ open, onClose, onSubmit }) => {
 
   const submitComment = useCallback(() => {
     onSubmit(comment);
+    setComment('');
   }, [comment]);
 
+  const onCancel = () => {
+    setComment('');
+    onClose();
+  }
+  
   return (
     <Modal open={open}>
       <Modal.Header>Add Comment</Modal.Header>
@@ -86,7 +89,7 @@ const CommentModal = ({ open, onClose, onSubmit }) => {
         </Grid>
       </Modal.Content>
       <Modal.Actions>
-        <Button onClick={onClose}>Cancel</Button>
+        <Button onClick={onCancel}>Cancel</Button>
         <Button onClick={submitComment}>Okay</Button>
       </Modal.Actions>
     </Modal>
@@ -236,9 +239,6 @@ class ConsumerRequest extends React.Component {
                       placeholder="search data subject"
                       icon="search"
                     />
-                  </Grid.Column>
-                  <Grid.Column width={6} textAlign="right">
-                    <Button className="request-btn">Request Extension</Button>
                   </Grid.Column>
                 </Grid.Row>
                 <Grid.Row>

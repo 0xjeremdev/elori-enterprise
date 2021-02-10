@@ -7,12 +7,12 @@ import { Button, Dropdown, Grid, Image, Input } from "semantic-ui-react";
 import GlobalStyle from "../../../global-styles";
 import noImg from "../../../assets/images/no-img.png";
 import logo from "../../../assets/images/logo.png";
-import ToggleButton from "../../../components/ToggleButton";
 import Dropzone from "../../../components/Dropzone";
 import { consumerRequestFormApis } from "../../../utils/api/setting/requestform";
 import { consumerRequestApis } from "../../../utils/api/consumer/request";
 import ConfirmModal from "./ConfirmModal";
 import { EUList } from "../../../constants/constants";
+import { isEmailValid } from "../../../utils/validation";
 
 const RequestFormContainer = styled.div`
   p.title {
@@ -28,6 +28,10 @@ const RequestFormContainer = styled.div`
   }
   img.logo {
     margin-top: 50px;
+  }
+  .error-msg {
+    color: red;
+    font-size: 12px;
   }
   .ui.button.yellow {
     border-radius: 27px;
@@ -117,19 +121,51 @@ class Request extends React.Component {
     additionalQuestions: [],
     enableSubmit: false,
     first_name: "",
+    first_name_valid: true,
     last_name: "",
+    last_name_valid: true,
     email: "",
+    email_valid: true,
     request_type: "",
+    request_type_valid: true,
     country: "",
+    country_valid: true,
     state: "",
     file: null,
     additional_fields: [],
     confirmModal: false,
     sending: false,
+    reset: false, //for dropzone
   };
 
   onCaptcha = (value) => {
     this.setState({ enableSubmit: true });
+  };
+
+  inputValid = () => {
+    let isValid = true;
+    const { first_name, last_name, email, request_type, country } = this.state;
+    if (country === "") {
+      this.setState({ country_valid: false });
+      isValid = false;
+    }
+    if (first_name === "") {
+      this.setState({ first_name_valid: false });
+      isValid = false;
+    }
+    if (last_name === "") {
+      this.setState({ last_name_valid: false });
+      isValid = false;
+    }
+    if (!isEmailValid(email)) {
+      this.setState({ email_valid: false });
+      isValid = false;
+    }
+    if (request_type === "") {
+      this.setState({ request_type_valid: false });
+      isValid = false;
+    }
+    return isValid;
   };
 
   initState = ({
@@ -175,37 +211,41 @@ class Request extends React.Component {
   };
 
   uploadFile = (files) => {
-    this.setState({ file: files[0] });
+    this.setState({ file: files[0], reset: false });
   };
 
   handleUpload = () => {
-    const { id } = this.props.match.params;
-    let timeframe = 1;
-    this.setState({ sending: true });
-    if (EUList.findIndex((ele) => ele === this.state.country) > -1) {
-      timeframe = 0;
+    if (this.inputValid()) {
+      const { id } = this.props.match.params;
+      let timeframe = 1;
+      this.setState({ sending: true });
+      if (EUList.findIndex((ele) => ele === this.state.country) > -1) {
+        timeframe = 0;
+      }
+
+      consumerRequestApis
+        .sendConsumerRequest({ ...this.state, timeframe }, id)
+        .then((res) => {
+          let initFields = [];
+          this.state.additional_fields.map((field) => {
+            initFields.push({ question: field.question, value: "" });
+          });
+          this.setState({
+            confirmModal: true,
+            sending: false,
+            first_name: "",
+            last_name: "",
+            email: "",
+            request_type: "",
+            country: "",
+            state: "",
+            reset: true,
+            file: null,
+            additional_fields: [...initFields],
+          });
+        })
+        .catch((err) => this.setState({ sending: false }));
     }
-    consumerRequestApis
-      .sendConsumerRequest({ ...this.state, timeframe }, id)
-      .then((res) => {
-        let initFields = [];
-        this.state.additional_fields.map((field) => {
-          initFields.push({ question: field.question, value: "" });
-        });
-        this.setState({
-          confirmModal: true,
-          sending: false,
-          first_name: "",
-          last_name: "",
-          email: "",
-          request_type: "",
-          country: "",
-          state: "",
-          file: null,
-          additional_fields: [...initFields],
-        });
-      })
-      .catch((err) => this.setState({ sending: false }));
   };
 
   render() {
@@ -292,6 +332,9 @@ class Request extends React.Component {
           <Grid.Row className="form-row">
             <Grid.Column>
               <p className="control-label">* I am a Resident of</p>
+              {!this.state.country_valid && (
+                <label className="error-msg">Country is required</label>
+              )}
               <Dropdown
                 className="form-select"
                 fluid
@@ -299,8 +342,9 @@ class Request extends React.Component {
                 options={countryOptions}
                 selectOnBlur={false}
                 search
+                error={!this.state.country_valid}
                 onChange={(e, { value }) => {
-                  this.setState({ country: value });
+                  this.setState({ country: value, country_valid: true });
                 }}
                 value={this.state.country}
               />
@@ -324,13 +368,17 @@ class Request extends React.Component {
           <Grid.Row className="form-row">
             <Grid.Column>
               <p className="control-label">* First Name</p>
+              {!this.state.first_name_valid && (
+                <label className="error-msg">First name is required field</label>
+              )}
               <Input
                 className="form-input"
                 placeholder="hello, nice to meet you, what is your first name?"
                 fluid
+                error={!this.state.first_name_valid}
                 value={this.state.first_name}
                 onChange={(e, { value }) =>
-                  this.setState({ first_name: value })
+                  this.setState({ first_name: value, first_name_valid: true })
                 }
               />
             </Grid.Column>
@@ -338,38 +386,57 @@ class Request extends React.Component {
           <Grid.Row className="form-row">
             <Grid.Column>
               <p className="control-label">* Last Name</p>
+              {!this.state.last_name_valid && (
+                <label className="error-msg">Last name is required</label>
+              )}
               <Input
                 className="form-input"
                 placeholder="let's get more connected, and your last name?"
                 fluid
+                error={!this.state.last_name_valid}
                 value={this.state.last_name}
-                onChange={(e, { value }) => this.setState({ last_name: value })}
+                onChange={(e, { value }) =>
+                  this.setState({ last_name: value, last_name_valid: true })
+                }
               />
             </Grid.Column>
           </Grid.Row>
           <Grid.Row className="form-row">
             <Grid.Column>
               <p className="control-label">* Email Address</p>
+              {!this.state.email_valid && (
+                <label className="error-msg">Email is invalid</label>
+              )}
               <Input
                 className="form-input"
                 placeholder="and how about your email address?"
                 fluid
+                error={!this.state.email_valid}
                 value={this.state.email}
-                onChange={(e, { value }) => this.setState({ email: value })}
+                onChange={(e, { value }) =>
+                  this.setState({ email: value, email_valid: true })
+                }
               />
             </Grid.Column>
           </Grid.Row>
           <Grid.Row className="form-row">
             <Grid.Column>
               <p className="control-label">* Request Type</p>
+              {!this.state.request_type_valid && (
+                <label className="error-msg">Request type is required</label>
+              )}
               <Dropdown
                 fluid
                 selection
                 className="form-select"
                 options={requestTypeOptions}
+                error={!this.state.request_type_valid}
                 value={this.state.request_type}
                 onChange={(e, { value }) =>
-                  this.setState({ request_type: value })
+                  this.setState({
+                    request_type: value,
+                    request_type_valid: true,
+                  })
                 }
               />
             </Grid.Column>
@@ -385,7 +452,10 @@ class Request extends React.Component {
                         fluid
                         selection
                         className="form-select"
-                        value={this.state.additional_fields[index] && this.state.additional_fields[index].value}
+                        value={
+                          this.state.additional_fields[index] &&
+                          this.state.additional_fields[index].value
+                        }
                         options={booleanTypeOptions}
                         onChange={(e, { value }) =>
                           this.handleStateChange(value, index)
@@ -395,7 +465,10 @@ class Request extends React.Component {
                     {(item.value === "text" || item.value === "email") && (
                       <Input
                         className="form-input"
-                        value={this.state.additional_fields[index] && this.state.additional_fields[index].value}
+                        value={
+                          this.state.additional_fields[index] &&
+                          this.state.additional_fields[index].value
+                        }
                         fluid
                         onChange={(e, { value }) =>
                           this.handleStateChange(value, index)
@@ -439,7 +512,7 @@ class Request extends React.Component {
           </Grid.Row>
           <Grid.Row centered>
             <Grid.Column width="10">
-              <Dropzone onDrop={this.uploadFile} />
+              <Dropzone onDrop={this.uploadFile} reset={this.state.reset}/>
             </Grid.Column>
           </Grid.Row>
           <Grid.Row textAlign="center">

@@ -100,6 +100,11 @@ class RequestDetailModal extends React.Component {
                 </Grid.Column>
                 <Grid.Column>
                   <span>
+                    Country: {data.state_resident && data.state_resident.country}
+                  </span>
+                </Grid.Column>
+                <Grid.Column>
+                  <span>
                     Full Name: {data.first_name} {data.last_name}
                   </span>
                 </Grid.Column>
