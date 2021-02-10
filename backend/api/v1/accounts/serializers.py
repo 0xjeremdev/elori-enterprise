@@ -94,6 +94,7 @@ class LoginSerializer(serializers.ModelSerializer):
                 account.login_failed += 1
                 account.save()
                 if account.login_failed == 4:
+                    account.login_failed = 0
                     account.is_locked = True
                     account.save()
                     raise AuthenticationFailed('This accunt is locked.')
