@@ -132,7 +132,6 @@ const setUserData = ({
   profile,
 }) => {
   try {
-    console.log(email, elroi_id, full_name, state_resident);
     localStorage.setItem("email", email);
     localStorage.setItem("elroi_id", elroi_id);
     localStorage.setItem("enterprise_id", enterprise_id);

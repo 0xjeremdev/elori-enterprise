@@ -10,6 +10,7 @@ from api.v1.enterprise.models import (UserGuideModel, CustomerConfiguration,
                                       EnterpriseEmailTemplateModel,
                                       EnterpriseEmailType,
                                       EnterpriseQuestionModel)
+from ..consumer_request.utils import validate_filesize, validate_filename
 
 
 class UserGuideSerializer(serializers.ModelSerializer):
@@ -26,6 +27,15 @@ class FileSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserGuideUploads
         fields = ["file", "name", "size"]
+
+    def validate(self, data):
+        request = self.context.get("request")
+        if not validate_filename(request.FILES.get("file")):
+            raise Exception("Invalid filetype")
+        if not validate_filesize(request.FILES.get("file")):
+            raise Exception(
+                "Too large filesize. The file should be less than 3MB.")
+        return super().validate(data)
 
 
 class CustomerConfigurationSerializer(serializers.ModelSerializer):
@@ -97,6 +107,15 @@ class EnterpriseConfigurationSerializer(serializers.ModelSerializer):
         model = EnterpriseConfigurationModel
         fields = "__all__"
 
+    def validate(self, data):
+        request = self.context.get("request")
+        if not validate_filename(request.FILES.get("logo")):
+            raise Exception("Invalid filetype")
+        if not validate_filesize(request.FILES.get("logo")):
+            raise Exception(
+                "Too large filesize. The file should be less than 3MB.")
+        return super().validate(data)
+
 
 class EnterpriseQuestionSerializer(serializers.ModelSerializer):
     content = serializers.CharField(required=True)
@@ -150,6 +169,15 @@ class EnterpriseAccountSettingsSerializer(serializers.ModelSerializer):
             "time_frame"
         ]
 
+    def validate(self, data):
+        request = self.context.get("request")
+        if not validate_filename(request.FILES.get("logo")):
+            raise Exception("Invalid filetype")
+        if not validate_filesize(request.FILES.get("logo")):
+            raise Exception(
+                "Too large filesize. The file should be less than 3MB.")
+        return super().validate(data)
+
 
 class EnterpriseEmailTypeSerializer(serializers.ModelSerializer):
     email_type = serializers.CharField(required=False)
@@ -172,6 +200,15 @@ class EnterpriseEmailTemplateSerializer(serializers.ModelSerializer):
             "content",
             "attachment",
         ]
+
+    def validate(self, data):
+        request = self.context.get("request")
+        if not validate_filename(request.FILES.get("attachment")):
+            raise Exception("Invalid filetype")
+        if not validate_filesize(request.FILES.get("attachment")):
+            raise Exception(
+                "Too large filesize. The file should be less than 3MB.")
+        return super().validate(data)
 
 
 class EnterpriseInviteSerializer(serializers.ModelSerializer):

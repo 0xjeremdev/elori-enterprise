@@ -12,7 +12,11 @@ import { consumerRequestFormApis } from "../../../utils/api/setting/requestform"
 import { consumerRequestApis } from "../../../utils/api/consumer/request";
 import ConfirmModal from "./ConfirmModal";
 import { EUList } from "../../../constants/constants";
-import { isEmailValid } from "../../../utils/validation";
+import {
+  getFileExtenstion,
+  getFileSizeMb,
+  isEmailValid,
+} from "../../../utils/validation";
 
 const RequestFormContainer = styled.div`
   p.title {
@@ -211,7 +215,23 @@ class Request extends React.Component {
   };
 
   uploadFile = (files) => {
-    this.setState({ file: files[0], reset: false });
+    const fileExtension = getFileExtenstion(files[0].name);
+    if (
+      fileExtension === "docx" ||
+      fileExtension === "doc" ||
+      fileExtension === "pdf" ||
+      fileExtension === "xlsx"
+    ) {
+      if (getFileSizeMb(files[0].size) < 3) {
+        this.setState({ file: files[0], reset: false });
+      } else {
+        alert("File Size are restricted to 3MB");
+        this.setState({ reset: true });
+      }
+    } else {
+      alert("Document only allow .docx, .doc, .pdf or .xlsx");
+      this.setState({ reset: true });
+    }
   };
 
   handleUpload = () => {
@@ -369,7 +389,9 @@ class Request extends React.Component {
             <Grid.Column>
               <p className="control-label">* First Name</p>
               {!this.state.first_name_valid && (
-                <label className="error-msg">First name is required field</label>
+                <label className="error-msg">
+                  First name is required field
+                </label>
               )}
               <Input
                 className="form-input"
@@ -512,7 +534,7 @@ class Request extends React.Component {
           </Grid.Row>
           <Grid.Row centered>
             <Grid.Column width="10">
-              <Dropzone onDrop={this.uploadFile} reset={this.state.reset}/>
+              <Dropzone onDrop={this.uploadFile} reset={this.state.reset} />
             </Grid.Column>
           </Grid.Row>
           <Grid.Row textAlign="center">

@@ -27,7 +27,7 @@ class LoggingActivityMixin(object):
 
     def initial(self, request, *args, **kwargs):
         self.log = {"requested_at": now()}
-        self.log["data"] = self._clean_data(request.body)
+        # self.log["data"] = self._clean_data(request.body)
 
         super(LoggingActivityMixin, self).initial(request, *args, **kwargs)
 

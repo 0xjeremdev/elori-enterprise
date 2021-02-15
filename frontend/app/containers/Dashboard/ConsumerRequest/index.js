@@ -62,14 +62,14 @@ const CommentModal = ({ open, onClose, onSubmit }) => {
 
   const submitComment = useCallback(() => {
     onSubmit(comment);
-    setComment('');
+    setComment("");
   }, [comment]);
 
   const onCancel = () => {
-    setComment('');
+    setComment("");
     onClose();
-  }
-  
+  };
+
   return (
     <Modal open={open}>
       <Modal.Header>Add Comment</Modal.Header>
@@ -99,6 +99,7 @@ const CommentModal = ({ open, onClose, onSubmit }) => {
 class ConsumerRequest extends React.Component {
   state = {
     activeMenuItem: "processing",
+    searchKey: "",
     consumerList: [],
     count: [],
     selRequestItem: {},
@@ -178,7 +179,7 @@ class ConsumerRequest extends React.Component {
   };
 
   render() {
-    const { consumerList, filterStatus } = this.state;
+    const { consumerList, filterStatus, searchKey } = this.state;
     const selectOptions = [
       { key: "1", value: "week", text: "This week" },
       { key: "2", value: "month", text: "This month" },
@@ -187,6 +188,19 @@ class ConsumerRequest extends React.Component {
     const consumerRenderList = consumerList.filter(
       (item) => item.status === filterStatus
     );
+    let updatedRenderList = [];
+    consumerRenderList.forEach((item) => {
+      let flag = false;
+      Object.entries(item).forEach(([key, value]) => {
+        if (String(value).includes(searchKey)) {
+          flag = true;
+          return;
+        }
+      });
+      if (flag) {
+        updatedRenderList.push(item);
+      }
+    });
     const totalRequestsCount = consumerList.length;
     const rejectedRequestsCount = consumerList.filter(
       (item) => item.status === REJECT
@@ -238,6 +252,10 @@ class ConsumerRequest extends React.Component {
                       fluid
                       placeholder="search data subject"
                       icon="search"
+                      value={searchKey || ""}
+                      onChange={(e) =>
+                        this.setState({ searchKey: e.target.value })
+                      }
                     />
                   </Grid.Column>
                 </Grid.Row>
@@ -414,7 +432,7 @@ class ConsumerRequest extends React.Component {
                   </Grid.Column>
                 </Grid.Row>
                 <Divider />
-                {map(consumerRenderList, (item) => (
+                {map(updatedRenderList, (item) => (
                   <Grid.Row key={item.created_at}>
                     <Grid.Column
                       onClick={() => {
@@ -425,7 +443,7 @@ class ConsumerRequest extends React.Component {
                     </Grid.Column>
                   </Grid.Row>
                 ))}
-                {consumerRenderList.length === 0 && (
+                {updatedRenderList.length === 0 && (
                   <Grid.Row textAlign="center">
                     <Grid.Column>
                       <p>No Consumer Request</p>

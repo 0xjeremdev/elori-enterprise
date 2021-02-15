@@ -18,6 +18,7 @@ import {
 } from "../../../constants/constants";
 import { consumerRequestApis } from "../../../utils/api/consumer/request";
 import { emailApis } from "../../../utils/api/setting/email";
+import { getFileExtenstion } from "../../../utils/validation";
 const Container = styled.div`
   & span {
     color: #707683 !important;
@@ -70,13 +71,18 @@ class RequestDetailModal extends React.Component {
   };
 
   onFileChange = (e) => {
-    this.setState({
-      selectFile: e.target.files[0],
-      processFile: {
-        ...this.state.processFile,
-        attachment: e.target.files[0].name,
-      },
-    });
+    const fExtension = getFileExtenstion(e.target.files[0].name);
+    if (fExtension === "pdf") {
+      this.setState({
+        selectFile: e.target.files[0],
+        processFile: {
+          ...this.state.processFile,
+          attachment: e.target.files[0].name,
+        },
+      });
+    } else {
+      alert("Documents should be pdf");
+    }
   };
 
   render() {
@@ -100,7 +106,8 @@ class RequestDetailModal extends React.Component {
                 </Grid.Column>
                 <Grid.Column>
                   <span>
-                    Country: {data.state_resident && data.state_resident.country}
+                    Country:{" "}
+                    {data.state_resident && data.state_resident.country}
                   </span>
                 </Grid.Column>
                 <Grid.Column>

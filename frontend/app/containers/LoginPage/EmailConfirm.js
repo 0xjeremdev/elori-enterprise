@@ -31,11 +31,9 @@ class EmailConfirm extends React.Component {
     const { id } = this.props.match.params;
     emailVerify(id)
       .then((res) => {
-        console.log(res);
         this.setState({ confirming: false, msg: res.data.email });
       })
       .catch((error) => {
-        console.log(error.response.data);
         this.setState({ confirming: false, msg: error.response.data.error });
       });
   };

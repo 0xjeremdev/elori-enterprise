@@ -120,9 +120,12 @@ class ConsumerRequestAPI(
             else:
                 return Response(serializer.errors,
                                 status=status.HTTP_400_BAD_REQUEST)
-        except Enterprise.DoesNotExist:
+        except Exception as e:
             return Response(
-                {"error": "Enterprise was not found."},
+                {
+                    "success": False,
+                    "error": str(e)
+                },
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -255,9 +258,12 @@ class ConsumerRequestSetStatus(LoggingMixin, GenericAPIView):
                 "success": True,
             }, status=status.HTTP_200_OK)
 
-        except:
+        except Exception as e:
             return Response(
-                {"error": "Parameter error."},
+                {
+                    "success": False,
+                    "error": str(e)
+                },
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -305,9 +311,12 @@ class ConsumerRequestSend(LoggingMixin, GenericAPIView):
                 "success": True,
             }, status=status.HTTP_200_OK)
 
-        except:
+        except Exception as e:
             return Response(
-                {"error": "Parameter error."},
+                {
+                    "success": False,
+                    "error": str(e)
+                },
                 status=status.HTTP_400_BAD_REQUEST,
             )
 

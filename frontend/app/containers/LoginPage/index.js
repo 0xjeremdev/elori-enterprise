@@ -45,7 +45,6 @@ class Login extends React.Component {
 
   handleResetPwd = () => {
     const { history } = this.props;
-    console.log("reset password");
     history.push("/forget-password");
   };
 

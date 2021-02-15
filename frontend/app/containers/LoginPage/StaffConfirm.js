@@ -30,10 +30,8 @@ class StaffConfirm extends React.Component {
 
   componentDidMount = () => {
     const { id } = this.props.match.params;
-    console.log("this is invite id", id);
     customerVerify(id)
       .then((res) => {
-        console.log(res);
         this.setState(
           {
             confirming: false,
@@ -49,7 +47,6 @@ class StaffConfirm extends React.Component {
         );
       })
       .catch((error) => {
-        console.log(error.response.data);
         this.setState({ confirming: false, msg: "Failed" });
       });
   };

@@ -6,6 +6,7 @@ from rest_framework import serializers, status
 from api.v1.consumer_request.models import ConsumerRequest, ConsumerReqeustQuestionModel
 from api.v1.enterprise.models import Enterprise, EnterpriseQuestionModel
 from ..enterprise.models import EnterpriseEmailType
+from .utils import validate_filename, validate_filesize
 
 
 class ConsumerRequestSerializer(serializers.ModelSerializer):
@@ -37,6 +38,15 @@ class ConsumerRequestSerializer(serializers.ModelSerializer):
         return settings.STATUSES[obj.status][1]
 
     """ used to return text for request type """
+
+    def validate(self, data):
+        request = self.context.get("request")
+        if not validate_filename(request.FILES.get("file")):
+            raise Exception("Invalid filetype")
+        if not validate_filesize(request.FILES.get("file")):
+            raise Exception(
+                "Too large filesize. The file should be less than 3MB.")
+        return super().validate(data)
 
     def create(self, validated_data):
         request = self.context.get("request")
@@ -98,6 +108,12 @@ class ConsumerRequestSendSerializer(serializers.Serializer):
     email_type = serializers.CharField(default="")
 
     def validate(self, data):
+        request = self.context.get("request")
+        if not validate_filename(request.FILES.get("attachment")):
+            raise Exception("Invalid filetype")
+        if not validate_filesize(request.FILES.get("attachment")):
+            raise Exception(
+                "Too large filesize. The file should be less than 3MB.")
         if not EnterpriseEmailType.objects.filter(
                 type_name=data.get("email_type")).exists():
             raise Exception("Invalid EmailType")

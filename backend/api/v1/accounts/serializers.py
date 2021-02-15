@@ -16,6 +16,7 @@ from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 
 from api.v1.accounts.models import Account, Staff, Enterprise
 from .utlis import validate_password_strength
+from ..consumer_request.utils import validate_filesize, validate_filename
 
 
 def generate_auth_code():
@@ -324,3 +325,12 @@ class AccountProfileSettingsSerializer(serializers.ModelSerializer):
             'id', 'email', 'logo', 'first_name', 'last_name', 'company_email',
             'phone_number', 'company_name', 'timezone', 'is_2fa_active'
         ]
+
+    def validate(self, data):
+        request = self.context.get("request")
+        if not validate_filename(request.FILES.get("logo")):
+            raise Exception("Invalid filetype")
+        if not validate_filesize(request.FILES.get("logo")):
+            raise Exception(
+                "Too large filesize. The file should be less than 3MB.")
+        return super().validate(data)
