@@ -322,7 +322,7 @@ class Request extends React.Component {
               width="13"
               style={{ marginTop: "120px", padding: "0px 200px 0px 0px" }}
             >
-              <p className="title">{companyName}'s Privacy Request Form</p>
+              <p className="title">{companyName && `${companyName}'s`} Privacy Request Form</p>
               <p className="desc">
                 Your privacy is very important to us. STATE law grants
                 California residents rights relating to their personal

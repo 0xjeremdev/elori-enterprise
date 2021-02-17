@@ -126,8 +126,10 @@ class EnterpriseConfigurationModel(models.Model):
     site_color = models.JSONField(null=True, blank=True)
     site_theme = models.JSONField(null=True, blank=True)
     background_image = models.FileField()
-    website_launched_to = models.CharField(max_length=255)
-    company_name = models.CharField(max_length=255)
+    website_launched_to = models.CharField(max_length=255,
+                                           null=True,
+                                           default="")
+    company_name = models.CharField(max_length=255, null=True, default="")
     resident_state = models.BooleanField(default=True)
     additional_configuration = models.JSONField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)

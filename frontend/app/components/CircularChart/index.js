@@ -92,7 +92,9 @@ class CircularChart extends React.Component {
   }
 
   render() {
-    const series = (this.props.validCount / this.props.total) * 100;
+    const series = this.props.total
+      ? (this.props.validCount / this.props.total) * 100
+      : 0;
     return (
       <div id="chart">
         <ReactApexChart

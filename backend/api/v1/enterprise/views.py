@@ -263,21 +263,40 @@ class EnterpriseConfiguration(
                 enterprise_id__user=request.user,
             )
             serializer = self.serializer_class(configuration,
-                                               data=request.data)
-            if serializer.is_valid():
+                                               data=request.data,
+                                               context={"request": request})
+            if serializer.is_valid(raise_exception=True):
                 serializer.save()
                 return Response(serializer.data, status=status.HTTP_200_OK)
             else:
                 return Response(serializer.errors,
                                 status=status.HTTP_400_BAD_REQUEST)
+
         except EnterpriseConfigurationModel.DoesNotExist:
             if request.user and hasattr(request.user, "enterprise"):
-                return self.create(request, *args, **kwargs)
+                try:
+                    return self.create(request, *args, **kwargs)
+                except Exception as e:
+                    return Response(
+                        {
+                            "success": False,
+                            "error": str(e),
+                        },
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
             return Response(
                 {
                     "error": "You are not allowed to continue",
                 },
                 status=status.HTTP_401_UNAUTHORIZED,
+            )
+        except Exception as e:
+            return Response(
+                {
+                    "success": False,
+                    "error": str(e),
+                },
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
     # delete configuration

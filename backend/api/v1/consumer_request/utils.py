@@ -11,6 +11,8 @@ def gen_random_id():
 
 
 def validate_filename(file):
+    if file == None:
+        return False
     filename = file.name
     valid_extensions = [
         ".jpg", ".jpeg", ".doc", ".docx", ".xls", ".xlsx", ".pdf"
@@ -25,4 +27,6 @@ def validate_filename(file):
 
 
 def validate_filesize(file):
+    if file == None:
+        return False
     return file.size <= 3698688

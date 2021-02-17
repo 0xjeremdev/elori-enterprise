@@ -100,8 +100,8 @@ class LoggingActivityMixin(object):
                 "status_code":
                 response.status_code,
             })
-            if self._clean_data(request.query_params.dict()) == {}:
-                self.log.update({"query_params": self.log["data"]})
+            # if self._clean_data(request.query_params.dict()) == {}:
+            # self.log.update({"query_params": self.log["data"]})
             if self._get_user(request) != None:
                 try:
                     self.handle_log()
