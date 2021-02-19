@@ -54,8 +54,8 @@ class UserSetting extends React.Component {
       firstName: first_name,
       lastName: last_name,
       companyEmail: email,
-      phoneNumber: phone_number,
-      companyName: company_name,
+      phoneNumber: phone_number === "null" ? null : phone_number,
+      companyName: company_name === "null" ? null : company_name,
       timezone,
     });
   };

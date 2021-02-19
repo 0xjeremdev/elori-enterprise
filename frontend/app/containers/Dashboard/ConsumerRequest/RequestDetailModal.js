@@ -110,6 +110,16 @@ class RequestDetailModal extends React.Component {
                     {data.state_resident && data.state_resident.country}
                   </span>
                 </Grid.Column>
+                {data.state_resident &&
+                  data.state_resident.country ===
+                    "United States of America" && (
+                    <Grid.Column>
+                      <span>
+                        State:{" "}
+                        {data.state_resident && data.state_resident.state}
+                      </span>
+                    </Grid.Column>
+                  )}
                 <Grid.Column>
                   <span>
                     Full Name: {data.first_name} {data.last_name}
@@ -135,7 +145,6 @@ class RequestDetailModal extends React.Component {
                 )}
                 {data.file && (
                   <Grid.Column>
-                    <img src={data.file} alt="No Img" />
                     <a href={data.file} target="_blank">
                       Review File
                     </a>

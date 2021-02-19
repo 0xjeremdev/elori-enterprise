@@ -1,3 +1,4 @@
+import { add } from "lodash";
 import React from "react";
 import { Button, Form, Grid, Icon, Image } from "semantic-ui-react";
 import styled from "styled-components";
@@ -65,11 +66,12 @@ class AccountSetting extends React.Component {
       logoUrl: logo,
       siteColor: site_color,
       secondColor: second_color,
-      notificationEmail: notification_email,
-      address,
-      companyName: company_name,
+      notificationEmail:
+        notification_email === "null" ? null : notification_email,
+      address: address === "null" ? null : address,
+      companyName: companyName === "null" ? null : companyName,
       timezone,
-      time_frame
+      time_frame,
     });
   };
 
@@ -239,7 +241,9 @@ class AccountSetting extends React.Component {
                 options={timeframeOptions}
                 label="Timeframe"
                 value={this.state.time_frame || ""}
-                onChange={(e, { value }) => this.setState({ time_frame: value })}
+                onChange={(e, { value }) =>
+                  this.setState({ time_frame: value })
+                }
               />
             </Form>
           </Grid.Column>

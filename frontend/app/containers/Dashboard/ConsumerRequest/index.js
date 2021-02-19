@@ -125,6 +125,11 @@ class ConsumerRequest extends React.Component {
 
   componentDidMount() {
     this.initState();
+    this.interval = setInterval(this.initState, 300000);
+  }
+
+  componentWillUnmount() {
+    clearInterval(this.interval);
   }
 
   updateRequestItem = (id, status, extend) => {
