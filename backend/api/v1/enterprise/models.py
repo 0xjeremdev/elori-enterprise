@@ -1,7 +1,9 @@
 import uuid
+import secrets
 from django.contrib.postgres.fields import JSONField
 from django.db import models
 from django.conf import settings
+from django.db.models.signals import post_save
 from api.v1.accounts.models import Account, Enterprise
 
 
@@ -126,9 +128,11 @@ class EnterpriseConfigurationModel(models.Model):
     site_color = models.JSONField(null=True, blank=True)
     site_theme = models.JSONField(null=True, blank=True)
     background_image = models.FileField()
-    website_launched_to = models.CharField(max_length=255,
-                                           null=True,
-                                           default="")
+    website_launched_to = models.CharField(
+        max_length=255,
+        null=True,
+        default="",
+    )
     company_name = models.CharField(max_length=255, null=True, default="")
     resident_state = models.BooleanField(default=True)
     additional_configuration = models.JSONField(blank=True)
@@ -141,6 +145,44 @@ class EnterpriseConfigurationModel(models.Model):
     class Meta:
         db_table = "enterprise_configuration"
         ordering = ["-created_at"]
+
+
+""" update elroi id for enterprises"""
+
+
+def update_enterprise_web_id(sender, instance, created, **kwargs):
+    if created:
+        token = generate_web_id()
+        web_id = check_unique_enterprise_web_id(token)
+        instance.website_launched_to = web_id
+        instance.save()
+    elif instance.website_launched_to == '':
+        token = generate_web_id()
+        web_id = check_unique_enterprise_web_id(token)
+        instance.website_launched_to = web_id
+        instance.save()
+
+
+""" check if elroi_id doesn't exists already """
+
+
+def check_unique_enterprise_web_id(check_id):
+    try:
+        EnterpriseConfigurationModel.objects.get(
+            website_launched_to__exact=check_id)
+        web_id = generate_web_id()
+        return check_unique_enterprise_web_id(web_id)
+    except EnterpriseConfigurationModel.DoesNotExist:
+        return check_id
+
+
+post_save.connect(update_enterprise_web_id,
+                  sender=EnterpriseConfigurationModel)
+
+
+def generate_web_id():
+    token = secrets.token_hex(16)
+    return f"{token}"
 
 
 class EnterpriseQuestionModel(models.Model):

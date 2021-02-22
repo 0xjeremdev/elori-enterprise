@@ -5,7 +5,7 @@ from api.v1.enterprise.views import (
     NotifyCustomer, ExtendedVsNewRequests, EnterpriseConfiguration,
     UserGuideUpload, EnterpriseAssessmentShareLink, EnterpriseAccountSettings,
     EnterpriseInvitation, GetInvitationInfo, EnterpriseEmailTemplate,
-    EnterpriseEmailTypeView, EnterpriseQuestionView)
+    EnterpriseEmailTypeView, EnterpriseQuestionView, EnterpriseWebform)
 
 urlpatterns = [
     path('user-guide/', UserGuide.as_view(), name="user_guide"),
@@ -29,6 +29,9 @@ urlpatterns = [
     path('consumer-request-config/<int:enterprise_id>',
          EnterpriseConfiguration.as_view(),
          name='enterprise_configuration_get'),
+    path('webform-config/<web_id>',
+         EnterpriseWebform.as_view(),
+         name='enterprise_webform_get'),
     path('enterprise-get-assessment-share-link/<elroi_id>',
          EnterpriseAssessmentShareLink.as_view(),
          name='enterprise_assessment_share_link'),

@@ -230,7 +230,7 @@ class EnterpriseConfiguration(
 ):
     serializer_class = EnterpriseConfigurationSerializer
 
-    permission_classes = (permissions.AllowAny, )
+    permission_classes = (permissions.IsAuthenticated, )
 
     # parser_classes = (MultiPartParser, FormParser, FileUploadParser)
     def get(self, request, *args, **kwargs):
@@ -306,6 +306,35 @@ class EnterpriseConfiguration(
             enterprise_id__elroi_id=request.data.get("elroi_id"),
         )
         return self.destroy(request, *args, **kwargs)
+
+
+class EnterpriseWebform(
+        GenericAPIView,
+        mixins.ListModelMixin,
+):
+    serializer_class = EnterpriseConfigurationSerializer
+    permission_classes = (permissions.AllowAny, )
+
+    def get(self, request, *args, **kwargs):
+        try:
+            self.queryset = EnterpriseConfigurationModel.objects.filter(
+                website_launched_to=kwargs["web_id"])
+            return self.list(request, *args, **kwargs)
+        except EnterpriseConfigurationModel.DoesNotExist:
+            return Response({"error": "Page not found"},
+                            status=status.HTTP_404_NOT_FOUND)
+
+    def list(self, request, *args, **kwargs):
+        response = super(EnterpriseWebform, self).list(request, args, kwargs)
+        if len(response.data["results"]) == 0:
+            return Response({"success": False}, status=status.HTTP_200_OK)
+        return Response(
+            {
+                "success": True,
+                "data": response.data["results"][0]
+            },
+            status=status.HTTP_200_OK,
+        )
 
 
 class EnterpriseQuestionView(GenericAPIView):

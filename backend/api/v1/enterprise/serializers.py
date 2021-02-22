@@ -109,16 +109,18 @@ class EnterpriseConfigurationSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         request = self.context.get("request")
-        if not validate_filename(request.FILES.get("logo")):
-            raise Exception("Invalid filetype")
-        if not validate_filesize(request.FILES.get("logo")):
-            raise Exception(
-                "Too large filesize. The file should be less than 3MB.")
-        if not validate_filename(request.FILES.get("background_image")):
-            raise Exception("Invalid filetype")
-        if not validate_filesize(request.FILES.get("background_image")):
-            raise Exception(
-                "Too large filesize. The file should be less than 3MB.")
+        if "logo" in request.FILES:
+            if not validate_filename(request.FILES.get("logo")):
+                raise Exception("Invalid filetype")
+            if not validate_filesize(request.FILES.get("logo")):
+                raise Exception(
+                    "Too large filesize. The file should be less than 3MB.")
+        if "background_image" in request.FILES:
+            if not validate_filename(request.FILES.get("background_image")):
+                raise Exception("Invalid filetype")
+            if not validate_filesize(request.FILES.get("background_image")):
+                raise Exception(
+                    "Too large filesize. The file should be less than 3MB.")
         return super().validate(data)
 
 
