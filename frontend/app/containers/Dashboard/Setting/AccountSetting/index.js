@@ -126,7 +126,7 @@ class AccountSetting extends React.Component {
             <input
               type="file"
               id="logo"
-              accept="image/x-png,image/jpg,image/jpeg"
+              accept="image/jpg,image/jpeg"
               hidden
               onChange={this.onLogoChange}
             />

@@ -203,7 +203,7 @@ class Request extends React.Component {
 
   componentDidMount() {
     const { id } = this.props.match.params;
-    consumerRequestFormApis.getConsumerRequestForm(id).then((res) => {
+    consumerRequestFormApis.getConsumerRequestFormByToken(id).then((res) => {
       this.initState(res);
     });
   }
@@ -280,6 +280,7 @@ class Request extends React.Component {
       { key: "1", text: "Return", value: "request_return" },
       { key: "2", text: "Delete", value: "request_delete" },
       { key: "3", text: "Modify", value: "request_modify" },
+      { key: "3", text: "Do Not Sell", value: "request_dns" },
     ];
     const booleanTypeOptions = [
       { key: "1", text: "Yes", value: true },
@@ -501,7 +502,7 @@ class Request extends React.Component {
                       <Input
                         className="form-input"
                         type="file"
-                        accept="image/x-png,image/jpg,image/jpeg"
+                        accept="image/jpg,image/jpeg"
                         fluid
                         onChange={(e, { value }) =>
                           this.handleStateChange(value, index)

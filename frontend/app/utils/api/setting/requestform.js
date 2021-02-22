@@ -5,6 +5,7 @@ export const consumerRequestFormApis = {
   setConsumerRequestForm,
   getConsumerRequestForm,
   updateConsumerRequestForm,
+  getConsumerRequestFormByToken,
 };
 
 function setConsumerRequestForm(payload) {
@@ -89,6 +90,7 @@ function updateConsumerRequestForm(payload) {
         formData,
         {
           headers: {
+            Authorization: `Bearer ${token}`,
             "Content-Type": "multipart/form-data",
           },
         }
@@ -99,9 +101,30 @@ function updateConsumerRequestForm(payload) {
 }
 
 function getConsumerRequestForm(enterprise_id) {
+  const token = localStorage.getItem("access-token");
   return new Promise((resolve, reject) => {
     axios
-      .get(`${API_ENDPOINT_URL}/enterprise/consumer-request-config/${enterprise_id}`)
+      .get(
+        `${API_ENDPOINT_URL}/enterprise/consumer-request-config/${enterprise_id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      )
+      .then((res) => {
+        if (res.data.success) {
+          resolve(res.data.data);
+        }
+      })
+      .catch((e) => reject(e));
+  });
+}
+
+function getConsumerRequestFormByToken(token) {
+  return new Promise((resolve, reject) => {
+    axios
+      .get(`${API_ENDPOINT_URL}/enterprise/webform-config/${token}`)
       .then((res) => {
         if (res.data.success) {
           resolve(res.data.data);

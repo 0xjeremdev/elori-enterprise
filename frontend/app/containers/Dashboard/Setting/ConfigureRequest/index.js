@@ -125,7 +125,8 @@ class ConfigureRequest extends React.Component {
   handleSave = () => {
     consumerRequestFormApis
       .setConsumerRequestForm(this.state)
-      .then((res) => console.log(res));
+      .then((res) => this.initState(res.data))
+      .catch((err) => alert(err.response.data.error));
   };
 
   removeQues = (index) => {
@@ -153,11 +154,11 @@ class ConfigureRequest extends React.Component {
       backImg,
       backImgBS64,
       additionalQuestions,
+      lanchUrl,
     } = this.state;
-    const enterprise_id = localStorage.getItem("enterprise_id");
     const fullUrl = window.location.href;
     const arr = fullUrl.split("/");
-    const requestUrl = `${arr[0]}//${arr[2]}/request/${enterprise_id}`;
+    const requestUrl = `${arr[0]}//${arr[2]}/request/${lanchUrl}`;
     return (
       <Container>
         <Grid.Row verticalAlign="middle">
@@ -173,7 +174,7 @@ class ConfigureRequest extends React.Component {
             <input
               type="file"
               id="logo"
-              accept="image/x-png,image/jpg,image/jpeg"
+              accept="image/jpg,image/jpeg"
               hidden
               onChange={this.onLogoChange}
             />
@@ -228,7 +229,7 @@ class ConfigureRequest extends React.Component {
                   <input
                     type="file"
                     id="backImg"
-                    accept="image/x-png,image/jpg,image/jpeg"
+                    accept="image/jpg,image/jpeg"
                     hidden
                     onChange={this.onBackImgChange}
                   />
@@ -246,11 +247,13 @@ class ConfigureRequest extends React.Component {
           </Grid.Column>
         </Grid.Row>
         <Grid.Row verticalAlign="middle">
-          <Grid.Column width={6}>
-            <Form>
-              <Form.Input label="Website Launched to" value={requestUrl} />
-            </Form>
-          </Grid.Column>
+          {lanchUrl && (
+            <Grid.Column width={6}>
+              <Form>
+                <Form.Input label="Website Launched to" value={requestUrl} />
+              </Form>
+            </Grid.Column>
+          )}
         </Grid.Row>
         <Grid.Row>
           <Grid.Column width={5}>
@@ -281,45 +284,46 @@ class ConfigureRequest extends React.Component {
             <Divider horizontal>Verification Questions</Divider>
           </Grid.Column>
         </Grid.Row>
-        {additionalQuestions.map((ques, index) => (
-          <Grid.Row>
-            <Grid.Column width={6}>
-              <Form>
-                <Form.Input
-                  label={`Question ${index + 1}`}
-                  value={ques.question}
-                  onChange={(e, { value }) =>
-                    this.setAdditionalQuestion(index, "question", value)
-                  }
+        {additionalQuestions &&
+          additionalQuestions.map((ques, index) => (
+            <Grid.Row>
+              <Grid.Column width={6}>
+                <Form>
+                  <Form.Input
+                    label={`Question ${index + 1}`}
+                    value={ques.question}
+                    onChange={(e, { value }) =>
+                      this.setAdditionalQuestion(index, "question", value)
+                    }
+                  />
+                </Form>
+              </Grid.Column>
+              <Grid.Column width={4}>
+                <Form>
+                  <Form.Dropdown
+                    label="Value"
+                    selection
+                    options={formAnswerTypeOptions}
+                    value={ques.value}
+                    onChange={(e, { value }) =>
+                      this.setAdditionalQuestion(index, "value", value)
+                    }
+                  />
+                </Form>
+              </Grid.Column>
+              <Grid.Column width={2}>
+                <br />
+                <Button
+                  basic
+                  circular
+                  icon="close"
+                  color="red"
+                  size="tiny"
+                  onClick={() => this.removeQues(index)}
                 />
-              </Form>
-            </Grid.Column>
-            <Grid.Column width={4}>
-              <Form>
-                <Form.Dropdown
-                  label="Value"
-                  selection
-                  options={formAnswerTypeOptions}
-                  value={ques.value}
-                  onChange={(e, { value }) =>
-                    this.setAdditionalQuestion(index, "value", value)
-                  }
-                />
-              </Form>
-            </Grid.Column>
-            <Grid.Column width={2}>
-              <br />
-              <Button
-                basic
-                circular
-                icon="close"
-                color="red"
-                size="tiny"
-                onClick={() => this.removeQues(index)}
-              />
-            </Grid.Column>
-          </Grid.Row>
-        ))}
+              </Grid.Column>
+            </Grid.Row>
+          ))}
         <Grid.Row>
           <Grid.Column>
             <Button circular color="blue" onClick={() => this.addQues()}>
