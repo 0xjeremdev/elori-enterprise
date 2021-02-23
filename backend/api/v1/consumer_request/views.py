@@ -20,7 +20,7 @@ from api.v1.consumer_request.serializers import (
     PeriodParameterSerializer, ConsumerReportSerializer,
     ConsumerRequestSendSerializer)
 from api.v1.enterprise.constants import Const_Email_Templates
-from api.v1.enterprise.models import EnterpriseEmailType, EnterpriseEmailTemplateModel
+from api.v1.enterprise.models import EnterpriseEmailType, EnterpriseEmailTemplateModel, EnterpriseConfigurationModel
 
 
 class ConsumerRequestAPI(
@@ -84,8 +84,10 @@ class ConsumerRequestAPI(
 
     def create(self, request, *args, **kwargs):
         try:
-            enterprise = Enterprise.objects.get(
-                id=request.data.get("enterprise_id"))
+            enterprise_conf = EnterpriseConfigurationModel.objects.get(
+                website_launched_to=request.data.get("web_id"))
+            enterprise = enterprise_conf.enterprise_id
+            request.data['enterprise_id'] = enterprise.pk
             serializer = self.serializer_class(data=request.data,
                                                context={"request": request})
             if serializer.is_valid():
@@ -120,6 +122,14 @@ class ConsumerRequestAPI(
             else:
                 return Response(serializer.errors,
                                 status=status.HTTP_400_BAD_REQUEST)
+        except EnterpriseConfigurationModel.DoesNotExist:
+            return Response(
+                {
+                    "success": False,
+                    "error": "Invalid request url"
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         except Exception as e:
             return Response(
                 {

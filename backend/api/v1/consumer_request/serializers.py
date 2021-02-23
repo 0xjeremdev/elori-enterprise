@@ -15,6 +15,7 @@ class ConsumerRequestSerializer(serializers.ModelSerializer):
     # elroi_id = serializers.SerializerMethodField()
 
     enterprise_id = serializers.IntegerField(read_only=True)
+    web_id = serializers.CharField(read_only=True)
     email = serializers.CharField(required=True)
     first_name = serializers.CharField(required=False)
     last_name = serializers.CharField(required=False)

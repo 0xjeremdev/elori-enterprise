@@ -8,7 +8,7 @@ export const consumerRequestApis = {
   sendProcessingEmail,
 };
 
-function sendConsumerRequest(payload, enterprise_id) {
+function sendConsumerRequest(payload, web_id) {
   const {
     first_name,
     last_name,
@@ -29,7 +29,7 @@ function sendConsumerRequest(payload, enterprise_id) {
   formData.append("email", email);
   formData.append("state_resident", JSON.stringify({ country, state }));
   formData.append("request_type", request_type);
-  formData.append("enterprise_id", enterprise_id);
+  formData.append("web_id", web_id);
   formData.append("timeframe", timeframe);
   formData.append("additional_fields", JSON.stringify(additional_fields));
   return new Promise((resolve, reject) => {
