@@ -202,8 +202,8 @@ class Request extends React.Component {
   };
 
   componentDidMount() {
-    const { id } = this.props.match.params;
-    consumerRequestFormApis.getConsumerRequestFormByToken(id).then((res) => {
+    const website_launched_to = localStorage.getItem("website_launched_to");
+    consumerRequestFormApis.getConsumerRequestFormByToken(website_launched_to).then((res) => {
       this.initState(res);
     });
   }

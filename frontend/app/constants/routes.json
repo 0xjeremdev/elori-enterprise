@@ -12,7 +12,7 @@
   "SIGNUP": "/signup",
   "EMAILCONFIRM": "/email-confirm/:id",
   "STAFFINVITE": "/customer-join/:id",
-  "REQUEST": "/request/:id?",
+  "REQUEST": "/request",
   "VERIFYCODE": "/verify-code",
   "RESETPASSWORD": "/forget-password",
   "SETPASSWORD": "/password-reset/:uidb64/:token"

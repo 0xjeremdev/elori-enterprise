@@ -56,6 +56,8 @@ class ConfigureRequest extends React.Component {
     site_color,
     site_theme,
   }) => {
+    console.log("website_launched_to", website_launched_to);
+    localStorage.setItem("website_launched_to", website_launched_to);
     this.setState({
       additionalQuestions:
         typeof additional_configuration === "string"
@@ -154,11 +156,10 @@ class ConfigureRequest extends React.Component {
       backImg,
       backImgBS64,
       additionalQuestions,
-      lanchUrl,
     } = this.state;
     const fullUrl = window.location.href;
     const arr = fullUrl.split("/");
-    const requestUrl = `${arr[0]}//${arr[2]}/request/${lanchUrl}`;
+    const requestUrl = `${arr[0]}//${arr[2]}/request/`;
     return (
       <Container>
         <Grid.Row verticalAlign="middle">
@@ -247,13 +248,11 @@ class ConfigureRequest extends React.Component {
           </Grid.Column>
         </Grid.Row>
         <Grid.Row verticalAlign="middle">
-          {lanchUrl && (
-            <Grid.Column width={6}>
-              <Form>
-                <Form.Input label="Website Launched to" value={requestUrl} />
-              </Form>
-            </Grid.Column>
-          )}
+          <Grid.Column width={6}>
+            <Form>
+              <Form.Input label="Website Launched to" value={requestUrl} />
+            </Form>
+          </Grid.Column>
         </Grid.Row>
         <Grid.Row>
           <Grid.Column width={5}>

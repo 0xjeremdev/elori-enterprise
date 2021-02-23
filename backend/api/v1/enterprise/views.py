@@ -235,12 +235,23 @@ class EnterpriseConfiguration(
     # parser_classes = (MultiPartParser, FormParser, FileUploadParser)
     def get(self, request, *args, **kwargs):
         try:
+            if not EnterpriseConfigurationModel.objects.filter(
+                    enterprise_id__user=request.user).exists():
+                EnterpriseConfigurationModel.objects.create(
+                    enterprise_id=request.user.enterprise,
+                    site_color='{"a": 1, "b": 0, "g": 120, "r": 255}',
+                    site_theme='{"a": 1, "b": 0, "g": 120, "r": 255}',
+                    additional_configuration="[]")
             self.queryset = EnterpriseConfigurationModel.objects.filter(
-                enterprise_id__id=kwargs["enterprise_id"])
+                enterprise_id__user=request.user)
             return self.list(request, *args, **kwargs)
         except EnterpriseConfigurationModel.DoesNotExist:
-            return Response({"error": "Page not found"},
-                            status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {
+                    "error": "You are not allowed to continue",
+                },
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
 
     def list(self, request, *args, **kwargs):
         response = super(EnterpriseConfiguration,
@@ -259,9 +270,7 @@ class EnterpriseConfiguration(
     def post(self, request, *args, **kwargs):
         try:
             configuration = EnterpriseConfigurationModel.objects.get(
-                enterprise_id=request.data.get("enterprise_id"),
-                enterprise_id__user=request.user,
-            )
+                enterprise_id__user=request.user, )
             serializer = self.serializer_class(configuration,
                                                data=request.data,
                                                context={"request": request})
