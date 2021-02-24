@@ -56,7 +56,6 @@ class ConfigureRequest extends React.Component {
     site_color,
     site_theme,
   }) => {
-    console.log("website_launched_to", website_launched_to);
     localStorage.setItem("website_launched_to", website_launched_to);
     this.setState({
       additionalQuestions:

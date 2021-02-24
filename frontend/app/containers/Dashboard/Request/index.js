@@ -325,9 +325,7 @@ class Request extends React.Component {
             >
               <p className="title">{companyName && `${companyName}'s`} Privacy Request Form</p>
               <p className="desc">
-                Your privacy is very important to us. STATE law grants
-                California residents rights relating to their personal
-                information. If you would like to make a request to access or
+                Your privacy is very important to us. If you would like to make a request to access or
                 delete your information, please complete the form below. All
                 fields marked with an asterisk (*) are required so we can
                 properly verify your identity.
@@ -556,16 +554,6 @@ class Request extends React.Component {
               <span className="power-by">
                 Powered by <Image src={logo} as="span" />
               </span>
-            </Grid.Column>
-          </Grid.Row>
-          <Grid.Row textAlign="left">
-            <Grid.Column width="16">
-              <p className="desc-center">
-                If you need assistance please call 1-800-123-45678
-              </p>
-              <p className="desc-center">
-                This site is intended for United States Residents only
-              </p>
             </Grid.Column>
           </Grid.Row>
         </Grid>
