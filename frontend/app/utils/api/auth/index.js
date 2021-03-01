@@ -18,6 +18,7 @@ const register = ({
   newUserName,
   newUserFName,
   newUserLName,
+  companyName,
   newUserPwd,
 }) => {
   try {
@@ -29,7 +30,8 @@ const register = ({
       .post(apiUrl, {
         email: newUserEmail,
         password: newUserPwd,
-        name: newUserName,
+        username: newUserName,
+        company_name: companyName,
         first_name: newUserFName,
         last_name: newUserLName,
         enterprise_elroi_id: enterprise_elroi_id || undefined,

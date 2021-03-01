@@ -1,4 +1,6 @@
 import pyotp
+import math
+import random
 import os
 import string
 from django.core.mail import EmailMessage, send_mail
@@ -34,6 +36,14 @@ class SendUserEmail:
             mail.send()
         except Exception as e:
             print(e)
+
+
+def generate_auth_code():
+    digits = "0123456789"
+    OTP = ""
+    for i in range(6):
+        OTP += digits[math.floor(random.random() * 10)]
+    return OTP
 
 
 def generate_verification_code():

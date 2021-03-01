@@ -173,30 +173,8 @@ class LoggingActivityMixin(object):
         user = self._get_user(request)
         if user == None:
             return elroi_id
-        enterprise = Enterprise.objects.filter(user=user).first()
-        if enterprise != None:
-            return enterprise.elroi_id
-        staff = Staff.objects.filter(user=user).first()
-        if staff != None:
-            return staff.elroi_id
-        return ""
-        # data = json.loads(clean_data)
-        # if "elroi_id" in data:
-        #     elroi_id = data['elroi_id']
-        # elif "data" in data:
-        #     if 'elroi_id' in data['data']:
-        #         elroi_id = data['data']['elroi_id']
 
-        # if elroi_id is None:
-        #     path = request.path
-        #     start = path.find('E-')
-        #     if start != '-1':
-        #         elroi_id = path[start:(start+8)]
-        #     elif path.find('C-') > 0:
-        #         start_c = path.index('C-')
-        #         elroi_id = path[start_c:(start_c+8)]
-
-        return elroi_id
+        return user.elroi_id
 
     def _get_response_ms(self):
         """

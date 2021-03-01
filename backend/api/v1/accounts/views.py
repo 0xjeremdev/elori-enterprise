@@ -69,8 +69,10 @@ class RegisterStaff(LoggingMixin, GenericAPIView):
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid(raise_exception=True):
-            staff_data = serializer.save()
-            account = Account.objects.get(email__iexact=staff_data.email)
+            serializer.save()
+            account = Account.objects.get(
+                email__iexact=request.data.get("email"))
+            staff_data = account.staff
             token = RefreshToken.for_user(account).access_token
             activate_url = f"{settings.FRONTEND_URL}/email-confirm/{str(token)}"
             message_body = render_to_string(
@@ -87,11 +89,11 @@ class RegisterStaff(LoggingMixin, GenericAPIView):
             return Response(
                 {
                     "user": {
-                        "elroi_id": staff_data.elroi_id,
-                        "email": staff_data.email,
-                        "first_name": staff_data.first_name,
-                        "last_name": staff_data.last_name,
-                        "full_name": staff_data.full_name(),
+                        "elroi_id": account.elroi_id,
+                        "email": account.email,
+                        "first_name": account.first_name,
+                        "last_name": account.last_name,
+                        "full_name": account.full_name(),
                         "two_fa_valid": account.is_2fa_on(),
                         "profile": staff_data.profile(),
                     },
@@ -104,7 +106,7 @@ class RegisterStaff(LoggingMixin, GenericAPIView):
                             status=status.HTTP_400_BAD_REQUEST)
 
 
-class RegisterEnterprise(LoggingMixin, GenericAPIView):
+class RegisterEnterprise(GenericAPIView):
     serializer_class = RegisterEnterpriseSerializer
     renderer_classes = (UserRenderer, )
 
@@ -112,9 +114,8 @@ class RegisterEnterprise(LoggingMixin, GenericAPIView):
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
             serializer.save()
-            enterprise_data = serializer.data
             account = Account.objects.get(
-                email__iexact=enterprise_data["email"])
+                email__iexact=request.data.get("email"))
             enterprise = account.enterprise
             token = RefreshToken.for_user(account).access_token
             activate_url = f"{settings.FRONTEND_URL}/email-confirm/{str(token)}"
@@ -132,13 +133,12 @@ class RegisterEnterprise(LoggingMixin, GenericAPIView):
             return Response(
                 {
                     "user": {
-                        "elroi_id": enterprise.elroi_id,
-                        "email": enterprise.email,
-                        "name": enterprise.name,
-                        "first_name": enterprise.first_name,
-                        "last_name": enterprise.last_name,
-                        "full_name": enterprise.full_name(),
-                        "web": enterprise.web,
+                        "elroi_id": account.elroi_id,
+                        "email": account.email,
+                        "username": account.username,
+                        "first_name": account.first_name,
+                        "last_name": account.last_name,
+                        "full_name": account.full_name(),
                         "two_fa_valid": account.is_2fa_on(),
                         "profile": enterprise.profile(),
                     },
@@ -206,8 +206,8 @@ class LoginAPI(LoggingMixin, GenericAPIView):
 
         res_data = {
             account_id: account.id,
-            "elroi_id": account.elroi_id,
-            "email": account.email,
+            "elroi_id": user.elroi_id,
+            "email": user.email,
             "full_name": account.full_name(),
             "is_2fa_active": user.is_2fa_active,
             "profile": account.profile(),

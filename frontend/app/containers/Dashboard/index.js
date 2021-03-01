@@ -13,6 +13,7 @@ import ConsumerDetail from "./ConsumerDetail";
 import { accountSettingApis } from "../../utils/api/setting/account";
 import { enterpriseSettingApis } from "../../utils/api/setting/enterprise";
 import NotFound from "../NotFound";
+import { ToastProvider } from "react-toast-notifications";
 
 const AppWrapper = styled("div")`
   min-height: calc(100vh);
@@ -145,55 +146,57 @@ class Dashboard extends React.Component {
     const { animation, direction, visible, activeMenuItem } = this.state;
     return (
       <AppWrapper visible={visible}>
-        <GlobalStyle />
-        <Sidebar.Pushable as={Segment} style={{ marginTop: "0px" }}>
-          <VerticalSidebar
-            menu={adminRoutes}
-            animation={animation}
-            direction={direction}
-            visible={visible}
-            onSelect={this.selectMenu}
-            onLogout={this.handleLogout}
-            active={activeMenuItem}
-            handleContact={this.handleContactAdmin}
-            logoUrl={this.state.logoUrl}
-          />
-          <Sidebar.Pusher>
-            <RightWrapper basic>
-              <ContentWrapper
-                fluid
-                style={{ marginRight: "0 !important" }}
-                visible={visible}
-              >
-                <Topbar avatarUrl={this.state.avatarUrl} />
-                <Switch>
-                  <Route
-                    exact
-                    path={routes.CONSUMER}
-                    component={ConsumerRequest}
-                  />
-                  <Route
-                    exact
-                    path={routes.CONSUMERDETAIL}
-                    component={ConsumerDetail}
-                  />
-                  <Route
-                    exact
-                    path={routes.SETTING}
-                    render={(props) => (
-                      <Setting
-                        {...props}
-                        onAvatarUpdate={this.updateAvatar}
-                        onlogoUpdate={this.logoUpdate}
-                      />
-                    )}
-                  />
-                  <Route component={NotFound} />
-                </Switch>
-              </ContentWrapper>
-            </RightWrapper>
-          </Sidebar.Pusher>
-        </Sidebar.Pushable>
+        <ToastProvider placement="top-right">
+          <GlobalStyle />
+          <Sidebar.Pushable as={Segment} style={{ marginTop: "0px" }}>
+            <VerticalSidebar
+              menu={adminRoutes}
+              animation={animation}
+              direction={direction}
+              visible={visible}
+              onSelect={this.selectMenu}
+              onLogout={this.handleLogout}
+              active={activeMenuItem}
+              handleContact={this.handleContactAdmin}
+              logoUrl={this.state.logoUrl}
+            />
+            <Sidebar.Pusher>
+              <RightWrapper basic>
+                <ContentWrapper
+                  fluid
+                  style={{ marginRight: "0 !important" }}
+                  visible={visible}
+                >
+                  <Topbar avatarUrl={this.state.avatarUrl} />
+                  <Switch>
+                    <Route
+                      exact
+                      path={routes.CONSUMER}
+                      component={ConsumerRequest}
+                    />
+                    <Route
+                      exact
+                      path={routes.CONSUMERDETAIL}
+                      component={ConsumerDetail}
+                    />
+                    <Route
+                      exact
+                      path={routes.SETTING}
+                      render={(props) => (
+                        <Setting
+                          {...props}
+                          onAvatarUpdate={this.updateAvatar}
+                          onlogoUpdate={this.logoUpdate}
+                        />
+                      )}
+                    />
+                    <Route component={NotFound} />
+                  </Switch>
+                </ContentWrapper>
+              </RightWrapper>
+            </Sidebar.Pusher>
+          </Sidebar.Pushable>
+        </ToastProvider>
       </AppWrapper>
     );
   }

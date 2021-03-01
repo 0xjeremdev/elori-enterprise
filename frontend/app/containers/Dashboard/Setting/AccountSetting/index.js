@@ -1,5 +1,6 @@
 import { add } from "lodash";
 import React from "react";
+import { withToastManager } from "react-toast-notifications";
 import { Button, Form, Grid, Icon, Image } from "semantic-ui-react";
 import styled from "styled-components";
 import noImage from "../../../../assets/images/no-img.png";
@@ -53,8 +54,6 @@ class AccountSetting extends React.Component {
 
   initState = ({
     logo,
-    site_color,
-    second_color,
     notification_email,
     address,
     company_name,
@@ -64,12 +63,10 @@ class AccountSetting extends React.Component {
     this.props.logoUpdate(logo);
     this.setState({
       logoUrl: logo,
-      siteColor: site_color,
-      secondColor: second_color,
       notificationEmail:
         notification_email === "null" ? null : notification_email,
       address: address === "null" ? null : address,
-      companyName: companyName === "null" ? null : companyName,
+      companyName: company_name === "null" ? null : company_name,
       timezone,
       time_frame,
     });
@@ -85,7 +82,6 @@ class AccountSetting extends React.Component {
 
   onLogoChange = (e) => {
     const self = this;
-    console.log(e.target.files[0], " this is logo file");
     this.setState(
       { logoFile: e.target.files[0], logoFileName: e.target.files[0].name },
       () => {
@@ -99,9 +95,22 @@ class AccountSetting extends React.Component {
   };
 
   handleSave = () => {
+    const { toastManager } = this.props;
     enterpriseSettingApis
       .setEnterpriseSetting(this.state)
-      .then((res) => this.initState(res.data));
+      .then((res) => {
+        toastManager.add("Save Enterprise setting is succeed", {
+          appearance: "success",
+          autoDismiss: true,
+        });
+        this.initState(res.data);
+      })
+      .catch((e) =>
+        toastManager.add('Save Enterprise setting is failed', {
+          appearance: "error",
+          autoDismiss: true,
+        })
+      );
   };
 
   onInvite = (email) => {
@@ -268,4 +277,4 @@ class AccountSetting extends React.Component {
   }
 }
 
-export default AccountSetting;
+export default withToastManager(AccountSetting);

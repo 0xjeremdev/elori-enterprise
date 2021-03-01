@@ -13,13 +13,6 @@ class Topbar extends React.Component {
       >
         <Grid.Row textAlign="left">
           <Grid.Column>
-            <span>
-              <Icon
-                name={"bell outline"}
-                size="big"
-                style={{ color: "#ccc" }}
-              />
-            </span>
           </Grid.Column>
           <Grid.Column>
             <span>

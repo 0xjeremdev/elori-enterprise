@@ -1,6 +1,4 @@
 import pyotp
-import math
-import random
 from django.conf import settings
 from django.contrib.auth import authenticate
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
@@ -15,16 +13,8 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 
 from api.v1.accounts.models import Account, Staff, Enterprise
-from .utlis import validate_password_strength
+from .utlis import validate_password_strength, generate_auth_code
 from ..consumer_request.utils import validate_filesize, validate_filename
-
-
-def generate_auth_code():
-    digits = "0123456789"
-    OTP = ""
-    for i in range(6):
-        OTP += digits[math.floor(random.random() * 10)]
-    return OTP
 
 
 # Register Serializer, used when new account is created
@@ -76,33 +66,33 @@ class LoginSerializer(serializers.ModelSerializer):
     email = serializers.CharField(min_length=6, max_length=80, required=True)
     password = serializers.CharField(min_length=8, write_only=True)
     two_fa_valid = serializers.BooleanField(read_only=True, required=False)
-    enterprise_id = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Account
-        fields = ('email', 'two_fa_valid', 'tokens', 'password',
-                  'enterprise_id')
+        fields = ('email', 'two_fa_valid', 'tokens', 'password')
 
     def validate(self, data):
         email = data.get('email', '')
         password = data.get('password', '')
-        user = authenticate(email=email, password=password)
         account = Account.objects.filter(email=email).first()
+        if account == None:
+            raise AuthenticationFailed("This email doesn't exist.")
         if account != None and account.is_locked:
             raise AuthenticationFailed('This accunt is locked.')
+
+        user = authenticate(username=account.username, password=password)
+
         if not user:
-            if account != None:
-                account.login_failed += 1
+            account.login_failed += 1
+            account.save()
+            if account.login_failed >= 4:
+                account.login_failed = 0
+                account.is_locked = True
                 account.save()
-                if account.login_failed >= 4:
-                    account.login_failed = 0
-                    account.is_locked = True
-                    account.save()
-                    raise AuthenticationFailed('This accunt is locked.')
-                raise AuthenticationFailed(
-                    "The password isn't correct. You can try more " +
-                    str(4 - account.login_failed) + " times.")
-            raise AuthenticationFailed("This email doesn't exist.")
+                raise AuthenticationFailed('This accunt is locked.')
+            raise AuthenticationFailed(
+                "The password isn't correct. You can try more " +
+                str(4 - account.login_failed) + " times.")
         if not user.is_active:
             raise AuthenticationFailed('Account disabled, contact admin.')
         if not user.is_verified:
@@ -122,6 +112,11 @@ class StaffSerializer(serializers.Serializer):
         max_length=80,
         required=True,
         validators=[UniqueValidator(queryset=Account.objects.all())])
+    username = serializers.CharField(
+        min_length=3,
+        max_length=255,
+        required=True,
+        validators=[UniqueValidator(queryset=Account.objects.all())])
     first_name = serializers.CharField(required=True)
     last_name = serializers.CharField(required=True)
     two_fa_valid = serializers.BooleanField(read_only=True, required=False)
@@ -139,21 +134,21 @@ class StaffSerializer(serializers.Serializer):
 
     def create(self, validated_data):
         enterprise = Enterprise.objects.filter(
-            elroi_id=validated_data['enterprise_elroi_id']).first()
+            user__elroi_id=validated_data['enterprise_elroi_id']).first()
         if enterprise == None:
             raise ValidationError("Enterprise doesn't exist",
                                   code=status.HTTP_400_BAD_REQUEST)
         user = Account.objects.create_front_user(validated_data['email'],
+                                                 validated_data['username'],
                                                  validated_data['password'])
-        user.first_name = validated_data['first_name']
-        user.last_name = validated_data['last_name']
+        user.first_name = validated_data['first_name'].capitalize()
+        user.last_name = validated_data['last_name'].capitalize()
+        user.is_member = True
         user.save()
         del validated_data['password']
         del validated_data['enterprise_elroi_id']
 
-        staff = Staff.objects.create(user=user,
-                                     enterprise=enterprise,
-                                     **validated_data)
+        staff = Staff.objects.create(user=user, enterprise=enterprise)
         return staff
 
 
@@ -165,17 +160,21 @@ class RegisterEnterpriseSerializer(serializers.ModelSerializer):
         min_length=6,
         max_length=80,
         required=True,
-        validators=[UniqueValidator(queryset=Enterprise.objects.all())])
-    name = serializers.CharField(min_length=3, max_length=255, required=True)
+        validators=[UniqueValidator(queryset=Account.objects.all())])
+    username = serializers.CharField(
+        min_length=3,
+        max_length=255,
+        required=True,
+        validators=[UniqueValidator(queryset=Account.objects.all())])
     first_name = serializers.CharField(required=True)
     last_name = serializers.CharField(required=True)
-    web = serializers.URLField(required=False)
+    company_name = serializers.CharField(required=True)
     two_fa_valid = serializers.BooleanField(read_only=True, required=False)
-    password = serializers.CharField(min_length=8, write_only=True)
+    password = serializers.CharField(min_length=12, write_only=True)
     elroi_id = serializers.CharField(required=False)
 
     class Meta:
-        model = Enterprise
+        model = Account
         fields = '__all__'
         extra_kwargs = {'password': {'write_only': True}}
 
@@ -187,12 +186,15 @@ class RegisterEnterpriseSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         try:
             user = Account.objects.create_front_user(
-                validated_data['email'], validated_data['password'])
-            user.first_name = validated_data['first_name']
-            user.last_name = validated_data['last_name']
+                validated_data['email'], validated_data['username'],
+                validated_data['password'])
+            user.first_name = validated_data['first_name'].capitalize()
+            user.last_name = validated_data['last_name'].capitalize()
+            user.is_enterprise = True
             user.save()
             del validated_data['password']
-            enterprise = Enterprise.objects.create(user=user, **validated_data)
+            enterprise = Enterprise.objects.create(
+                user=user, company_name=validated_data['company_name'])
             return enterprise
         except IntegrityError as e:
             raise ValidationError(
@@ -328,9 +330,12 @@ class AccountProfileSettingsSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         request = self.context.get("request")
-        if not validate_filename(request.FILES.get("logo")):
-            raise Exception("Invalid filetype")
-        if not validate_filesize(request.FILES.get("logo")):
-            raise Exception(
-                "Too large filesize. The file should be less than 3MB.")
+        if "logo" in request.FILES:
+            if not validate_filename(request.FILES.get("logo")):
+                raise Exception("Invalid filetype")
+            if not validate_filesize(request.FILES.get("logo")):
+                raise Exception(
+                    "Too large filesize. The file should be less than 3MB.")
+        data["first_name"] = data.get("first_name").capitalize()
+        data["last_name"] = data.get("last_name").capitalize()
         return super().validate(data)

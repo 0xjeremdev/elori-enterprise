@@ -725,23 +725,28 @@ class GetInvitationInfo(LoggingMixin, GenericAPIView):
     permission_classes = (permissions.AllowAny, )
 
     def get(self, request, *args, **kwargs):
-        invite_key = force_text(urlsafe_base64_decode(kwargs.get("uidb64")))
-        invite = EnterpriseInviteModel.objects.filter(
-            invite_key=invite_key).first()
-        if invite == None:
-            raise ValidationError("Invitation isn't exist",
-                                  code=status.HTTP_400_BAD_REQUEST)
-        enterprise_data = EnterpriseAccountSettingsSerializer(
-            invite.enterprise, context={
-                "request": request
-            }).data
-        data = {
-            "enterprise": {
-                "id": invite.enterprise.pk,
-                "elroi_id": invite.enterprise.elroi_id,
-                "name": invite.enterprise.name,
-                "logo": enterprise_data["logo"]
-            },
-            "email": invite.email
-        }
-        return Response(data, status=status.HTTP_200_OK)
+        try:
+            invite_key = force_text(urlsafe_base64_decode(
+                kwargs.get("uidb64")))
+            invite = EnterpriseInviteModel.objects.filter(
+                invite_key=invite_key).first()
+            if invite == None:
+                raise ValidationError("This invitation doesn't exist",
+                                      code=status.HTTP_400_BAD_REQUEST)
+            enterprise_data = EnterpriseAccountSettingsSerializer(
+                invite.enterprise, context={
+                    "request": request
+                }).data
+            data = {
+                "enterprise": {
+                    "id": invite.enterprise.pk,
+                    "elroi_id": invite.enterprise.user.elroi_id,
+                    "company_name": invite.enterprise.company_name,
+                    "logo": enterprise_data["logo"]
+                },
+                "email": invite.email
+            }
+            return Response(data, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({"error": str(e)},
+                            status=status.HTTP_400_BAD_REQUEST)

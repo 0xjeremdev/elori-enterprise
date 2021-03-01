@@ -78,30 +78,14 @@ class EnterpriseConfigurationSerializer(serializers.ModelSerializer):
     site_theme = serializers.JSONField(required=False)
     background_image = serializers.FileField(required=False)
     website_launched_to = serializers.CharField(required=False)
-    company_name = serializers.CharField(required=False)
+    company_name = serializers.SerializerMethodField()
     resident_state = serializers.BooleanField(required=False)
 
-    # logo = serializers.SerializerMethodField()
-    # background_image = serializers.SerializerMethodField()
-
-    # def get_logo(self, obj):
-    #     if obj.logo.url:
-    #         return self.build_url(obj.logo.url)
-    #     else:
-    #         return obj.logo
-
-    # def get_background_image(self, obj):
-    #     if obj.background_image.url:
-    #         return self.build_url(obj.background_image.url)
-    #     else:
-    #         return obj.background_image
-
-    # def build_url(self, file_url):
-    #     request = self.context.get("request")
-    #     return request.build_absolute_uri(file_url)
-
     def get_elroi_id(self, obj):
-        return obj.enterprise_id.elroi_id
+        return obj.enterprise_id.user.elroi_id
+
+    def get_company_name(self, obj):
+        return obj.enterprise_id.company_name
 
     class Meta:
         model = EnterpriseConfigurationModel
@@ -148,41 +132,22 @@ class EnterpriseAccountSettingsSerializer(serializers.ModelSerializer):
     timezone = serializers.CharField(required=False)
     time_frame = serializers.CharField(required=False)
 
-    # logo_url = serializers.SerializerMethodField(required=False)
-
-    # def get_logo_url(self, obj):
-    #     request = self.context.get("request")
-    #     try:
-    #         if obj.logo.url:
-    #             return request.build_absolute_uri(obj.logo.url)
-    #         else:
-    #             return obj.logo
-    #     except:
-    #         return None
-
     class Meta:
         model = Enterprise
         fields = [
-            "elroi_id",
-            "logo",
-            # "logo_url",
-            "site_color",
-            "second_color",
-            "notification_email",
-            "additional_emails",
-            "address",
-            "company_name",
-            "timezone",
-            "time_frame"
+            "elroi_id", "logo", "site_color", "second_color",
+            "notification_email", "additional_emails", "address",
+            "company_name", "timezone", "time_frame"
         ]
 
     def validate(self, data):
         request = self.context.get("request")
-        if not validate_filename(request.FILES.get("logo")):
-            raise Exception("Invalid filetype")
-        if not validate_filesize(request.FILES.get("logo")):
-            raise Exception(
-                "Too large filesize. The file should be less than 3MB.")
+        if "logo" in request.FILES:
+            if not validate_filename(request.FILES.get("logo")):
+                raise Exception("Invalid filetype")
+            if not validate_filesize(request.FILES.get("logo")):
+                raise Exception(
+                    "Too large filesize. The file should be less than 3MB.")
         return super().validate(data)
 
 

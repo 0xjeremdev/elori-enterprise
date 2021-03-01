@@ -2,6 +2,7 @@ from django.urls import path
 from .views import (ConsumerRequestAPI, ConsumerRequestProgressAPI,
                     ConsumerRequestSetStatus, ConsumerRequestMade,
                     ConsumerReport, ConsumerRequestSend,
+                    ConsumerRequestSendCode, ConsumerRequestValidateCode,
                     ConsumerRequestQuestionView)
 
 urlpatterns = [
@@ -9,6 +10,12 @@ urlpatterns = [
     path('request/<int:enterprise_id>',
          ConsumerRequestAPI.as_view(),
          name="consumer_request_get"),
+    path('send-code',
+         ConsumerRequestSendCode.as_view(),
+         name="consumer_request_code_send"),
+    path('validate-code',
+         ConsumerRequestValidateCode.as_view(),
+         name="consumer_request_code_validate"),
     path('questions',
          ConsumerRequestQuestionView.as_view(),
          name="consumer_request_question"),

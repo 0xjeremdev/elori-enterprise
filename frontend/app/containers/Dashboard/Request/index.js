@@ -17,6 +17,8 @@ import {
   getFileSizeMb,
   isEmailValid,
 } from "../../../utils/validation";
+import { withToastManager } from "react-toast-notifications";
+import VerifyEmailModal from "./VerifyEmailModal";
 
 const RequestFormContainer = styled.div`
   p.title {
@@ -140,6 +142,7 @@ class Request extends React.Component {
     confirmModal: false,
     sending: false,
     reset: false, //for dropzone
+    verifyEmailModal: false,
   };
 
   onCaptcha = (value) => {
@@ -192,6 +195,7 @@ class Request extends React.Component {
       lanchUrl: website_launched_to,
       logoUrl: logo,
       siteColor: site_color,
+      country: "United States of America",
       siteTheme: site_theme,
     });
     let additional_fields = [];
@@ -202,8 +206,8 @@ class Request extends React.Component {
   };
 
   componentDidMount() {
-    const website_launched_to = localStorage.getItem("website_launched_to");
-    consumerRequestFormApis.getConsumerRequestFormByToken(website_launched_to).then((res) => {
+    const { id } = this.props.match.params;
+    consumerRequestFormApis.getConsumerRequestFormByToken(id).then((res) => {
       this.initState(res);
     });
   }
@@ -234,6 +238,16 @@ class Request extends React.Component {
     }
   };
 
+  sendCodeToEmail = () => {
+    const { id } = this.props.match.params;
+    const { email } = this.state;
+    this.setState({ verifyEmailModal: true });
+    consumerRequestApis
+      .sendOneCodeEmail(id, email)
+      .then((res) => console.log(res))
+      .catch((e) => alert(e));
+  };
+
   handleUpload = () => {
     if (this.inputValid()) {
       const { id } = this.props.match.params;
@@ -257,14 +271,17 @@ class Request extends React.Component {
             last_name: "",
             email: "",
             request_type: "",
-            country: "",
+            country: "United States of America",
             state: "",
             reset: true,
             file: null,
             additional_fields: [...initFields],
           });
         })
-        .catch((err) => this.setState({ sending: false }));
+        .catch((err) => {
+          alert("Something went wrong while send request");
+          this.setState({ sending: false });
+        });
     }
   };
 
@@ -275,12 +292,14 @@ class Request extends React.Component {
       companyName,
       additionalQuestions,
       siteColor,
+      verifyEmailModal,
     } = this.state;
+    const { id } = this.props.match.params;
     const requestTypeOptions = [
       { key: "1", text: "Return", value: "request_return" },
       { key: "2", text: "Delete", value: "request_delete" },
       { key: "3", text: "Modify", value: "request_modify" },
-      { key: "3", text: "Do Not Sell", value: "request_dns" },
+      { key: "4", text: "Do Not Sell", value: "request_dns" },
     ];
     const booleanTypeOptions = [
       { key: "1", text: "Yes", value: true },
@@ -323,12 +342,14 @@ class Request extends React.Component {
               width="13"
               style={{ marginTop: "120px", padding: "0px 200px 0px 0px" }}
             >
-              <p className="title">{companyName && `${companyName}'s`} Privacy Request Form</p>
+              <p className="title">
+                {companyName && `${companyName}'s`} Privacy Request Form
+              </p>
               <p className="desc">
-                Your privacy is very important to us. If you would like to make a request to access or
-                delete your information, please complete the form below. All
-                fields marked with an asterisk (*) are required so we can
-                properly verify your identity.
+                Your privacy is very important to us. If you would like to make
+                a request to access or delete your information, please complete
+                the form below. All fields marked with an asterisk (*) are
+                required so we can properly verify your identity.
                 <br />
                 <br />
                 <br /> For enhanced user experience, use Google Chrome, the most
@@ -542,7 +563,7 @@ class Request extends React.Component {
                 className="yellow"
                 size="medium"
                 disabled={!this.state.enableSubmit}
-                onClick={this.handleUpload}
+                onClick={this.sendCodeToEmail}
                 loading={this.state.sending}
               >
                 Submit!
@@ -561,9 +582,16 @@ class Request extends React.Component {
           open={this.state.confirmModal}
           onClose={() => this.setState({ confirmModal: false })}
         />
+        <VerifyEmailModal
+          open={verifyEmailModal}
+          web_id={id}
+          email={this.state.email}
+          onVerifySuccess={this.handleUpload}
+          onClose={() => this.setState({ verifyEmailModal: false })}
+        />
       </RequestFormContainer>
     );
   }
 }
 
-export default Request;
+export default withToastManager(Request);

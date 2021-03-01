@@ -6,6 +6,7 @@ import ColorPicker from "../../../../components/ColorPicker";
 import noImage from "../../../../assets/images/no-img.png";
 import { formAnswerTypeOptions } from "../../../../constants/constants";
 import { consumerRequestFormApis } from "../../../../utils/api/setting/requestform";
+import { withToastManager } from "react-toast-notifications";
 
 const Container = styled(Grid)`
   label,
@@ -124,10 +125,24 @@ class ConfigureRequest extends React.Component {
   };
 
   handleSave = () => {
+    const { toastManager } = this.props;
+
     consumerRequestFormApis
       .setConsumerRequestForm(this.state)
-      .then((res) => this.initState(res.data))
-      .catch((err) => alert(err.response.data.error));
+      .then((res) => {
+        toastManager.add("Save Consumer Request setting is succeed", {
+          appearance: "success",
+          autoDismiss: true,
+        });
+        this.initState(res.data);
+      })
+      .catch((err) => {
+        // console.log(err.response.data.error);
+        toastManager.add("Save Consumer Request setting is failed", {
+          appearance: "error",
+          autoDismiss: true,
+        });
+      });
   };
 
   removeQues = (index) => {
@@ -158,7 +173,8 @@ class ConfigureRequest extends React.Component {
     } = this.state;
     const fullUrl = window.location.href;
     const arr = fullUrl.split("/");
-    const requestUrl = `${arr[0]}//${arr[2]}/request/`;
+    const website_launched_to = localStorage.getItem("website_launched_to");
+    const requestUrl = `${arr[0]}//${arr[2]}/request/${website_launched_to}`;
     return (
       <Container>
         <Grid.Row verticalAlign="middle">
@@ -344,4 +360,4 @@ class ConfigureRequest extends React.Component {
   }
 }
 
-export default ConfigureRequest;
+export default withToastManager(ConfigureRequest);

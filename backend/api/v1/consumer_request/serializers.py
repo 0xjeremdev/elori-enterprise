@@ -3,10 +3,11 @@ from datetime import datetime, timedelta
 from rest_framework import serializers
 from rest_framework.exceptions import AuthenticationFailed, ValidationError
 from rest_framework import serializers, status
-from api.v1.consumer_request.models import ConsumerRequest, ConsumerReqeustQuestionModel
+from api.v1.consumer_request.models import ConsumerRequest, ConsumerReqeustQuestionModel, ConsumerReqeustCodeModel
 from api.v1.enterprise.models import Enterprise, EnterpriseQuestionModel
-from ..enterprise.models import EnterpriseEmailType
+from ..enterprise.models import EnterpriseEmailType, EnterpriseConfigurationModel
 from .utils import validate_filename, validate_filesize
+from api.v1.accounts.utlis import generate_auth_code
 
 
 class ConsumerRequestSerializer(serializers.ModelSerializer):
@@ -42,11 +43,14 @@ class ConsumerRequestSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         request = self.context.get("request")
-        if not validate_filename(request.FILES.get("file")):
-            raise Exception("Invalid filetype")
-        if not validate_filesize(request.FILES.get("file")):
-            raise Exception(
-                "Too large filesize. The file should be less than 3MB.")
+        if "file" in request.FILES:
+            if not validate_filename(request.FILES.get("file")):
+                raise Exception("Invalid filetype")
+            if not validate_filesize(request.FILES.get("file")):
+                raise Exception(
+                    "Too large filesize. The file should be less than 3MB.")
+        data["first_name"] = data.get("first_name").capitalize()
+        data["last_name"] = data.get("last_name").capitalize()
         return super().validate(data)
 
     def create(self, validated_data):
@@ -154,6 +158,49 @@ class ConsumerReportSerializer(serializers.ModelSerializer):
         for key in data.keys():
             values_list.append(data[key])
         return values_list
+
+
+class ConsumerRequestCodeSerializer(serializers.ModelSerializer):
+    web_id = serializers.CharField(required=True, write_only=True)
+    email = serializers.CharField(required=True)
+    code = serializers.CharField(required=False)
+
+    class Meta:
+        model = ConsumerReqeustCodeModel
+        exclude = ["enterprise", "id", "lifetime"]
+
+    def validate(self, data):
+        enterprise_conf = EnterpriseConfigurationModel.objects.filter(
+            website_launched_to=data.get("web_id")).first()
+        if not enterprise_conf:
+            raise Exception("Invalid Web ID")
+        code = data.get("code", '')
+        print(code)
+        if code != '':
+            code_model = ConsumerReqeustCodeModel.objects.filter(
+                enterprise=enterprise_conf.enterprise_id,
+                email=data.get("email")).first()
+            if not code_model:
+                raise Exception("Invalid email")
+            if code_model.code != code:
+                raise Exception("Invalid code")
+            if code_model.lifetime > datetime.utcnow() + timedelta(minutes=5):
+                raise Exception("Expired code")
+        else:
+            verification_code = generate_auth_code()
+            if not ConsumerReqeustCodeModel.objects.filter(
+                    enterprise=enterprise_conf.enterprise_id,
+                    email=data.get("email")).exists():
+                ConsumerReqeustCodeModel.objects.create(
+                    enterprise=enterprise_conf.enterprise_id,
+                    email=data.get("email"))
+            code_model = ConsumerReqeustCodeModel.objects.get(
+                enterprise=enterprise_conf.enterprise_id,
+                email=data.get("email"))
+            code_model.code = verification_code
+            code_model.lifetime = datetime.utcnow() + timedelta(minutes=5)
+            code_model.save()
+        return super().validate(data)
 
 
 class PeriodParameterSerializer(serializers.Serializer):

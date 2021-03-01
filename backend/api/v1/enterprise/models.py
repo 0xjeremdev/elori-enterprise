@@ -133,7 +133,6 @@ class EnterpriseConfigurationModel(models.Model):
         null=True,
         default="",
     )
-    company_name = models.CharField(max_length=255, null=True, default="")
     resident_state = models.BooleanField(default=False)
     additional_configuration = models.JSONField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)

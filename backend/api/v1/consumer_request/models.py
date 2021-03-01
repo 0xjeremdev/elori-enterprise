@@ -92,3 +92,19 @@ class ConsumerReqeustQuestionModel(models.Model):
     class Meta:
         db_table = "consumer_request_questions"
         ordering = ["-created_at"]
+
+
+class ConsumerReqeustCodeModel(models.Model):
+    email = models.CharField(max_length=500, blank=False, null=False)
+    enterprise = models.ForeignKey(
+        Enterprise,
+        on_delete=models.SET_NULL,
+        related_name="request_code_enterprise",
+        null=True,
+        blank=True,
+    )
+    code = models.CharField(max_length=6, blank=False, null=False, default="")
+    lifetime = models.DateTimeField(blank=False, null=False, auto_now=True)
+
+    class Meta:
+        db_table = "consumer_request_codes"

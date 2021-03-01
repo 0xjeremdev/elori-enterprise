@@ -11,7 +11,7 @@ class EnterpriseEmailTypeAdmin(admin.ModelAdmin):
 
 @admin.register(EnterpriseConfigurationModel)
 class EnterpriseConfigurationAdmin(admin.ModelAdmin):
-    list_display = ("enterprise_id", "website_launched_to", "company_name")
+    list_display = ("enterprise_id", "website_launched_to")
 
 
 # Register your models here.

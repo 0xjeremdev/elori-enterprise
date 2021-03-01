@@ -14,17 +14,16 @@ from django.views import View
 from api.v1.accounts.models import Enterprise
 from api.v1.accounts.utlis import SendUserEmail
 from api.v1.analytics.mixins import LoggingMixin
-from api.v1.consumer_request.models import ConsumerRequest
+from api.v1.consumer_request.models import ConsumerRequest, ConsumerReqeustCodeModel
 from api.v1.consumer_request.serializers import (
     ConsumerRequestSerializer, ConsumerRequestQuestionSerializer,
     PeriodParameterSerializer, ConsumerReportSerializer,
-    ConsumerRequestSendSerializer)
+    ConsumerRequestSendSerializer, ConsumerRequestCodeSerializer)
 from api.v1.enterprise.constants import Const_Email_Templates
 from api.v1.enterprise.models import EnterpriseEmailType, EnterpriseEmailTemplateModel, EnterpriseConfigurationModel
 
 
 class ConsumerRequestAPI(
-        LoggingMixin,
         mixins.ListModelMixin,
         mixins.CreateModelMixin,
         mixins.UpdateModelMixin,
@@ -37,25 +36,6 @@ class ConsumerRequestAPI(
 
     # get the list of consumer requests
     def get(self, request, *args, **kwargs):
-        # period = "week"
-        # if request.GET.get("period"):
-        #     period = request.GET.get("period")
-
-        # if period == "year":
-        #     self.queryset = ConsumerRequest.objects.filter(
-        #         request_date__year=datetime.today().year)
-        # elif period == "month":
-        #     self.queryset = ConsumerRequest.objects.filter(
-        #         request_date__month=datetime.today().month)
-        # elif period == "week":
-        #     week_start = datetime.today()
-        #     week_start -= timedelta(days=week_start.weekday())
-        #     week_end = week_start + timedelta(days=7)
-        #     self.queryset = ConsumerRequest.objects.filter(
-        #         request_date__gte=week_start, request_date__lt=week_end)
-        # elif period == "day":
-        #     self.queryset = ConsumerRequest.objects.filter(
-        #         request_date__day=datetime.today().day)
         try:
             enterprise = Enterprise.objects.get(id=kwargs["enterprise_id"])
             self.queryset = ConsumerRequest.objects.filter(
@@ -87,7 +67,9 @@ class ConsumerRequestAPI(
             enterprise_conf = EnterpriseConfigurationModel.objects.get(
                 website_launched_to=request.data.get("web_id"))
             enterprise = enterprise_conf.enterprise_id
-            request.data['enterprise_id'] = enterprise.pk
+            request.data._mutable = True
+            request.data['enterprise_id'] = enterprise.id
+            request.data._mutable = False
             serializer = self.serializer_class(data=request.data,
                                                context={"request": request})
             if serializer.is_valid():
@@ -122,6 +104,7 @@ class ConsumerRequestAPI(
             else:
                 return Response(serializer.errors,
                                 status=status.HTTP_400_BAD_REQUEST)
+
         except EnterpriseConfigurationModel.DoesNotExist:
             return Response(
                 {
@@ -140,6 +123,7 @@ class ConsumerRequestAPI(
             )
 
     # update consumer request
+
     def put(self, request, *args, **kwargs):
         try:
             consumer_request = ConsumerRequest.objects.get(
@@ -175,6 +159,68 @@ class ConsumerRequestAPI(
         except ConsumerRequest.DoesNotExist:
             return Response(
                 {"error": "ConsumerRequest was not found."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+
+class ConsumerRequestSendCode(GenericAPIView):
+    serializer_class = ConsumerRequestCodeSerializer
+    permission_classes = (permissions.AllowAny, )
+
+    def post(self, request):
+        try:
+            serializer = self.serializer_class(data=request.data, )
+            serializer.is_valid(raise_exception=True)
+            enterprise_conf = EnterpriseConfigurationModel.objects.get(
+                website_launched_to=request.data.get("web_id"))
+            code_model = ConsumerReqeustCodeModel.objects.filter(
+                enterprise=enterprise_conf.enterprise_id,
+                email=request.data.get("email")).first()
+            message_body = render_to_string(
+                "email/customer/request_send_code.html",
+                {"verification_code": code_model.code},
+            )
+            email_data = {
+                "email_body":
+                message_body,
+                "to_email":
+                code_model.email,
+                "email_subject":
+                f"Verify your request for {enterprise_conf.enterprise_id.company_name}",
+            }
+            SendUserEmail.send_email(email_data)
+            return Response({
+                "success": True,
+            }, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response(
+                {
+                    "success": False,
+                    "error": str(e)
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+
+class ConsumerRequestValidateCode(GenericAPIView):
+    serializer_class = ConsumerRequestCodeSerializer
+    permission_classes = (permissions.AllowAny, )
+
+    def post(self, request):
+        try:
+            serializer = self.serializer_class(data=request.data, )
+            serializer.is_valid(raise_exception=True)
+            return Response({
+                "success": True,
+            }, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response(
+                {
+                    "success": False,
+                    "error": str(e)
+                },
                 status=status.HTTP_400_BAD_REQUEST,
             )
 

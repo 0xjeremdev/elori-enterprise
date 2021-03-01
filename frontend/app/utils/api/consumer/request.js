@@ -7,6 +7,8 @@ export const consumerRequestApis = {
   getConsumerRequest,
   updateConsumerRequest,
   sendProcessingEmail,
+  sendOneCodeEmail,
+  validateOneCodeEmail,
 };
 
 function sendConsumerRequest(payload, web_id) {
@@ -98,6 +100,28 @@ function updateConsumerRequest({ id, status, extend, comment }) {
         }
       )
       .then((res) => resolve(res.data))
+      .catch((e) => reject(e));
+  });
+}
+
+function sendOneCodeEmail(web_id, email) {
+  return new Promise((resolve, reject) => {
+    axios
+      .post(`${API_ENDPOINT_URL}/consumer/send-code`, { web_id, email })
+      .then((res) => resolve(res))
+      .catch((e) => reject(e));
+  });
+}
+
+function validateOneCodeEmail(web_id, email, code) {
+  return new Promise((resolve, reject) => {
+    axios
+      .post(`${API_ENDPOINT_URL}/consumer/validate-code`, {
+        web_id,
+        email,
+        code,
+      })
+      .then((res) => resolve(res))
       .catch((e) => reject(e));
   });
 }

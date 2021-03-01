@@ -1,4 +1,5 @@
 import React from "react";
+import { withToastManager } from "react-toast-notifications";
 import { Button, Form, Grid, Icon, Image, Input } from "semantic-ui-react";
 import styled from "styled-components";
 import noImage from "../../../../assets/images/no-img.png";
@@ -33,7 +34,6 @@ class UserSetting extends React.Component {
     logoBS64: null,
     phoneNumber: "",
     companyEmail: "",
-    companyName: "",
     firstName: "",
     lastName: "",
     timezone: "",
@@ -45,7 +45,6 @@ class UserSetting extends React.Component {
     last_name,
     email,
     phone_number,
-    company_name,
     timezone,
   }) => {
     this.props.avatarUpdate(logo);
@@ -55,7 +54,6 @@ class UserSetting extends React.Component {
       lastName: last_name,
       companyEmail: email,
       phoneNumber: phone_number === "null" ? null : phone_number,
-      companyName: company_name === "null" ? null : company_name,
       timezone,
     });
   };
@@ -79,9 +77,23 @@ class UserSetting extends React.Component {
   };
 
   handleSave = () => {
+    const { toastManager } = this.props;
     accountSettingApis
       .setAccountSetting(this.state)
-      .then((res) => this.initState(res.data));
+      .then((res) => {
+        toastManager.add("Save Account Setting is succeed", {
+          appearance: "success",
+          autoDismiss: true,
+        });
+        this.initState(res.data);
+      })
+      .catch((e) => {
+        console.log(e);
+        toastManager.add('Save Account Setting is failed', {
+          appearance: "error",
+          autoDismiss: true,
+        });
+      });
   };
 
   render() {
@@ -170,7 +182,7 @@ class UserSetting extends React.Component {
                 </Grid.Column>
               </Grid.Row>
               <Grid.Row>
-                <Grid.Column>
+                <Grid.Column width={8}>
                   <Form>
                     <Form.Input
                       label="Phone Number"
@@ -178,19 +190,6 @@ class UserSetting extends React.Component {
                         this.setState({ phoneNumber: value })
                       }
                       value={this.state.phoneNumber || ""}
-                    />
-                  </Form>
-                </Grid.Column>
-              </Grid.Row>
-              <Grid.Row>
-                <Grid.Column width={10}>
-                  <Form>
-                    <Form.Input
-                      label="Company Name"
-                      onChange={(e, { value }) =>
-                        this.setState({ companyName: value })
-                      }
-                      value={this.state.companyName || ""}
                     />
                   </Form>
                 </Grid.Column>
@@ -226,4 +225,4 @@ class UserSetting extends React.Component {
   }
 }
 
-export default UserSetting;
+export default withToastManager(UserSetting);

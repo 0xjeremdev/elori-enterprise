@@ -21,6 +21,7 @@ import ResetPassword from "../LoginPage/ResetPassword";
 import SetPassword from "../LoginPage/SetPassword";
 
 export default function App() {
+  const launchUrl = localStorage.getItem("website_launched_to");
   return (
     <Switch>
       <Route exact path={routes.LOGIN} component={Login} />
@@ -29,7 +30,7 @@ export default function App() {
       <Route exact path={routes.SETPASSWORD} component={SetPassword} />
       <Route exact path={routes.EMAILCONFIRM} component={EmailConfirm} />
       <Route exact path={routes.STAFFINVITE} component={StaffConfirm} />
-      <Route path={routes.REQUEST} component={Request} />
+      {launchUrl && <Route path={routes.REQUEST} component={Request} />}
       <PrivateRoute exact path={routes.VERIFYCODE} component={VerifyCode} />
       <PrivateRoute path={routes.DASHBOARD} component={Dashboard} />
     </Switch>
