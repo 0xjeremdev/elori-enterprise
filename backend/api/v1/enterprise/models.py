@@ -5,6 +5,7 @@ from django.db import models
 from django.conf import settings
 from django.db.models.signals import post_save
 from api.v1.accounts.models import Account, Enterprise
+from ..upload.models import Files
 
 
 class UserGuideModel(models.Model):
@@ -49,9 +50,11 @@ class UserGuideUploads(models.Model):
         related_query_name="uploads",
         on_delete=models.CASCADE,
     )
-    name = models.CharField(max_length=255)
-    file = models.FileField(blank=False, null=False)
-    size = models.IntegerField(default=0)
+    file = models.ForeignKey(Files,
+                             on_delete=models.SET_NULL,
+                             related_name="user_guide_file",
+                             null=True,
+                             blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -100,15 +103,11 @@ class EnterpriseEmailTemplateModel(models.Model):
                                    related_name="email_type_content",
                                    on_delete=models.CASCADE)
     content = models.TextField(null=True, blank=True, default="")
-    attachment = models.FileField()
-    file_name = models.CharField(max_length=255,
-                                 null=True,
-                                 blank=True,
-                                 default="")
-    file_type = models.CharField(max_length=255,
-                                 null=True,
-                                 blank=True,
-                                 default="")
+    attachment = models.ForeignKey(Files,
+                                   on_delete=models.SET_NULL,
+                                   related_name="email_temp_attachment",
+                                   null=True,
+                                   blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -124,10 +123,21 @@ class EnterpriseConfigurationModel(models.Model):
     enterprise_id = models.ForeignKey(Enterprise,
                                       related_name="configuration",
                                       on_delete=models.CASCADE)
-    logo = models.FileField()
+    logo = models.ForeignKey(Files,
+                             on_delete=models.SET_NULL,
+                             related_name="enterprise_conf_logo",
+                             null=True,
+                             blank=True)
     site_color = models.JSONField(null=True, blank=True)
     site_theme = models.JSONField(null=True, blank=True)
-    background_image = models.FileField()
+    background_image = models.ForeignKey(
+        Files,
+        on_delete=models.SET_NULL,
+        related_name="enterprise_conf_background",
+        null=True,
+        blank=True)
+    privacy_description = models.TextField(null=True, blank=True, default="")
+    file_description = models.TextField(null=True, blank=True, default="")
     website_launched_to = models.CharField(
         max_length=255,
         null=True,
@@ -139,7 +149,7 @@ class EnterpriseConfigurationModel(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return self.company_name
+        return self.enterprise_id.company_name
 
     class Meta:
         db_table = "enterprise_configuration"

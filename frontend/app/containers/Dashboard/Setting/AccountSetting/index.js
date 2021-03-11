@@ -7,6 +7,7 @@ import noImage from "../../../../assets/images/no-img.png";
 import ColorPicker from "../../../../components/ColorPicker";
 import { timeframeOptions, timezoneOptions } from "../../../../constants/types";
 import { enterpriseSettingApis } from "../../../../utils/api/setting/enterprise";
+import { baseToImgSrc } from "../../../../utils/file";
 import AddUserModal from "./AddUserModal";
 
 const Container = styled(Grid)`
@@ -53,13 +54,14 @@ class AccountSetting extends React.Component {
   }
 
   initState = ({
-    logo,
+    logo_data,
     notification_email,
     address,
     company_name,
     timezone,
     time_frame,
   }) => {
+    const logo = baseToImgSrc(logo_data);
     this.props.logoUpdate(logo);
     this.setState({
       logoUrl: logo,
@@ -106,7 +108,7 @@ class AccountSetting extends React.Component {
         this.initState(res.data);
       })
       .catch((e) =>
-        toastManager.add('Save Enterprise setting is failed', {
+        toastManager.add("Save Enterprise setting is failed", {
           appearance: "error",
           autoDismiss: true,
         })

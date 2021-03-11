@@ -9,6 +9,7 @@ from django.utils.timezone import utc
 from api.v1.accounts.models import Account, Enterprise
 from api.v1.consumer_request.utils import gen_random_id
 from ..enterprise.models import EnterpriseQuestionModel
+from ..upload.models import Files
 
 
 class ConsumerRequest(models.Model):
@@ -21,7 +22,11 @@ class ConsumerRequest(models.Model):
         blank=True,
     )
     ###########
-    file = models.FileField(blank=True, null=True)
+    file = models.ForeignKey(Files,
+                             on_delete=models.SET_NULL,
+                             related_name="file",
+                             null=True,
+                             blank=True)
     email = models.CharField(verbose_name="Email",
                              max_length=60,
                              unique=False,

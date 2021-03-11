@@ -1,5 +1,6 @@
 import csv
 import pdfkit
+import base64
 from datetime import datetime, timedelta
 from rest_framework import mixins, status
 from rest_framework import permissions
@@ -306,8 +307,8 @@ class ConsumerRequestSetStatus(LoggingMixin, GenericAPIView):
                 consumer_request.email,
                 "email_subject":
                 "Your request status was updated",
-                "email_template":
-                None if email_template is None else email_template
+                "attachment":
+                None if email_template is None else email_template.attachment
             }
             SendUserEmail.send_email(email_data)
             return Response({
@@ -497,23 +498,41 @@ class ConsumerRequestProgressAPI(LoggingMixin, APIView):
                             status=status.HTTP_400_BAD_REQUEST)
 
 
-class ConsumerRequestMade(LoggingMixin, APIView):
-    def get(self, request):
+class ConsumerRequestObject(LoggingMixin, APIView):
+    serializer_class = ConsumerRequestSerializer
+    permission_classes = (permissions.IsAuthenticated, )
+
+    def get(self, request, *args, **kwargs):
         try:
-            """ get completed requests """
-            total_confirmed = ConsumerRequest.objects.filter(status=3).count()
-            """ get total number of requests """
-            total_number = ConsumerRequest.objects.count()
-            """ get date for last request made"""
-            last_request = ConsumerRequest.objects.latest("request_date")
-            return Response(
-                {
-                    "confirmed": total_confirmed,
-                    "total_made": total_number,
-                    "last_date": last_request.request_date,
-                },
-                status=status.HTTP_200_OK,
-            )
-        except:
-            return Response({"error": "Wrong Url Format"},
+            user = request.user
+            consumer_request = ConsumerRequest.objects.filter(
+                id=kwargs["request_id"]).first()
+            if not consumer_request:
+                raise Exception("Invalid request ID")
+            if consumer_request.enterprise != user.enterprise:
+                raise Exception("Not Allowed")
+            consumer_data = ConsumerRequestSerializer(consumer_request).data
+            consumer_data["file"] = None
+            if consumer_request.file:
+                consumer_data["file"] = {
+                    "name":
+                    consumer_request.file.name,
+                    "size":
+                    consumer_request.file.size,
+                    "content":
+                    base64.b64encode(
+                        consumer_request.file.content).decode('utf-8'),
+                    "type":
+                    consumer_request.file.file_type
+                }
+            return Response({
+                "success": True,
+                "data": consumer_data
+            },
+                            status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({
+                "success": False,
+                "error": str(e)
+            },
                             status=status.HTTP_400_BAD_REQUEST)

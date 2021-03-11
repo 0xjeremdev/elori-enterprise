@@ -1,4 +1,5 @@
 import pyotp
+import base64
 from django.conf import settings
 from django.contrib.auth import authenticate
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
@@ -15,6 +16,7 @@ from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 from api.v1.accounts.models import Account, Staff, Enterprise
 from .utlis import validate_password_strength, generate_auth_code
 from ..consumer_request.utils import validate_filesize, validate_filename
+from ..upload.models import Files
 
 
 # Register Serializer, used when new account is created
@@ -81,7 +83,9 @@ class LoginSerializer(serializers.ModelSerializer):
             raise AuthenticationFailed('This accunt is locked.')
 
         user = authenticate(username=account.username, password=password)
-
+        print(account.username)
+        print(password)
+        print(user)
         if not user:
             account.login_failed += 1
             account.save()
@@ -312,7 +316,8 @@ class UserTokenSerializer(TokenObtainPairSerializer):
 class AccountProfileSettingsSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(read_only=True)
     email = serializers.CharField(read_only=True)
-    logo = serializers.FileField(required=False)
+    logo_data = serializers.SerializerMethodField()
+    logo = serializers.FileField(required=False, write_only=True)
     first_name = serializers.CharField(required=False)
     last_name = serializers.CharField(required=False)
     company_email = serializers.CharField(required=False)
@@ -324,9 +329,20 @@ class AccountProfileSettingsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Account
         fields = [
-            'id', 'email', 'logo', 'first_name', 'last_name', 'company_email',
-            'phone_number', 'company_name', 'timezone', 'is_2fa_active'
+            'id', 'email', 'logo', 'logo_data', 'first_name', 'last_name',
+            'company_email', 'phone_number', 'company_name', 'timezone',
+            'is_2fa_active'
         ]
+
+    def get_logo_data(self, obj):
+        if not obj.logo:
+            return None
+        return {
+            "name": obj.logo.name,
+            "size": obj.logo.size,
+            "content": base64.b64encode(obj.logo.content).decode('utf-8'),
+            "type": obj.logo.file_type
+        }
 
     def validate(self, data):
         request = self.context.get("request")
@@ -335,7 +351,19 @@ class AccountProfileSettingsSerializer(serializers.ModelSerializer):
                 raise Exception("Invalid filetype")
             if not validate_filesize(request.FILES.get("logo")):
                 raise Exception(
-                    "Too large filesize. The file should be less than 3MB.")
+                    "Too large filesize. The file should be less than 5MB.")
         data["first_name"] = data.get("first_name").capitalize()
         data["last_name"] = data.get("last_name").capitalize()
         return super().validate(data)
+
+    def update(self, instance, validated_data):
+        request = self.context.get("request")
+        account = request.user
+        if "logo" in request.FILES:
+            if not account.logo:
+                account.logo = Files.create(file=request.FILES.get("logo"))
+            else:
+                account.logo.update(file=request.FILES.get("logo"))
+            del validated_data["logo"]
+        account.save()
+        return super().update(instance, validated_data)

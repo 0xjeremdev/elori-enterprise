@@ -2,7 +2,7 @@ import os
 import re
 import string
 import time
-
+import base64
 import jwt
 import json
 import random
@@ -395,14 +395,11 @@ class AccountProfileSettings(LoggingMixin, GenericAPIView):
 
     def get(self, request, *args, **kwargs):
         user = request.user
-        return Response(
-            AccountProfileSettingsSerializer(user,
-                                             context={
-                                                 "request": request
-                                             }).data,
-            status=status.HTTP_200_OK,
-        )
-        # pass
+        data = AccountProfileSettingsSerializer(user,
+                                                context={
+                                                    "request": request
+                                                }).data
+        return Response(data, status=status.HTTP_200_OK)
 
     def post(self, request, *args, **kwargs):
         user = request.user
@@ -411,7 +408,8 @@ class AccountProfileSettings(LoggingMixin, GenericAPIView):
                                            context={"request": request})
         if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
+            data = serializer.data
+            return Response(data, status=status.HTTP_200_OK)
         else:
             return Response(serializer.errors,
                             status=status.HTTP_400_BAD_REQUEST)

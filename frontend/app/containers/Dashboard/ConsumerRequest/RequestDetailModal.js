@@ -18,6 +18,7 @@ import {
 } from "../../../constants/constants";
 import { consumerRequestApis } from "../../../utils/api/consumer/request";
 import { emailApis } from "../../../utils/api/setting/email";
+import { blobFileToNewTab } from "../../../utils/file";
 import { getFileExtenstion } from "../../../utils/validation";
 const Container = styled.div`
   & span {
@@ -145,7 +146,12 @@ class RequestDetailModal extends React.Component {
                 )}
                 {data.file && (
                   <Grid.Column>
-                    <a href={data.file} target="_blank">
+                    <a
+                      target="_blank"
+                      onClick={() => {
+                        blobFileToNewTab(data.file);
+                      }}
+                    >
                       Review File
                     </a>
                   </Grid.Column>

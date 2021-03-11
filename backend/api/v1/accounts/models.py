@@ -5,6 +5,7 @@ from django.contrib.auth.models import BaseUserManager, AbstractUser
 from django.db import models
 from django.db.models.signals import post_save
 from rest_framework_simplejwt.tokens import RefreshToken
+from ..upload.models import Files
 
 
 class CustomAccountManager(BaseUserManager):
@@ -33,10 +34,10 @@ class CustomAccountManager(BaseUserManager):
         user.save(using=self._db)
         return user
 
-    def create_superuser(self, email, password):
+    def create_superuser(self, email, username, password):
         user = self.model(
             email=self.normalize_email(email),
-            username=self.normalize_email(email),
+            username=username,
             is_active=True,
             is_admin=True,
             is_staff=True,
@@ -58,7 +59,11 @@ class Account(AbstractUser):
                                 blank=True,
                                 null=True)
     verification_code = models.CharField(max_length=6, blank=True, null=True)
-    logo = models.FileField(null=True, blank=True)
+    logo = models.ForeignKey(Files,
+                             on_delete=models.SET_NULL,
+                             related_name="account_logo",
+                             null=True,
+                             blank=True)
     first_name = models.CharField(max_length=80, null=True, blank=True)
     last_name = models.CharField(max_length=80, null=True, blank=True)
     phone_number = models.CharField(max_length=20, null=True, blank=True)
@@ -78,8 +83,8 @@ class Account(AbstractUser):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    USERNAME_FIELD = "username"
-    REQUIRED_FIELDS = []
+    # USERNAME_FIELD = "username"
+    # REQUIRED_FIELDS = []
 
     objects = CustomAccountManager()
 
@@ -162,7 +167,11 @@ class Enterprise(models.Model):
     company_name = models.CharField(max_length=80, null=True, blank=True)
     timezone = models.CharField(max_length=20, null=True, blank=True)
     address = models.CharField(max_length=255, null=True, blank=True)
-    logo = models.FileField(null=True, blank=True)
+    logo = models.ForeignKey(Files,
+                             on_delete=models.SET_NULL,
+                             related_name="enterprise_logo",
+                             null=True,
+                             blank=True)
     time_frame = models.CharField(max_length=255,
                                   null=True,
                                   blank=True,

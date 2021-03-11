@@ -5,6 +5,7 @@ import styled from "styled-components";
 import noImage from "../../../../assets/images/no-img.png";
 import { timezoneOptions } from "../../../../constants/types";
 import { accountSettingApis } from "../../../../utils/api/setting/account";
+import { baseToImgSrc } from "../../../../utils/file";
 
 const Container = styled(Grid)`
   label,
@@ -40,13 +41,14 @@ class UserSetting extends React.Component {
   };
 
   initState = ({
-    logo,
+    logo_data,
     first_name,
     last_name,
     email,
     phone_number,
     timezone,
   }) => {
+    const logo = baseToImgSrc(logo_data);
     this.props.avatarUpdate(logo);
     this.setState({
       logoUrl: logo,

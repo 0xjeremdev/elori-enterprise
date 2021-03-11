@@ -1,6 +1,6 @@
 from django.urls import path
 from .views import (ConsumerRequestAPI, ConsumerRequestProgressAPI,
-                    ConsumerRequestSetStatus, ConsumerRequestMade,
+                    ConsumerRequestSetStatus, ConsumerRequestObject,
                     ConsumerReport, ConsumerRequestSend,
                     ConsumerRequestSendCode, ConsumerRequestValidateCode,
                     ConsumerRequestQuestionView)
@@ -31,7 +31,7 @@ urlpatterns = [
     path('get-progress/<str:period>/',
          ConsumerRequestProgressAPI.as_view(),
          name="consumer_request_progress"),
-    path('get-made-confirmed/',
-         ConsumerRequestMade.as_view(),
-         name="consumer_request_made_confirmed"),
+    path('get-request/<int:request_id>',
+         ConsumerRequestObject.as_view(),
+         name="get_consumer_request_object"),
 ]

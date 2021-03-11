@@ -110,9 +110,10 @@ class ConsumerRequest extends React.Component {
   };
 
   handleDetailModal = (id) => {
-    const { consumerList } = this.state;
-    const selRequestItem = consumerList.find((item) => item.id === id);
-    this.setState({ selRequestItem, detailModal: true });
+    consumerRequestApis.getConsumerRequestObject(id).then((res) => {
+      const selRequestItem = res.data;
+      this.setState({ selRequestItem, detailModal: true });
+    });
   };
 
   initState = () => {

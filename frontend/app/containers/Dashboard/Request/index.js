@@ -19,6 +19,7 @@ import {
 } from "../../../utils/validation";
 import { withToastManager } from "react-toast-notifications";
 import VerifyEmailModal from "./VerifyEmailModal";
+import { baseToImgSrc } from "../../../utils/file";
 
 const RequestFormContainer = styled.div`
   p.title {
@@ -177,13 +178,15 @@ class Request extends React.Component {
 
   initState = ({
     additional_configuration,
-    background_image,
+    background_image_data,
     company_name,
     website_launched_to,
-    logo,
+    logo_data,
     site_color,
     site_theme,
   }) => {
+    const logo = baseToImgSrc(logo_data);
+    const background_image = baseToImgSrc(background_image_data);
     const additionalConfiguration =
       typeof additional_configuration === "string"
         ? JSON.parse(additional_configuration)
@@ -224,6 +227,9 @@ class Request extends React.Component {
       fileExtension === "docx" ||
       fileExtension === "doc" ||
       fileExtension === "pdf" ||
+      fileExtension === "jpg" ||
+      fileExtension === "png" ||
+      fileExtension === "jpeg" ||
       fileExtension === "xlsx"
     ) {
       if (getFileSizeMb(files[0].size) < 3) {

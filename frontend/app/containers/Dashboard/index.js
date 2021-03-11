@@ -14,6 +14,7 @@ import { accountSettingApis } from "../../utils/api/setting/account";
 import { enterpriseSettingApis } from "../../utils/api/setting/enterprise";
 import NotFound from "../NotFound";
 import { ToastProvider } from "react-toast-notifications";
+import { baseToImgSrc } from "../../utils/file";
 
 const AppWrapper = styled("div")`
   min-height: calc(100vh);
@@ -120,8 +121,8 @@ class Dashboard extends React.Component {
     accountSettingApis.getAccountSetting().then(({ logo }) => {
       this.updateAvatar(logo);
     });
-    enterpriseSettingApis.getEnterpriseSetting().then(({ logo }) => {
-      this.logoUpdate(logo);
+    enterpriseSettingApis.getEnterpriseSetting().then(({ logo_data }) => {
+      this.logoUpdate(baseToImgSrc(logo_data));
     });
   }
 

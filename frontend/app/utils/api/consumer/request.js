@@ -9,6 +9,7 @@ export const consumerRequestApis = {
   sendProcessingEmail,
   sendOneCodeEmail,
   validateOneCodeEmail,
+  getConsumerRequestObject
 };
 
 function sendConsumerRequest(payload, web_id) {
@@ -72,6 +73,20 @@ function getConsumerRequest() {
   return new Promise((resolve, reject) => {
     axios
       .get(`${API_ENDPOINT_URL}/consumer/request/${enterprise_id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      .then((res) => resolve(res.data))
+      .catch((e) => reject(e));
+  });
+}
+
+function getConsumerRequestObject(requestId) {
+  const token = localStorage.getItem("access-token");
+  return new Promise((resolve, reject) => {
+    axios
+      .get(`${API_ENDPOINT_URL}/consumer/get-request/${requestId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

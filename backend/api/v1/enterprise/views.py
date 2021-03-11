@@ -1,3 +1,4 @@
+import base64
 from typing import re
 
 from django.conf import settings
@@ -222,17 +223,12 @@ class ExtendedVsNewRequests(LoggingMixin, APIView):
 
 class EnterpriseConfiguration(
         LoggingMixin,
-        mixins.ListModelMixin,
-        mixins.CreateModelMixin,
-        mixins.UpdateModelMixin,
-        mixins.DestroyModelMixin,
         GenericAPIView,
 ):
     serializer_class = EnterpriseConfigurationSerializer
 
     permission_classes = (permissions.IsAuthenticated, )
 
-    # parser_classes = (MultiPartParser, FormParser, FileUploadParser)
     def get(self, request, *args, **kwargs):
         try:
             if not EnterpriseConfigurationModel.objects.filter(
@@ -242,9 +238,16 @@ class EnterpriseConfiguration(
                     site_color='{"a": 1, "b": 0, "g": 120, "r": 255}',
                     site_theme='{"a": 1, "b": 0, "g": 120, "r": 255}',
                     additional_configuration="[]")
-            self.queryset = EnterpriseConfigurationModel.objects.filter(
-                enterprise_id__user=request.user)
-            return self.list(request, *args, **kwargs)
+            enterprise_conf = EnterpriseConfigurationModel.objects.filter(
+                enterprise_id__user=request.user).first()
+            data = EnterpriseConfigurationSerializer(enterprise_conf).data
+            return Response(
+                {
+                    "success": True,
+                    "data": data
+                },
+                status=status.HTTP_200_OK,
+            )
         except EnterpriseConfigurationModel.DoesNotExist:
             return Response(
                 {
@@ -253,30 +256,18 @@ class EnterpriseConfiguration(
                 status=status.HTTP_401_UNAUTHORIZED,
             )
 
-    def list(self, request, *args, **kwargs):
-        response = super(EnterpriseConfiguration,
-                         self).list(request, args, kwargs)
-        if len(response.data["results"]) == 0:
-            return Response({"success": False}, status=status.HTTP_200_OK)
-        return Response(
-            {
-                "success": True,
-                "data": response.data["results"][0]
-            },
-            status=status.HTTP_200_OK,
-        )
-
     # create new configuration
     def post(self, request, *args, **kwargs):
         try:
-            configuration = EnterpriseConfigurationModel.objects.get(
+            enterprise_conf = EnterpriseConfigurationModel.objects.get(
                 enterprise_id__user=request.user, )
-            serializer = self.serializer_class(configuration,
+            serializer = self.serializer_class(enterprise_conf,
                                                data=request.data,
                                                context={"request": request})
             if serializer.is_valid(raise_exception=True):
                 serializer.save()
-                return Response(serializer.data, status=status.HTTP_200_OK)
+                data = serializer.data
+                return Response(data, status=status.HTTP_200_OK)
             else:
                 return Response(serializer.errors,
                                 status=status.HTTP_400_BAD_REQUEST)
@@ -295,6 +286,7 @@ class EnterpriseConfiguration(
                     )
             return Response(
                 {
+                    "success": False,
                     "error": "You are not allowed to continue",
                 },
                 status=status.HTTP_401_UNAUTHORIZED,
@@ -557,11 +549,12 @@ class EnterpriseAccountSettings(LoggingMixin, GenericAPIView):
         user = request.user
         if hasattr(user, "enterprise"):
             enterprise = user.enterprise
+            data = EnterpriseAccountSettingsSerializer(enterprise,
+                                                       context={
+                                                           "request": request
+                                                       }).data
             return Response(
-                EnterpriseAccountSettingsSerializer(enterprise,
-                                                    context={
-                                                        "request": request
-                                                    }).data,
+                data,
                 status=status.HTTP_200_OK,
             )
         else:
@@ -572,19 +565,27 @@ class EnterpriseAccountSettings(LoggingMixin, GenericAPIView):
 
     def post(self, request, *args, **kwargs):
         user = request.user
-        if hasattr(user, "enterprise"):
-            enterprise = user.enterprise
-            serializer = self.serializer_class(enterprise,
-                                               data=request.data,
-                                               context={"request": request})
-            if serializer.is_valid():
-                serializer.save()
-                return Response(serializer.data, status=status.HTTP_200_OK)
+        try:
+            if hasattr(user, "enterprise"):
+                enterprise = user.enterprise
+                serializer = self.serializer_class(
+                    enterprise,
+                    data=request.data,
+                    context={"request": request})
+                if serializer.is_valid():
+                    serializer.save()
+                    return Response(serializer.data, status=status.HTTP_200_OK)
+                else:
+                    return Response(serializer.errors,
+                                    status=status.HTTP_400_BAD_REQUEST)
             else:
-                return Response(serializer.errors,
+                return Response({"error": "Not allowed to continue"},
                                 status=status.HTTP_400_BAD_REQUEST)
-        else:
-            return Response({"error": "Not allowed to continue"},
+        except Exception as e:
+            return Response({
+                "success": False,
+                "error": str(e)
+            },
                             status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -641,34 +642,40 @@ class EnterpriseEmailTemplate(LoggingMixin, GenericAPIView):
 
     def post(self, request, *args, **kwargs):
         user = request.user
-        if hasattr(user, "enterprise"):
-            enterprise = user.enterprise
-            email_type = EnterpriseEmailType.objects.filter(
-                email_id=kwargs["email_type"]).first()
-            if email_type == None:
-                return Response({"error": "Wrong email type."},
-                                status=status.HTTP_400_BAD_REQUEST)
-            if not EnterpriseEmailTemplateModel.objects.filter(
-                    enterprise=enterprise, email_type=email_type).exists():
-                EnterpriseEmailTemplateModel.objects.create(
-                    enterprise=enterprise, email_type=email_type)
-            emailTemp = EnterpriseEmailTemplateModel.objects.filter(
-                enterprise=enterprise, email_type=email_type).first()
-            if "attachment" in request.FILES:
-                attachment = request.FILES["attachment"]
-                emailTemp.file_name = attachment.name
-                emailTemp.file_type = attachment.content_type
-            serializer = self.serializer_class(emailTemp,
-                                               data=request.data,
-                                               context={"request": request})
-            if serializer.is_valid():
-                serializer.save()
-                return Response(serializer.data, status=status.HTTP_200_OK)
+        try:
+            if hasattr(user, "enterprise"):
+                enterprise = user.enterprise
+                email_type = EnterpriseEmailType.objects.filter(
+                    email_id=kwargs["email_type"]).first()
+                if email_type == None:
+                    return Response({"error": "Wrong email type."},
+                                    status=status.HTTP_400_BAD_REQUEST)
+                if not EnterpriseEmailTemplateModel.objects.filter(
+                        enterprise=enterprise, email_type=email_type).exists():
+                    EnterpriseEmailTemplateModel.objects.create(
+                        enterprise=enterprise, email_type=email_type)
+                emailTemp = EnterpriseEmailTemplateModel.objects.filter(
+                    enterprise=enterprise, email_type=email_type).first()
+                serializer = self.serializer_class(
+                    emailTemp, data=request.data, context={"request": request})
+                if serializer.is_valid(raise_exception=True):
+                    serializer.save()
+                    return Response(serializer.data, status=status.HTTP_200_OK)
+                else:
+                    return Response(serializer.errors,
+                                    status=status.HTTP_400_BAD_REQUEST)
             else:
-                return Response(serializer.errors,
-                                status=status.HTTP_400_BAD_REQUEST)
-        else:
-            return Response({"error": "Not allowed to continue"},
+                return Response(
+                    {
+                        "success": False,
+                        "error": "Not allowed to continue"
+                    },
+                    status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({
+                "success": False,
+                "error": str(e)
+            },
                             status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -748,5 +755,8 @@ class GetInvitationInfo(LoggingMixin, GenericAPIView):
             }
             return Response(data, status=status.HTTP_200_OK)
         except Exception as e:
-            return Response({"error": str(e)},
+            return Response({
+                "success": False,
+                "error": str(e)
+            },
                             status=status.HTTP_400_BAD_REQUEST)

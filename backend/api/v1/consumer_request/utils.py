@@ -15,7 +15,7 @@ def validate_filename(file):
         return False
     filename = file.name
     valid_extensions = [
-        ".jpg", ".jpeg", ".doc", ".docx", ".xls", ".xlsx", ".pdf"
+        ".jpg", ".jpeg", ".png", ".doc", ".docx", ".xls", ".xlsx", ".pdf"
     ]
     isNameValid = False
     for item in valid_extensions:
@@ -29,4 +29,4 @@ def validate_filename(file):
 def validate_filesize(file):
     if file == None:
         return False
-    return file.size <= 3698688
+    return file.size <= 5000000

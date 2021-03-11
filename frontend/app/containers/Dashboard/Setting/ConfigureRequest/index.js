@@ -7,6 +7,7 @@ import noImage from "../../../../assets/images/no-img.png";
 import { formAnswerTypeOptions } from "../../../../constants/constants";
 import { consumerRequestFormApis } from "../../../../utils/api/setting/requestform";
 import { withToastManager } from "react-toast-notifications";
+import { baseToImgSrc } from "../../../../utils/file";
 
 const Container = styled(Grid)`
   label,
@@ -50,13 +51,15 @@ class ConfigureRequest extends React.Component {
 
   initState = ({
     additional_configuration,
-    background_image,
+    background_image_data,
     company_name,
     website_launched_to,
-    logo,
+    logo_data,
     site_color,
     site_theme,
   }) => {
+    const logo = baseToImgSrc(logo_data);
+    const background_image = baseToImgSrc(background_image_data);
     localStorage.setItem("website_launched_to", website_launched_to);
     this.setState({
       additionalQuestions:

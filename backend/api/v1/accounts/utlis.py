@@ -25,14 +25,9 @@ class SendUserEmail:
                                 body=data["email_body"])
             mail.content_subtype = "html"
             if "attachment" in data and data["attachment"] is not None:
-                mail.attach(data["attachment"].name, data["attachment"].read(),
-                            data["attachment"].content_type)
-            elif "email_template" in data and data[
-                    "email_template"] is not None and data[
-                        "email_template"].attachment is not None:
-                mail.attach(data["email_template"].file_name,
-                            data["email_template"].attachment.read(),
-                            data["email_template"].file_type)
+                mail.attach(data["attachment"].name,
+                            data["attachment"].content,
+                            data["attachment"].file_type)
             mail.send()
         except Exception as e:
             print(e)

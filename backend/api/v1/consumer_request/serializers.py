@@ -8,6 +8,7 @@ from api.v1.enterprise.models import Enterprise, EnterpriseQuestionModel
 from ..enterprise.models import EnterpriseEmailType, EnterpriseConfigurationModel
 from .utils import validate_filename, validate_filesize
 from api.v1.accounts.utlis import generate_auth_code
+from ..upload.models import Files
 
 
 class ConsumerRequestSerializer(serializers.ModelSerializer):
@@ -24,7 +25,7 @@ class ConsumerRequestSerializer(serializers.ModelSerializer):
     state_resident = serializers.JSONField(required=False)
     request_type = serializers.CharField(required=False)
     additional_fields = serializers.JSONField(required=False)
-    file = serializers.FileField(required=False)
+    file = serializers.FileField(required=False, write_only=True)
 
     def get_elroi_id(self, obj):
         return obj.enterprise.elroi_id
@@ -48,7 +49,7 @@ class ConsumerRequestSerializer(serializers.ModelSerializer):
                 raise Exception("Invalid filetype")
             if not validate_filesize(request.FILES.get("file")):
                 raise Exception(
-                    "Too large filesize. The file should be less than 3MB.")
+                    "Too large filesize. The file should be less than 5MB.")
         data["first_name"] = data.get("first_name").capitalize()
         data["last_name"] = data.get("last_name").capitalize()
         return super().validate(data)
@@ -57,10 +58,14 @@ class ConsumerRequestSerializer(serializers.ModelSerializer):
         request = self.context.get("request")
         enterprise = Enterprise.objects.get(
             id=request.data.get("enterprise_id"))
+        file_obj = Files.create(file=request.FILES.get("file"))
+        if "file" in validated_data:
+            del validated_data["file"]
         timeframe = request.data.get("timeframe")
         consumer_request = ConsumerRequest.objects.create(
             enterprise=enterprise,
             **validated_data,
+            file=file_obj,
             process_end_date=datetime.utcnow() +
             timedelta(days=30 if timeframe == 0 else 45))
         return consumer_request
