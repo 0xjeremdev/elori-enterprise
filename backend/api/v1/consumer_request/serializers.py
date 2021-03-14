@@ -138,8 +138,6 @@ class ConsumerRequestSendSerializer(serializers.Serializer):
 
 
 class ConsumerReportSerializer(serializers.ModelSerializer):
-    status_text = serializers.SerializerMethodField()
-    timeframe_text = serializers.SerializerMethodField()
     email = serializers.CharField()
     first_name = serializers.CharField()
     last_name = serializers.CharField()
@@ -163,6 +161,9 @@ class ConsumerReportSerializer(serializers.ModelSerializer):
     def get_list(self):
         values_list = []
         data = self.data
+        state_resident = data["state_resident"]
+        data["state_resident"] = state_resident[
+            "country"] + '    ' + state_resident["state"]
         data["status"] = settings.STATUSES[data["status"]][1]
         data["timeframe"] = settings.TIMEFRAME_TYPE[data["timeframe"]][1]
         for key in data.keys():

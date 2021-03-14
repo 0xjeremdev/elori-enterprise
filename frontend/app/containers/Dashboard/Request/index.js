@@ -257,10 +257,14 @@ class Request extends React.Component {
   handleUpload = () => {
     if (this.inputValid()) {
       const { id } = this.props.match.params;
-      let timeframe = 1;
+      let timeframe = 0;
       this.setState({ sending: true });
-      if (EUList.findIndex((ele) => ele === this.state.country) > -1) {
-        timeframe = 0;
+      // if (EUList.findIndex((ele) => ele === this.state.country) > -1) {
+      //   timeframe = 0;
+      // }
+
+      if(this.state.country === 'United States of America') {
+        timeframe = 1;
       }
 
       consumerRequestApis
