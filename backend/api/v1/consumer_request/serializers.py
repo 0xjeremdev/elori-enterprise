@@ -62,12 +62,16 @@ class ConsumerRequestSerializer(serializers.ModelSerializer):
         if "file" in validated_data:
             del validated_data["file"]
         timeframe = request.data.get("timeframe")
+        days = 45
+        if enterprise.time_frame == "GDPR":
+            days = 30
+        if timeframe == 0:
+            days = 30
         consumer_request = ConsumerRequest.objects.create(
             enterprise=enterprise,
             **validated_data,
             file=file_obj,
-            process_end_date=datetime.utcnow() +
-            timedelta(days=30 if timeframe == 0 else 45))
+            process_end_date=datetime.utcnow() + timedelta(days=days))
         return consumer_request
 
 
