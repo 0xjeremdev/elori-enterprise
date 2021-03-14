@@ -224,7 +224,7 @@ class ConsumerRequest extends React.Component {
       { key: 4, value: REJECT, text: "Reject" },
     ];
     const reportOptions = [
-      { key: 1, value: "pdf", text: "PDF" },
+      // { key: 1, value: "pdf", text: "PDF" },
       { key: 2, value: "csv", text: "CSV" },
     ];
     const timeframeOptions = [

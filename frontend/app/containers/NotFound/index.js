@@ -22,26 +22,6 @@ const NotFound = () => {
             <br />
             <br />
             <br />
-            <p>
-              There are many variations of passages of Loem fered alt
-              <br />
-              eration in some form, by injected even slightly believable.
-            </p>
-            <br />
-            <br />
-            <br />
-            <Button color="violet" circular size="big">
-              CONTACT US
-            </Button>
-            <br />
-            <br />
-            <br />
-            <div>
-              <Button circular color="facebook" icon="facebook" /> &nbsp;&nbsp;&nbsp;
-              <Button circular color="twitter" icon="twitter" /> &nbsp;&nbsp;&nbsp;
-              <Button circular color="linkedin" icon="linkedin" /> &nbsp;&nbsp;&nbsp;
-              <Button circular color="instagram" icon="instagram" />
-            </div>
           </Segment>
         </Grid.Column>
       </Grid.Row>
