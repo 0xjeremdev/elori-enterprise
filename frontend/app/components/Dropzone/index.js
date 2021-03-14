@@ -32,7 +32,7 @@ function Dropzone(props) {
         </Button>
       </div>
       <aside>
-        <ul>{files}</ul>
+        {!props.reset && <ul>{files}</ul>}
       </aside>
     </section>
   );

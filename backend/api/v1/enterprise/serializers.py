@@ -1,5 +1,5 @@
 import os
-
+import base64
 from rest_framework import serializers, status
 from rest_framework.exceptions import AuthenticationFailed, ValidationError
 from api.v1.accounts.models import Enterprise, Account
@@ -8,7 +8,10 @@ from api.v1.enterprise.models import (UserGuideModel, CustomerConfiguration,
                                       EnterpriseConfigurationModel,
                                       UserGuideUploads, EnterpriseInviteModel,
                                       EnterpriseEmailTemplateModel,
-                                      EnterpriseEmailType)
+                                      EnterpriseEmailType,
+                                      EnterpriseQuestionModel)
+from ..consumer_request.utils import validate_filesize, validate_filename
+from ..upload.models import Files
 
 
 class UserGuideSerializer(serializers.ModelSerializer):
@@ -25,6 +28,15 @@ class FileSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserGuideUploads
         fields = ["file", "name", "size"]
+
+    def validate(self, data):
+        request = self.context.get("request")
+        if not validate_filename(request.FILES.get("file")):
+            raise Exception("Invalid filetype")
+        if not validate_filesize(request.FILES.get("file")):
+            raise Exception(
+                "Too large filesize. The file should be less than 3MB.")
+        return super().validate(data)
 
 
 class CustomerConfigurationSerializer(serializers.ModelSerializer):
@@ -62,47 +74,104 @@ class RequestTrackerSerializer(serializers.ModelSerializer):
 
 class EnterpriseConfigurationSerializer(serializers.ModelSerializer):
     elroi_id = serializers.SerializerMethodField()
-    logo = serializers.FileField(required=False)
+    logo = serializers.FileField(required=False, write_only=True)
+    logo_data = serializers.SerializerMethodField()
     site_color = serializers.JSONField(required=False)
     site_theme = serializers.JSONField(required=False)
-    background_image = serializers.FileField(required=False)
+    background_image = serializers.FileField(required=False, write_only=True)
+    background_image_data = serializers.SerializerMethodField()
+    privacy_description = serializers.CharField(required=False)
+    file_description = serializers.CharField(required=False)
     website_launched_to = serializers.CharField(required=False)
-    company_name = serializers.CharField(required=False)
+    company_name = serializers.SerializerMethodField()
     resident_state = serializers.BooleanField(required=False)
-    additional_configuration = serializers.JSONField(required=False)
-
-    # logo = serializers.SerializerMethodField()
-    # background_image = serializers.SerializerMethodField()
-
-    # def get_logo(self, obj):
-    #     if obj.logo.url:
-    #         return self.build_url(obj.logo.url)
-    #     else:
-    #         return obj.logo
-
-    # def get_background_image(self, obj):
-    #     if obj.background_image.url:
-    #         return self.build_url(obj.background_image.url)
-    #     else:
-    #         return obj.background_image
-
-    # def build_url(self, file_url):
-    #     request = self.context.get("request")
-    #     return request.build_absolute_uri(file_url)
 
     def get_elroi_id(self, obj):
-        return obj.enterprise_id.elroi_id
+        return obj.enterprise_id.user.elroi_id
+
+    def get_company_name(self, obj):
+        return obj.enterprise_id.company_name
+
+    def get_logo_data(self, obj):
+        if not obj.logo:
+            return None
+        return {
+            "name": obj.logo.name,
+            "size": obj.logo.size,
+            "content": base64.b64encode(obj.logo.content).decode('utf-8'),
+            "type": obj.logo.file_type
+        }
+
+    def get_background_image_data(self, obj):
+        if not obj.background_image:
+            return None
+        return {
+            "name":
+            obj.background_image.name,
+            "size":
+            obj.background_image.size,
+            "content":
+            base64.b64encode(obj.background_image.content).decode('utf-8'),
+            "type":
+            obj.background_image.file_type
+        }
 
     class Meta:
         model = EnterpriseConfigurationModel
-        fields = "__all__"
+        exclude = ("enterprise_id", )
+
+    def validate(self, data):
+        request = self.context.get("request")
+        if "logo" in request.FILES:
+            if not validate_filename(request.FILES.get("logo")):
+                raise Exception("Invalid filetype")
+            if not validate_filesize(request.FILES.get("logo")):
+                raise Exception(
+                    "Too large filesize. The file should be less than 3MB.")
+        if "background_image" in request.FILES:
+            if not validate_filename(request.FILES.get("background_image")):
+                raise Exception("Invalid filetype")
+            if not validate_filesize(request.FILES.get("background_image")):
+                raise Exception(
+                    "Too large filesize. The file should be less than 3MB.")
+        return super().validate(data)
+
+    def update(self, instance, validated_data):
+        request = self.context.get("request")
+        if "logo" in request.FILES:
+            if not instance.logo:
+                instance.logo = Files.create(file=request.FILES.get("logo"))
+            else:
+                instance.logo.update(file=request.FILES.get("logo"))
+            del validated_data["logo"]
+        if "background_image" in request.FILES:
+            if not instance.background_image:
+                instance.background_image = Files.create(
+                    file=request.FILES.get("background_image"))
+            else:
+                instance.background_image.update(
+                    file=request.FILES.get("background_image"))
+            del validated_data["background_image"]
+        instance.save()
+        return super().update(instance, validated_data)
+
+
+class EnterpriseQuestionSerializer(serializers.ModelSerializer):
+    content = serializers.CharField(required=True)
+    question_type = serializers.IntegerField(required=True)
+
+    class Meta:
+        model = EnterpriseQuestionModel
+        fields = [
+            "content",
+            "question_type",
+        ]
 
 
 class EnterpriseAccountSettingsSerializer(serializers.ModelSerializer):
     elroi_id = serializers.CharField(read_only=True)
-    logo = serializers.FileField(required=False)
-    site_color = serializers.JSONField(required=False)
-    second_color = serializers.JSONField(required=False)
+    logo_data = serializers.SerializerMethodField()
+    logo = serializers.FileField(required=False, write_only=True)
     notification_email = serializers.CharField(required=False)
     additional_emails = serializers.CharField(required=False)
     address = serializers.CharField(required=False)
@@ -110,33 +179,44 @@ class EnterpriseAccountSettingsSerializer(serializers.ModelSerializer):
     timezone = serializers.CharField(required=False)
     time_frame = serializers.CharField(required=False)
 
-    # logo_url = serializers.SerializerMethodField(required=False)
-
-    # def get_logo_url(self, obj):
-    #     request = self.context.get("request")
-    #     try:
-    #         if obj.logo.url:
-    #             return request.build_absolute_uri(obj.logo.url)
-    #         else:
-    #             return obj.logo
-    #     except:
-    #         return None
-
     class Meta:
         model = Enterprise
         fields = [
-            "elroi_id",
-            "logo",
-            # "logo_url",
-            "site_color",
-            "second_color",
-            "notification_email",
-            "additional_emails",
-            "address",
-            "company_name",
-            "timezone",
+            "elroi_id", "logo_data", "logo", "notification_email",
+            "additional_emails", "address", "company_name", "timezone",
             "time_frame"
         ]
+
+    def get_logo_data(self, obj):
+        if not obj.logo:
+            return None
+        return {
+            "name": obj.logo.name,
+            "size": obj.logo.size,
+            "content": base64.b64encode(obj.logo.content).decode('utf-8'),
+            "type": obj.logo.file_type
+        }
+
+    def validate(self, data):
+        request = self.context.get("request")
+        if "logo" in request.FILES:
+            if not validate_filename(request.FILES.get("logo")):
+                raise Exception("Invalid filetype")
+            if not validate_filesize(request.FILES.get("logo")):
+                raise Exception(
+                    "Too large filesize. The file should be less than 3MB.")
+        return super().validate(data)
+
+    def update(self, instance, validated_data):
+        request = self.context.get("request")
+        if "logo" in request.FILES:
+            if not instance.logo:
+                instance.logo = Files.create(file=request.FILES.get("logo"))
+            else:
+                instance.logo.update(file=request.FILES.get("logo"))
+            del validated_data["logo"]
+        instance.save()
+        return super().update(instance, validated_data)
 
 
 class EnterpriseEmailTypeSerializer(serializers.ModelSerializer):
@@ -152,14 +232,46 @@ class EnterpriseEmailTypeSerializer(serializers.ModelSerializer):
 class EnterpriseEmailTemplateSerializer(serializers.ModelSerializer):
 
     content = serializers.CharField(required=False)
-    attachment = serializers.FileField(required=False)
+    attachment = serializers.FileField(required=False, write_only=True)
+    attachment_data = serializers.SerializerMethodField()
 
     class Meta:
         model = EnterpriseEmailTemplateModel
-        fields = [
-            "content",
-            "attachment",
-        ]
+        fields = ["content", "attachment", "attachment_data"]
+
+    def get_attachment_data(self, obj):
+        if not obj.attachment:
+            return None
+        return {
+            "name": obj.attachment.name,
+            "size": obj.attachment.size,
+            "content":
+            base64.b64encode(obj.attachment.content).decode('utf-8'),
+            "type": obj.attachment.file_type
+        }
+
+    def validate(self, data):
+        request = self.context.get("request")
+        if "attachment" in request.FILES:
+            if not validate_filename(request.FILES.get("attachment")):
+                raise Exception("Invalid filetype")
+            if not validate_filesize(request.FILES.get("attachment")):
+                raise Exception(
+                    "Too large filesize. The file should be less than 5MB.")
+        return super().validate(data)
+
+    def update(self, instance, validated_data):
+        request = self.context.get("request")
+        if "attachment" in request.FILES:
+            if not instance.attachment:
+                instance.attachment = Files.create(
+                    file=request.FILES.get("attachment"))
+            else:
+                instance.attachment.update(
+                    file=request.FILES.get("attachment"))
+            del validated_data["attachment"]
+        instance.save()
+        return super().update(instance, validated_data)
 
 
 class EnterpriseInviteSerializer(serializers.ModelSerializer):

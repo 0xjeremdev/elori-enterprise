@@ -1,10 +1,13 @@
+import { add } from "lodash";
 import React from "react";
+import { withToastManager } from "react-toast-notifications";
 import { Button, Form, Grid, Icon, Image } from "semantic-ui-react";
 import styled from "styled-components";
 import noImage from "../../../../assets/images/no-img.png";
 import ColorPicker from "../../../../components/ColorPicker";
 import { timeframeOptions, timezoneOptions } from "../../../../constants/types";
 import { enterpriseSettingApis } from "../../../../utils/api/setting/enterprise";
+import { baseToImgSrc } from "../../../../utils/file";
 import AddUserModal from "./AddUserModal";
 
 const Container = styled(Grid)`
@@ -51,25 +54,23 @@ class AccountSetting extends React.Component {
   }
 
   initState = ({
-    logo,
-    site_color,
-    second_color,
+    logo_data,
     notification_email,
     address,
     company_name,
     timezone,
     time_frame,
   }) => {
+    const logo = baseToImgSrc(logo_data);
     this.props.logoUpdate(logo);
     this.setState({
       logoUrl: logo,
-      siteColor: site_color,
-      secondColor: second_color,
-      notificationEmail: notification_email,
-      address,
-      companyName: company_name,
+      notificationEmail:
+        notification_email === "null" ? null : notification_email,
+      address: address === "null" ? null : address,
+      companyName: company_name === "null" ? null : company_name,
       timezone,
-      time_frame
+      time_frame,
     });
   };
 
@@ -83,7 +84,6 @@ class AccountSetting extends React.Component {
 
   onLogoChange = (e) => {
     const self = this;
-    console.log(e.target.files[0], " this is logo file");
     this.setState(
       { logoFile: e.target.files[0], logoFileName: e.target.files[0].name },
       () => {
@@ -97,9 +97,22 @@ class AccountSetting extends React.Component {
   };
 
   handleSave = () => {
+    const { toastManager } = this.props;
     enterpriseSettingApis
       .setEnterpriseSetting(this.state)
-      .then((res) => this.initState(res.data));
+      .then((res) => {
+        toastManager.add("Save Enterprise setting is succeed", {
+          appearance: "success",
+          autoDismiss: true,
+        });
+        this.initState(res.data);
+      })
+      .catch((e) =>
+        toastManager.add("Save Enterprise setting is failed", {
+          appearance: "error",
+          autoDismiss: true,
+        })
+      );
   };
 
   onInvite = (email) => {
@@ -124,7 +137,7 @@ class AccountSetting extends React.Component {
             <input
               type="file"
               id="logo"
-              accept="image/x-png,image/jpg,image/jpeg"
+              accept="image/jpg,image/jpeg"
               hidden
               onChange={this.onLogoChange}
             />
@@ -135,7 +148,7 @@ class AccountSetting extends React.Component {
             </label>
           </Grid.Column>
         </Grid.Row>
-        <Grid.Row>
+        {/* <Grid.Row>
           <Grid.Column width={8}>
             <Grid>
               <Grid.Row columns={2} verticalAlign="middle">
@@ -170,7 +183,7 @@ class AccountSetting extends React.Component {
               </Grid.Row>
             </Grid>
           </Grid.Column>
-        </Grid.Row>
+        </Grid.Row> */}
         <Grid.Row>
           <Grid.Column>
             <Form>
@@ -186,19 +199,19 @@ class AccountSetting extends React.Component {
           </Grid.Column>
         </Grid.Row>
         <Grid.Row verticalAlign="middle">
-          <Grid.Column width={2}>
+          {/*<Grid.Column width={2}>
             <label>
               <b>Add Users</b>
             </label>
           </Grid.Column>
-          <Grid.Column width={4}>
+           <Grid.Column width={4}>
             <Button
               color="blue"
               onClick={() => this.setState({ addUserModal: true })}
             >
               <Icon name="plus" /> Add User
             </Button>
-          </Grid.Column>
+          </Grid.Column> */}
         </Grid.Row>
         <Grid.Row>
           <Grid.Column width={6}>
@@ -239,7 +252,9 @@ class AccountSetting extends React.Component {
                 options={timeframeOptions}
                 label="Timeframe"
                 value={this.state.time_frame || ""}
-                onChange={(e, { value }) => this.setState({ time_frame: value })}
+                onChange={(e, { value }) =>
+                  this.setState({ time_frame: value })
+                }
               />
             </Form>
           </Grid.Column>
@@ -264,4 +279,4 @@ class AccountSetting extends React.Component {
   }
 }
 
-export default AccountSetting;
+export default withToastManager(AccountSetting);

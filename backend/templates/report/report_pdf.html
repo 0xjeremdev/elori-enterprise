@@ -1,0 +1,54 @@
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <style>
+        table {
+            font-family: arial, sans-serif;
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        td,
+        th {
+            border: 1px solid #dddddd;
+            text-align: left;
+            padding: 8px;
+        }
+    </style>
+    {% block layout_style %}
+    <style>
+        @page #port{
+            size:letter;
+            }
+        @page #land{
+            size:portrait;
+            }
+    </style>
+    {% endblock %}
+</head>
+
+<body>
+    <div>
+        <table>
+            <tr>
+                {% for key in keys%}
+                <th>{{ key }}</th>
+                {% endfor %}
+            </tr>
+            {% for row in data %}
+            <tr>
+                {% for item in row %}
+                    {% if item != None %}
+                    <td>{{item}}</td>
+                    {% else %}
+                    <td></td>
+                    {% endif %}
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+</body>
+
+</html>

@@ -11,8 +11,6 @@ function setEnterpriseSetting(payload) {
   const token = localStorage.getItem("access-token");
   const {
     logoFile,
-    siteColor,
-    secondColor,
     notificationEmail,
     companyName,
     address,
@@ -23,8 +21,6 @@ function setEnterpriseSetting(payload) {
   if (logoFile) {
     formData.append("logo", logoFile);
   }
-  formData.append("site_color", JSON.stringify(siteColor));
-  formData.append("second_color", JSON.stringify(secondColor));
   formData.append("notification_email", notificationEmail);
   formData.append("company_name", companyName);
   formData.append("address", address);

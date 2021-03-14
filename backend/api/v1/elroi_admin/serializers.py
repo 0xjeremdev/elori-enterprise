@@ -20,8 +20,7 @@ class EnterpriseTrialSerializer(serializers.ModelSerializer):
             key=validated_data['key'],
             value=validated_data['value'],
             created_by=validated_data['created_by'],
-            updated_by=validated_data['updated_by']
-        )
+            updated_by=validated_data['updated_by'])
         return enterprise_config
 
 
@@ -35,14 +34,17 @@ class EnterpriseMaintenanceSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Enterprise
-        fields = ('elroi_id', 'is_active', 'turn_off_date', 'trial_start', 'trial_end')
+        fields = ('elroi_id', 'is_active', 'turn_off_date', 'trial_start',
+                  'trial_end')
+
 
 class EnterprisePaymentSerializer(serializers.ModelSerializer):
     payment = serializers.JSONField()
 
     class Meta:
         model = Enterprise
-        exclude = ['email']
+        # exclude = ['email']
+        fields = "__all__"
         read_only_fields = ['elroi_id']
 
 
@@ -55,7 +57,9 @@ class EnterpriseCustomersSerializer(serializers.ModelSerializer):
         return req_total
 
     def get_tied_customers(self, obj):
-        total_customers = ConsumerRequest.objects.filter(enterprise=obj.id).distinct('customer_id').order_by('customer_id').count()
+        total_customers = ConsumerRequest.objects.filter(
+            enterprise=obj.id).distinct('customer_id').order_by(
+                'customer_id').count()
         return total_customers
 
     class Meta:
@@ -63,21 +67,25 @@ class EnterpriseCustomersSerializer(serializers.ModelSerializer):
         fields = ('elroi_id', 'unique_customers', 'total_requests', 'name')
         read_only_fields = ['elroi_id']
 
+
 class EnterpriseActivitySerializer(serializers.ModelSerializer):
     class Meta:
         model = ActivityLog
         fields = '__all__'
+
 
 class QuestionnaireApiSerializer(serializers.ModelSerializer):
     class Meta:
         model = Questionnaire
         fields = '__all__'
 
+
 class UserGuideUploadApiSerializer(serializers.ModelSerializer):
     elroi_id = serializers.CharField(max_length=255, required=False)
     title = serializers.CharField(max_length=255, required=False)
     content = serializers.CharField(required=False)
-    created_by = serializers.HiddenField(default=serializers.CurrentUserDefault())
+    created_by = serializers.HiddenField(
+        default=serializers.CurrentUserDefault())
 
     class Meta:
         model = UserGuideModel

@@ -16,6 +16,7 @@ class Signup extends React.Component {
     newUserName: "",
     newUserFName: "",
     newUserLName: "",
+    companyName: "",
     newUserPwd: "",
     newUserConfirmPwd: "",
     togglePwd: false,
@@ -30,6 +31,7 @@ class Signup extends React.Component {
       newUserLName,
       newUserPwd,
       newUserConfirmPwd,
+      companyName,
     } = this.state;
     if (
       newUserEmail !== "" &&
@@ -37,6 +39,7 @@ class Signup extends React.Component {
       newUserFName !== "" &&
       newUserLName !== "" &&
       newUserPwd !== "" &&
+      companyName !== "" &&
       newUserConfirmPwd == newUserPwd
     ) {
       if (isEmailValid(newUserEmail)) {
@@ -54,6 +57,7 @@ class Signup extends React.Component {
       newUserFName,
       newUserLName,
       newUserPwd,
+      companyName,
     } = this.state;
     // this.setState({ sendSignRequst: true });
     if (this.isSignUpUserValid()) {
@@ -64,6 +68,7 @@ class Signup extends React.Component {
           newUserFName,
           newUserLName,
           newUserPwd,
+          companyName,
         })
       );
     }
@@ -100,7 +105,7 @@ class Signup extends React.Component {
         <Grid>
           <Grid.Row textAlign="right">
             <Grid.Column>
-              <img src={logo} alt="No Img"/>
+              <img src={logo} alt="No Img" />
             </Grid.Column>
           </Grid.Row>
         </Grid>
@@ -169,6 +174,19 @@ class Signup extends React.Component {
                         value={this.state.newUserLName}
                         onChange={(e, { value }) =>
                           this.setState({ newUserLName: value })
+                        }
+                      />
+                    </Grid.Column>
+                  </Grid.Row>
+                  <Grid.Row>
+                    <Grid.Column>
+                      <span className="input-label">Company Name</span>
+                      <Input
+                        icon="user"
+                        iconPosition="left"
+                        value={this.state.companyName}
+                        onChange={(e, { value }) =>
+                          this.setState({ companyName: value })
                         }
                       />
                     </Grid.Column>

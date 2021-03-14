@@ -85,7 +85,6 @@ export function* signup(request) {
     }
   } catch (error) {
     yield put({ type: SIGNUP_REQUEST_ERROR, error: error.error.errors })
-    console.log(error, error.response)
   }
 }
 

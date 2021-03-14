@@ -31,7 +31,7 @@ class RequestItem extends React.Component {
     const today = new Date();
     const receiveDate = new Date(request_date);
     const diffTime = Math.abs(today - receiveDate);
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) - 1;
     return diffDays;
   };
 

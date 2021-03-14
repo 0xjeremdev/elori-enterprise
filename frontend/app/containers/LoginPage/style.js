@@ -1,5 +1,5 @@
-import styled from 'styled-components';
-import { Container } from 'semantic-ui-react';
+import styled from "styled-components";
+import { Container } from "semantic-ui-react";
 
 export const PortalWrapper = styled(Container)`
   padding: 120px 0px;
@@ -59,6 +59,14 @@ export const PortalWrapper = styled(Container)`
     color: #04d68e;
   }
   span.error-msg {
-    color: red; font-size: 12px; margin-left: 12px;
+    color: red;
+    font-size: 12px;
+    margin-left: 12px;
+  }
+  p.error-msg {
+    color: red;
+    font-size: 12px;
+    margin-left: 12px;
+    margin-bottom: 5px;
   }
 `;

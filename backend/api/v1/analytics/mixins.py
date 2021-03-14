@@ -8,7 +8,7 @@ from django.db import connection
 from django.utils.timezone import now
 
 from api.v1.analytics.models import ActivityLog
-
+from api.v1.accounts.models import Enterprise, Staff
 logger = logging.getLogger(__name__)
 
 
@@ -21,14 +21,13 @@ class LoggingActivityMixin(object):
     sensitive_fields = {}
 
     def __init__(self, *args, **kwargs):
-        assert isinstance(
-            self.CLEANED_SUBSTITUTE, str
-        ), "CLEANED_SUBSTITUTE must be a string."
+        assert isinstance(self.CLEANED_SUBSTITUTE,
+                          str), "CLEANED_SUBSTITUTE must be a string."
         super(LoggingActivityMixin, self).__init__(*args, **kwargs)
 
     def initial(self, request, *args, **kwargs):
         self.log = {"requested_at": now()}
-        self.log["data"] = self._clean_data(request.body)
+        # self.log["data"] = self._clean_data(request.body)
 
         super(LoggingActivityMixin, self).initial(request, *args, **kwargs)
 
@@ -49,19 +48,18 @@ class LoggingActivityMixin(object):
         return response
 
     def finalize_response(self, request, response, *args, **kwargs):
-        response = super(LoggingActivityMixin, self).finalize_response(
-            request, response, *args, **kwargs
-        )
+        response = super(LoggingActivityMixin,
+                         self).finalize_response(request, response, *args,
+                                                 **kwargs)
 
         # Ensure backward compatibility for those using _should_log hook
-        should_log = (
-            self._should_log if hasattr(self, "_should_log") else self.should_log
-        )
+        should_log = (self._should_log
+                      if hasattr(self, "_should_log") else self.should_log)
 
         if should_log(request, response):
-            if (
-                connection.settings_dict.get("ATOMIC_REQUESTS") and getattr(response, "exception", None) and connection.in_atomic_block
-            ):
+            if (connection.settings_dict.get("ATOMIC_REQUESTS")
+                    and getattr(response, "exception", None)
+                    and connection.in_atomic_block):
                 # response with exception (HTTP status like: 401, 404, etc)
                 # pointwise disable atomic block for handle log (TransactionManagementError)
                 connection.set_rollback(True)
@@ -73,33 +71,44 @@ class LoggingActivityMixin(object):
             else:
                 rendered_content = response.getvalue()
             clean_data = self._clean_data(rendered_content)
-            self.log.update(
-                {
-                    "remote_addr": self._get_ip_address(request),
-                    "view": self._get_view_name(request),
-                    "view_method": self._get_view_method(request),
-                    "path": request.path,
-                    "elroi_id": self._get_elroi_id(request, clean_data),
-                    "host": request.get_host(),
-                    "method": request.method,
-                    "query_params": self._clean_data(request.query_params.dict()),
-                    "user": self._get_user(request),
-                    "username_persistent": self._get_user(request).get_username()
-                    if self._get_user(request)
-                    else "Anonymous",
-                    "response_ms": self._get_response_ms(),
-                    "response": clean_data,
-                    "status_code": response.status_code,
-                }
-            )
-            if self._clean_data(request.query_params.dict()) == {}:
-                self.log.update({"query_params": self.log["data"]})
-            try:
-                self.handle_log()
-            except Exception:
-                # ensure that all exceptions raised by handle_log
-                # doesn't prevent API call to continue as expected
-                logger.exception("Logging API call raise exception!")
+            self.log.update({
+                "remote_addr":
+                self._get_ip_address(request),
+                "view":
+                self._get_view_name(request),
+                "view_method":
+                self._get_view_method(request),
+                "path":
+                request.path,
+                "elroi_id":
+                self._get_elroi_id(request, clean_data),
+                "host":
+                request.get_host(),
+                "method":
+                request.method,
+                "query_params":
+                self._clean_data(request.query_params.dict()),
+                "user":
+                self._get_user(request),
+                "username_persistent":
+                self._get_user(request).get_username()
+                if self._get_user(request) else "Anonymous",
+                "response_ms":
+                self._get_response_ms(),
+                "response":
+                clean_data,
+                "status_code":
+                response.status_code,
+            })
+            # if self._clean_data(request.query_params.dict()) == {}:
+            # self.log.update({"query_params": self.log["data"]})
+            if self._get_user(request) != None:
+                try:
+                    self.handle_log()
+                except Exception:
+                    # ensure that all exceptions raised by handle_log
+                    # doesn't prevent API call to continue as expected
+                    logger.exception("Logging API call raise exception!")
 
         return response
 
@@ -140,9 +149,8 @@ class LoggingActivityMixin(object):
         method = request.method.lower()
         try:
             attributes = getattr(self, method)
-            return (
-                type(attributes.__self__).__module__ + "." + type(attributes.__self__).__name__
-            )
+            return (type(attributes.__self__).__module__ + "." +
+                    type(attributes.__self__).__name__)
 
         except AttributeError:
             return None
@@ -162,23 +170,11 @@ class LoggingActivityMixin(object):
 
     def _get_elroi_id(self, request, clean_data):
         elroi_id = None
-        data = json.loads(clean_data)
-        if "elroi_id" in data:
-            elroi_id = data['elroi_id']
-        elif "data" in data:
-            if 'elroi_id' in data['data']:
-                elroi_id = data['data']['elroi_id']
+        user = self._get_user(request)
+        if user == None:
+            return elroi_id
 
-        if elroi_id is None:
-            path = request.path
-            start = path.find('E-')
-            if start != '-1':
-                elroi_id = path[start:(start+8)]
-            elif path.find('C-') > 0:
-                start_c = path.index('C-')
-                elroi_id = path[start_c:(start_c+8)]
-
-        return elroi_id
+        return user.elroi_id
 
     def _get_response_ms(self):
         """
@@ -194,9 +190,8 @@ class LoggingActivityMixin(object):
         Method that should return a value that evaluated to True if the request should be logged.
         By default, check if the request method is in logging_methods.
         """
-        return (
-            self.logging_methods == "__all__" or request.method in self.logging_methods
-        )
+        return (self.logging_methods == "__all__"
+                or request.method in self.logging_methods)
 
     def _clean_data(self, data):
         """
@@ -228,7 +223,8 @@ class LoggingActivityMixin(object):
             data = dict(data)
             if self.sensitive_fields:
                 SENSITIVE_FIELDS = SENSITIVE_FIELDS | {
-                    field.lower() for field in self.sensitive_fields
+                    field.lower()
+                    for field in self.sensitive_fields
                 }
 
             for key, value in data.items():
@@ -246,6 +242,7 @@ class LoggingActivityMixin(object):
 class LoggingMixin(LoggingActivityMixin):
     def handle_log(self):
         ActivityLog(**self.log).save()
+
 
 class LoggingErrorsMixin(LoggingMixin):
     def should_log(self, request, response):

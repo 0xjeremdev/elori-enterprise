@@ -1,9 +1,11 @@
 import React from "react";
+import { withToastManager } from "react-toast-notifications";
 import { Button, Form, Grid, Icon, Image, Input } from "semantic-ui-react";
 import styled from "styled-components";
 import noImage from "../../../../assets/images/no-img.png";
 import { timezoneOptions } from "../../../../constants/types";
 import { accountSettingApis } from "../../../../utils/api/setting/account";
+import { baseToImgSrc } from "../../../../utils/file";
 
 const Container = styled(Grid)`
   label,
@@ -33,29 +35,27 @@ class UserSetting extends React.Component {
     logoBS64: null,
     phoneNumber: "",
     companyEmail: "",
-    companyName: "",
     firstName: "",
     lastName: "",
     timezone: "",
   };
 
   initState = ({
-    logo,
+    logo_data,
     first_name,
     last_name,
     email,
     phone_number,
-    company_name,
     timezone,
   }) => {
+    const logo = baseToImgSrc(logo_data);
     this.props.avatarUpdate(logo);
     this.setState({
       logoUrl: logo,
       firstName: first_name,
       lastName: last_name,
       companyEmail: email,
-      phoneNumber: phone_number,
-      companyName: company_name,
+      phoneNumber: phone_number === "null" ? null : phone_number,
       timezone,
     });
   };
@@ -79,9 +79,23 @@ class UserSetting extends React.Component {
   };
 
   handleSave = () => {
+    const { toastManager } = this.props;
     accountSettingApis
       .setAccountSetting(this.state)
-      .then((res) => this.initState(res.data));
+      .then((res) => {
+        toastManager.add("Save Account Setting is succeed", {
+          appearance: "success",
+          autoDismiss: true,
+        });
+        this.initState(res.data);
+      })
+      .catch((e) => {
+        console.log(e);
+        toastManager.add('Save Account Setting is failed', {
+          appearance: "error",
+          autoDismiss: true,
+        });
+      });
   };
 
   render() {
@@ -104,7 +118,7 @@ class UserSetting extends React.Component {
             <input
               type="file"
               id="logo"
-              accept="image/x-png,image/jpg,image/jpeg"
+              accept="image/jpg,image/jpeg"
               hidden
               onChange={this.onLogoChange}
             />
@@ -170,7 +184,7 @@ class UserSetting extends React.Component {
                 </Grid.Column>
               </Grid.Row>
               <Grid.Row>
-                <Grid.Column>
+                <Grid.Column width={8}>
                   <Form>
                     <Form.Input
                       label="Phone Number"
@@ -178,19 +192,6 @@ class UserSetting extends React.Component {
                         this.setState({ phoneNumber: value })
                       }
                       value={this.state.phoneNumber || ""}
-                    />
-                  </Form>
-                </Grid.Column>
-              </Grid.Row>
-              <Grid.Row>
-                <Grid.Column width={10}>
-                  <Form>
-                    <Form.Input
-                      label="Company Name"
-                      onChange={(e, { value }) =>
-                        this.setState({ companyName: value })
-                      }
-                      value={this.state.companyName || ""}
                     />
                   </Form>
                 </Grid.Column>
@@ -226,4 +227,4 @@ class UserSetting extends React.Component {
   }
 }
 
-export default UserSetting;
+export default withToastManager(UserSetting);

@@ -1,5 +1,6 @@
 import axios from "axios";
 import { API_ENDPOINT_URL } from "constants/defaults";
+import "../index";
 
 export const accountSettingApis = {
   setAccountSetting,

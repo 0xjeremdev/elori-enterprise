@@ -8,10 +8,13 @@
   "USERS": "/users",
   "SETTING": "/setting",
   "RESOURCES": "/resources",
+  "GETDATA": "/data-return/:id",
   "LOGIN": "/login",
   "SIGNUP": "/signup",
   "EMAILCONFIRM": "/email-confirm/:id",
   "STAFFINVITE": "/customer-join/:id",
-  "REQUEST": "/request/:id?",
-  "VERIFYCODE": "/verify-code"
+  "REQUEST": "/request/:id",
+  "VERIFYCODE": "/verify-code",
+  "RESETPASSWORD": "/forget-password",
+  "SETPASSWORD": "/password-reset/:uidb64/:token"
 }

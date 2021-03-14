@@ -2,7 +2,7 @@ import os
 import re
 import string
 import time
-
+import base64
 import jwt
 import json
 import random
@@ -12,7 +12,7 @@ from django.contrib.sites.shortcuts import get_current_site
 from django.http import HttpResponsePermanentRedirect
 from django.template.loader import render_to_string
 from django.urls import reverse
-from django.utils.encoding import smart_str, smart_bytes, DjangoUnicodeDecodeError
+from django.utils.encoding import smart_str, smart_bytes, DjangoUnicodeDecodeError, force_str
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
@@ -22,6 +22,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.parsers import MultiPartParser, FormParser, FileUploadParser
+from rest_framework.exceptions import AuthenticationFailed, ValidationError
 
 from .models import Account, Staff, Enterprise
 from .renderers import UserRenderer
@@ -68,8 +69,10 @@ class RegisterStaff(LoggingMixin, GenericAPIView):
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid(raise_exception=True):
-            staff_data = serializer.save()
-            account = Account.objects.get(email__iexact=staff_data.email)
+            serializer.save()
+            account = Account.objects.get(
+                email__iexact=request.data.get("email"))
+            staff_data = account.staff
             token = RefreshToken.for_user(account).access_token
             activate_url = f"{settings.FRONTEND_URL}/email-confirm/{str(token)}"
             message_body = render_to_string(
@@ -86,11 +89,11 @@ class RegisterStaff(LoggingMixin, GenericAPIView):
             return Response(
                 {
                     "user": {
-                        "elroi_id": staff_data.elroi_id,
-                        "email": staff_data.email,
-                        "first_name": staff_data.first_name,
-                        "last_name": staff_data.last_name,
-                        "full_name": staff_data.full_name(),
+                        "elroi_id": account.elroi_id,
+                        "email": account.email,
+                        "first_name": account.first_name,
+                        "last_name": account.last_name,
+                        "full_name": account.full_name(),
                         "two_fa_valid": account.is_2fa_on(),
                         "profile": staff_data.profile(),
                     },
@@ -103,7 +106,7 @@ class RegisterStaff(LoggingMixin, GenericAPIView):
                             status=status.HTTP_400_BAD_REQUEST)
 
 
-class RegisterEnterprise(LoggingMixin, GenericAPIView):
+class RegisterEnterprise(GenericAPIView):
     serializer_class = RegisterEnterpriseSerializer
     renderer_classes = (UserRenderer, )
 
@@ -111,9 +114,8 @@ class RegisterEnterprise(LoggingMixin, GenericAPIView):
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
             serializer.save()
-            enterprise_data = serializer.data
             account = Account.objects.get(
-                email__iexact=enterprise_data["email"])
+                email__iexact=request.data.get("email"))
             enterprise = account.enterprise
             token = RefreshToken.for_user(account).access_token
             activate_url = f"{settings.FRONTEND_URL}/email-confirm/{str(token)}"
@@ -131,13 +133,12 @@ class RegisterEnterprise(LoggingMixin, GenericAPIView):
             return Response(
                 {
                     "user": {
-                        "elroi_id": enterprise.elroi_id,
-                        "email": enterprise.email,
-                        "name": enterprise.name,
-                        "first_name": enterprise.first_name,
-                        "last_name": enterprise.last_name,
-                        "full_name": enterprise.full_name(),
-                        "web": enterprise.web,
+                        "elroi_id": account.elroi_id,
+                        "email": account.email,
+                        "username": account.username,
+                        "first_name": account.first_name,
+                        "last_name": account.last_name,
+                        "full_name": account.full_name(),
                         "two_fa_valid": account.is_2fa_on(),
                         "profile": enterprise.profile(),
                     },
@@ -205,8 +206,8 @@ class LoginAPI(LoggingMixin, GenericAPIView):
 
         res_data = {
             account_id: account.id,
-            "elroi_id": account.elroi_id,
-            "email": account.email,
+            "elroi_id": user.elroi_id,
+            "email": user.email,
             "full_name": account.full_name(),
             "is_2fa_active": user.is_2fa_active,
             "profile": account.profile(),
@@ -236,61 +237,93 @@ class PasswordResetAPI(LoggingMixin, GenericAPIView):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
         email = request.data["email"]
-        if Account.objects.filter(email__iexact=email).exists():
-            user = Account.objects.get(email=email)
-            uidb64 = urlsafe_base64_encode(smart_bytes(user.id))
-            token = PasswordResetTokenGenerator().make_token(user)
-            current_site = get_current_site(request=request).domain
-            url = reverse("password_reset_confirmation",
-                          kwargs={
-                              "uidb64": uidb64,
-                              "token": token
-                          })
-            redirect_url = request.data.get("redirect_url", "")
-            reset_link = f"{settings.FRONTEND_URL}/{url}?redirect_url={redirect_url}"
-            email_template_data = {
-                "protocol": request.scheme,
-                "domain": current_site,
-                "url": reset_link,
-            }
-            message_body = render_to_string("email/password_reset.html",
-                                            email_template_data)
-            email_data = {
-                "email_body": message_body,
-                "to_email": user.email,
-                "email_subject": "Reset your password",
-            }
-            SendUserEmail.send_email(email_data)
-        return Response(
-            {
-                "success":
-                "Please check your Inbox, we have sent you a link to reset password."
-            },
-            status=status.HTTP_200_OK,
-        )
+        try:
+            if Account.objects.filter(email__iexact=email).exists():
+                user = Account.objects.get(email=email)
+                uidb64 = urlsafe_base64_encode(smart_bytes(user.id))
+                token = PasswordResetTokenGenerator().make_token(user)
+                reset_url = f"{settings.FRONTEND_URL}/password-reset/{uidb64}/{token}"
+                message_body = render_to_string(
+                    "email/password_reset.html", {
+                        "user_full_name": user.full_name(),
+                        "url": reset_url
+                    })
+                email_data = {
+                    "email_body": message_body,
+                    "to_email": user.email,
+                    "email_subject": "Reset your password",
+                }
+                SendUserEmail.send_email(email_data)
+                return Response(
+                    {
+                        "success":
+                        True,
+                        "message":
+                        "Please check your Inbox, we have sent you a link to reset password."
+                    },
+                    status=status.HTTP_200_OK,
+                )
+            else:
+                return Response(
+                    {
+                        "success": False,
+                        "message": "The email address doesn't exist."
+                    },
+                    status=status.HTTP_200_OK,
+                )
+        except:
+            return Response(
+                {
+                    "success": False,
+                    "message": "Server error."
+                },
+                status=status.HTTP_200_OK,
+            )
 
 
-class PasswordConfirmationAPI(GenericAPIView):
+class PasswordConfirmationAPI(GenericAPIView, LoggingMixin):
     serializer_class = PasswordCofirmationSerializer
 
-    def get(self, request, uidb64, token):
-        redirect_url = request.GET.get("redirect_url")
-        url_valid_false = f"{settings.FRONTEND_URL}?token_valid=False"
-        url_front_valid_false = f"{settings.FRONTEND_URL}?token_valid=False"
-        url_valid_true = f"{settings.FRONTEND_URL}?token_valid=True&message=Token Valid&uidb64={uidb64}&token={token}"
+    def get(self, request, *args, **kwargs):
         try:
-            user_id = smart_str(urlsafe_base64_decode(uidb64))
-            user = Account.objects.get(id=user_id)
-
+            token = kwargs["token"]
+            uidb64 = kwargs["uidb64"]
+            id = force_str(urlsafe_base64_decode(uidb64))
+            user = Account.objects.get(id=id)
             if not PasswordResetTokenGenerator().check_token(user, token):
-                if len(redirect_url) > 0:
-                    return CustomRedirect(url_valid_false)
-                else:
-                    return CustomRedirect(url_front_valid_false)
-            return CustomRedirect(url_valid_true)
-        except DjangoUnicodeDecodeError as e:
-            if not PasswordResetTokenGenerator().check_token(user=user):
-                return CustomRedirect(url_valid_false)
+                raise Exception("error")
+        except:
+            return Response({
+                "success": False,
+                "error": "Invalid link"
+            },
+                            status=status.HTTP_401_UNAUTHORIZED)
+        return Response({
+            "success": True,
+            "error": None
+        },
+                        status=status.HTTP_200_OK)
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data)
+        try:
+            uidb64 = kwargs["uidb64"]
+            id = force_str(urlsafe_base64_decode(uidb64))
+            user = Account.objects.get(id=id)
+            serializer.is_valid(raise_exception=True)
+            user.set_password(request.data.get("password"))
+            user.save()
+            return Response({
+                "success": True,
+                "error": None
+            },
+                            status=status.HTTP_200_OK)
+        except ValidationError as e:
+            return Response({
+                "success": False,
+                "error": e.detail.get("error")
+            },
+                            status=status.HTTP_200_OK)
 
 
 """ This view is used to generate and send verification code"""
@@ -325,7 +358,7 @@ class SendValidationCodeAPI(LoggingMixin, APIView):
 """ This view is used to confirm verification code and update database"""
 
 
-class VerificationCodeConfirmAPI(APIView):
+class VerificationCodeConfirmAPI(LoggingMixin, APIView):
     serializer_class = VerificationCodeSerializer
 
     permission_classes = (permissions.IsAuthenticated, )
@@ -362,14 +395,11 @@ class AccountProfileSettings(LoggingMixin, GenericAPIView):
 
     def get(self, request, *args, **kwargs):
         user = request.user
-        return Response(
-            AccountProfileSettingsSerializer(user,
-                                             context={
-                                                 "request": request
-                                             }).data,
-            status=status.HTTP_200_OK,
-        )
-        # pass
+        data = AccountProfileSettingsSerializer(user,
+                                                context={
+                                                    "request": request
+                                                }).data
+        return Response(data, status=status.HTTP_200_OK)
 
     def post(self, request, *args, **kwargs):
         user = request.user
@@ -378,7 +408,8 @@ class AccountProfileSettings(LoggingMixin, GenericAPIView):
                                            context={"request": request})
         if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
+            data = serializer.data
+            return Response(data, status=status.HTTP_200_OK)
         else:
             return Response(serializer.errors,
                             status=status.HTTP_400_BAD_REQUEST)

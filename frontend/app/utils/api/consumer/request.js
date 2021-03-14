@@ -1,21 +1,28 @@
 import axios from "axios";
+import "../index";
 import { API_ENDPOINT_URL } from "constants/defaults";
 
 export const consumerRequestApis = {
   sendConsumerRequest,
   getConsumerRequest,
   updateConsumerRequest,
+  sendProcessingEmail,
+  sendOneCodeEmail,
+  validateOneCodeEmail,
+  getConsumerRequestObject
 };
 
-function sendConsumerRequest(payload, enterprise_id) {
+function sendConsumerRequest(payload, web_id) {
   const {
     first_name,
     last_name,
     email,
-    state_resident,
     request_type,
     file,
     additional_fields,
+    country,
+    state,
+    timeframe,
   } = payload;
   const formData = new FormData();
   if (file) {
@@ -24,14 +31,34 @@ function sendConsumerRequest(payload, enterprise_id) {
   formData.append("first_name", first_name);
   formData.append("last_name", last_name);
   formData.append("email", email);
-  formData.append("state_resident", state_resident);
+  formData.append("state_resident", JSON.stringify({ country, state }));
   formData.append("request_type", request_type);
-  formData.append("enterprise_id", enterprise_id);
+  formData.append("web_id", web_id);
+  formData.append("timeframe", timeframe);
   formData.append("additional_fields", JSON.stringify(additional_fields));
   return new Promise((resolve, reject) => {
     axios
       .post(`${API_ENDPOINT_URL}/consumer/request`, formData, {
         headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      })
+      .then((res) => resolve(res))
+      .catch((e) => reject(e));
+  });
+}
+
+function sendProcessingEmail({ id, file, email_type }) {
+  const token = localStorage.getItem("access-token");
+  const formData = new FormData();
+  formData.append("attachment", file);
+  formData.append("id", id);
+  formData.append("email_type", email_type);
+  return new Promise((resolve, reject) => {
+    axios
+      .post(`${API_ENDPOINT_URL}/consumer/request/send`, formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
           "Content-Type": "multipart/form-data",
         },
       })
@@ -55,7 +82,21 @@ function getConsumerRequest() {
   });
 }
 
-function updateConsumerRequest(id, newStatus, extendStatus) {
+function getConsumerRequestObject(requestId) {
+  const token = localStorage.getItem("access-token");
+  return new Promise((resolve, reject) => {
+    axios
+      .get(`${API_ENDPOINT_URL}/consumer/get-request/${requestId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      .then((res) => resolve(res.data))
+      .catch((e) => reject(e));
+  });
+}
+
+function updateConsumerRequest({ id, status, extend, comment }) {
   const token = localStorage.getItem("access-token");
   return new Promise((resolve, reject) => {
     axios
@@ -63,8 +104,9 @@ function updateConsumerRequest(id, newStatus, extendStatus) {
         `${API_ENDPOINT_URL}/consumer/set-status`,
         {
           id,
-          status: newStatus ? newStatus : undefined,
-          extended: extendStatus,
+          status: status ? status : undefined,
+          extended: extend,
+          comment: comment ? comment : undefined,
         },
         {
           headers: {
@@ -73,6 +115,28 @@ function updateConsumerRequest(id, newStatus, extendStatus) {
         }
       )
       .then((res) => resolve(res.data))
+      .catch((e) => reject(e));
+  });
+}
+
+function sendOneCodeEmail(web_id, email) {
+  return new Promise((resolve, reject) => {
+    axios
+      .post(`${API_ENDPOINT_URL}/consumer/send-code`, { web_id, email })
+      .then((res) => resolve(res))
+      .catch((e) => reject(e));
+  });
+}
+
+function validateOneCodeEmail(web_id, email, code) {
+  return new Promise((resolve, reject) => {
+    axios
+      .post(`${API_ENDPOINT_URL}/consumer/validate-code`, {
+        web_id,
+        email,
+        code,
+      })
+      .then((res) => resolve(res))
       .catch((e) => reject(e));
   });
 }

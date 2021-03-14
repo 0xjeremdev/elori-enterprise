@@ -1,4 +1,6 @@
 import pyotp
+import math
+import random
 import os
 import string
 from django.core.mail import EmailMessage, send_mail
@@ -10,15 +12,33 @@ class SendUserEmail:
     @staticmethod
     def send_email(data):
         try:
-            send_mail(
-                subject=data["email_subject"],
-                html_message=data["email_body"],
-                message="",
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[data["to_email"]],
-            )
+            # send_mail(
+            #     subject=data["email_subject"],
+            #     html_message=data["email_body"],
+            #     message="",
+            #     from_email=settings.DEFAULT_FROM_EMAIL,
+            #     recipient_list=[data["to_email"]],
+            # )
+            mail = EmailMessage(subject=data["email_subject"],
+                                from_email=settings.DEFAULT_FROM_EMAIL,
+                                to=[data["to_email"]],
+                                body=data["email_body"])
+            mail.content_subtype = "html"
+            # if "attachment" in data and data["attachment"] is not None:
+            #     mail.attach(data["attachment"].name,
+            #                 data["attachment"].content,
+            #                 data["attachment"].file_type)
+            mail.send()
         except Exception as e:
             print(e)
+
+
+def generate_auth_code():
+    digits = "0123456789"
+    OTP = ""
+    for i in range(6):
+        OTP += digits[math.floor(random.random() * 10)]
+    return OTP
 
 
 def generate_verification_code():

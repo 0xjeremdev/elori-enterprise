@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     "api.v1.consumer_request",
     "api.v1.elroi_admin",
     "api.v1.analytics",
+    "api.v1.upload",
     "api.v1.assessment",
     "frontend.home",
     "django_otp",
@@ -139,10 +140,20 @@ STATUSES = (
     (4, "Rejected"),
 )
 
+TIMEFRAME_TYPE = (
+    (0, "GDPR"),
+    (1, "CCPA"),
+)
+
 REQUEST_TYPES = (
     (0, "Return"),
     (1, "Modify"),
     (2, "Delete"),
+)
+QUESTION_TYPES = (
+    (0, "Text"),
+    (1, "Yes/No"),
+    (2, "File"),
 )
 
 REST_FRAMEWORK = {
@@ -245,4 +256,5 @@ EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 DEFAULT_FROM_EMAIL = "no-reply@elroi.ai"
 
-FRONTEND_URL = get_env_value("FRONTEND_URL")
+# FRONTEND_URL = get_env_value("FRONTEND_URL")
+FRONTEND_URL = "http://10.209.18.180:8084"

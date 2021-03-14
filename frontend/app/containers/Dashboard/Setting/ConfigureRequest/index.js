@@ -6,6 +6,8 @@ import ColorPicker from "../../../../components/ColorPicker";
 import noImage from "../../../../assets/images/no-img.png";
 import { formAnswerTypeOptions } from "../../../../constants/constants";
 import { consumerRequestFormApis } from "../../../../utils/api/setting/requestform";
+import { withToastManager } from "react-toast-notifications";
+import { baseToImgSrc } from "../../../../utils/file";
 
 const Container = styled(Grid)`
   label,
@@ -44,24 +46,26 @@ class ConfigureRequest extends React.Component {
     lanchUrl: "",
     companyName: "",
     residentState: "",
-    additionalQuestions: [
-      { key: 1, question: "", value: "" },
-      { key: 2, question: "", value: "" },
-      { key: 3, question: "", value: "" },
-    ],
+    additionalQuestions: [],
   };
 
   initState = ({
     additional_configuration,
-    background_image,
+    background_image_data,
     company_name,
     website_launched_to,
-    logo,
+    logo_data,
     site_color,
     site_theme,
   }) => {
+    const logo = baseToImgSrc(logo_data);
+    const background_image = baseToImgSrc(background_image_data);
+    localStorage.setItem("website_launched_to", website_launched_to);
     this.setState({
-      additionalQuestions: additional_configuration,
+      additionalQuestions:
+        typeof additional_configuration === "string"
+          ? JSON.parse(additional_configuration)
+          : additional_configuration,
       backUrl: background_image,
       companyName: company_name,
       lanchUrl: website_launched_to,
@@ -124,9 +128,40 @@ class ConfigureRequest extends React.Component {
   };
 
   handleSave = () => {
+    const { toastManager } = this.props;
+
     consumerRequestFormApis
       .setConsumerRequestForm(this.state)
-      .then((res) => console.log(res));
+      .then((res) => {
+        toastManager.add("Save Consumer Request setting is succeed", {
+          appearance: "success",
+          autoDismiss: true,
+        });
+        this.initState(res.data);
+      })
+      .catch((err) => {
+        // console.log(err.response.data.error);
+        toastManager.add("Save Consumer Request setting is failed", {
+          appearance: "error",
+          autoDismiss: true,
+        });
+      });
+  };
+
+  removeQues = (index) => {
+    const { additionalQuestions } = this.state;
+    additionalQuestions.splice(index, 1);
+    this.setState({ additionalQuestions });
+  };
+
+  addQues = () => {
+    const { additionalQuestions } = this.state;
+    additionalQuestions.push({
+      key: additionalQuestions.length + 1,
+      question: "",
+      value: "",
+    });
+    this.setState({ additionalQuestions });
   };
 
   render() {
@@ -139,10 +174,10 @@ class ConfigureRequest extends React.Component {
       backImgBS64,
       additionalQuestions,
     } = this.state;
-    const enterprise_id = localStorage.getItem("enterprise_id");
     const fullUrl = window.location.href;
     const arr = fullUrl.split("/");
-    const requestUrl = `${arr[0]}//${arr[2]}/request/${enterprise_id}`;
+    const website_launched_to = localStorage.getItem("website_launched_to");
+    const requestUrl = `${arr[0]}//${arr[2]}/request/${website_launched_to}`;
     return (
       <Container>
         <Grid.Row verticalAlign="middle">
@@ -158,7 +193,7 @@ class ConfigureRequest extends React.Component {
             <input
               type="file"
               id="logo"
-              accept="image/x-png,image/jpg,image/jpeg"
+              accept="image/jpg,image/jpeg"
               hidden
               onChange={this.onLogoChange}
             />
@@ -213,7 +248,7 @@ class ConfigureRequest extends React.Component {
                   <input
                     type="file"
                     id="backImg"
-                    accept="image/x-png,image/jpg,image/jpeg" 
+                    accept="image/jpg,image/jpeg"
                     hidden
                     onChange={this.onBackImgChange}
                   />
@@ -266,82 +301,51 @@ class ConfigureRequest extends React.Component {
             <Divider horizontal>Verification Questions</Divider>
           </Grid.Column>
         </Grid.Row>
+        {additionalQuestions &&
+          additionalQuestions.map((ques, index) => (
+            <Grid.Row>
+              <Grid.Column width={6}>
+                <Form>
+                  <Form.Input
+                    label={`Question ${index + 1}`}
+                    value={ques.question}
+                    onChange={(e, { value }) =>
+                      this.setAdditionalQuestion(index, "question", value)
+                    }
+                  />
+                </Form>
+              </Grid.Column>
+              <Grid.Column width={4}>
+                <Form>
+                  <Form.Dropdown
+                    label="Value"
+                    selection
+                    options={formAnswerTypeOptions}
+                    value={ques.value}
+                    onChange={(e, { value }) =>
+                      this.setAdditionalQuestion(index, "value", value)
+                    }
+                  />
+                </Form>
+              </Grid.Column>
+              <Grid.Column width={2}>
+                <br />
+                <Button
+                  basic
+                  circular
+                  icon="close"
+                  color="red"
+                  size="tiny"
+                  onClick={() => this.removeQues(index)}
+                />
+              </Grid.Column>
+            </Grid.Row>
+          ))}
         <Grid.Row>
-          <Grid.Column width={6}>
-            <Form>
-              <Form.Input
-                label="Question 1"
-                value={additionalQuestions[0].question}
-                onChange={(e, { value }) =>
-                  this.setAdditionalQuestion(0, "question", value)
-                }
-              />
-            </Form>
-          </Grid.Column>
-          <Grid.Column width={4}>
-            <Form>
-              <Form.Dropdown
-                label="Value"
-                selection
-                options={formAnswerTypeOptions}
-                value={additionalQuestions[0].value}
-                onChange={(e, { value }) =>
-                  this.setAdditionalQuestion(0, "value", value)
-                }
-              />
-            </Form>
-          </Grid.Column>
-        </Grid.Row>
-        <Grid.Row>
-          <Grid.Column width={6}>
-            <Form>
-              <Form.Input
-                label="Question 2"
-                value={additionalQuestions[1].question}
-                onChange={(e, { value }) =>
-                  this.setAdditionalQuestion(1, "question", value)
-                }
-              />
-            </Form>
-          </Grid.Column>
-          <Grid.Column width={4}>
-            <Form>
-              <Form.Dropdown
-                label="Value"
-                selection
-                options={formAnswerTypeOptions}
-                value={additionalQuestions[1].value}
-                onChange={(e, { value }) =>
-                  this.setAdditionalQuestion(1, "value", value)
-                }
-              />
-            </Form>
-          </Grid.Column>
-        </Grid.Row>
-        <Grid.Row>
-          <Grid.Column width={6}>
-            <Form>
-              <Form.Input
-                label="Question 3"
-                value={additionalQuestions[2].question}
-                onChange={(e, { value }) =>
-                  this.setAdditionalQuestion(2, "question", value)
-                }
-              />
-            </Form>
-          </Grid.Column>
-          <Grid.Column width={4}>
-            <Form>
-              <Form.Dropdown
-                label="Value"
-                selection
-                options={formAnswerTypeOptions}
-                value={additionalQuestions[2].value}
-                onChange={(e, { value }) =>
-                  this.setAdditionalQuestion(2, "value", value)
-                }
-              />
-            </Form>
+          <Grid.Column>
+            <Button circular color="blue" onClick={() => this.addQues()}>
+              <Icon name="plus" /> Add Verification Question
+            </Button>
           </Grid.Column>
         </Grid.Row>
         <Grid.Row textAlign="right">
@@ -359,4 +363,4 @@ class ConfigureRequest extends React.Component {
   }
 }
 
-export default ConfigureRequest;
+export default withToastManager(ConfigureRequest);

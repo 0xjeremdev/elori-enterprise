@@ -1,3 +1,4 @@
+import base64
 from typing import re
 
 from django.conf import settings
@@ -20,13 +21,16 @@ from api.v1.enterprise.models import (UserGuideModel, CustomerConfiguration,
                                       EnterpriseConfigurationModel,
                                       EnterpriseInviteModel,
                                       EnterpriseEmailTemplateModel,
-                                      EnterpriseEmailType)
+                                      EnterpriseEmailType,
+                                      EnterpriseQuestionModel)
+from ..accounts.models import Enterprise
 from api.v1.enterprise.serializers import (
     UserGuideSerializer, CustomerConfigurationSerializer,
     CustomerSummarizeSerializer, RequestTrackerSerializer,
     EnterpriseConfigurationSerializer, FileSerializer,
     EnterpriseAccountSettingsSerializer, EnterpriseInviteSerializer,
-    EnterpriseEmailTypeSerializer, EnterpriseEmailTemplateSerializer)
+    EnterpriseEmailTypeSerializer, EnterpriseEmailTemplateSerializer,
+    EnterpriseQuestionSerializer)
 from .constants import Const_Email_Templates
 
 
@@ -219,29 +223,110 @@ class ExtendedVsNewRequests(LoggingMixin, APIView):
 
 class EnterpriseConfiguration(
         LoggingMixin,
-        mixins.ListModelMixin,
-        mixins.CreateModelMixin,
-        mixins.UpdateModelMixin,
-        mixins.DestroyModelMixin,
         GenericAPIView,
 ):
     serializer_class = EnterpriseConfigurationSerializer
 
+    permission_classes = (permissions.IsAuthenticated, )
+
+    def get(self, request, *args, **kwargs):
+        try:
+            if not EnterpriseConfigurationModel.objects.filter(
+                    enterprise_id__user=request.user).exists():
+                EnterpriseConfigurationModel.objects.create(
+                    enterprise_id=request.user.enterprise,
+                    site_color='{"a": 1, "b": 0, "g": 120, "r": 255}',
+                    site_theme='{"a": 1, "b": 0, "g": 120, "r": 255}',
+                    additional_configuration="[]")
+            enterprise_conf = EnterpriseConfigurationModel.objects.filter(
+                enterprise_id__user=request.user).first()
+            data = EnterpriseConfigurationSerializer(enterprise_conf).data
+            return Response(
+                {
+                    "success": True,
+                    "data": data
+                },
+                status=status.HTTP_200_OK,
+            )
+        except EnterpriseConfigurationModel.DoesNotExist:
+            return Response(
+                {
+                    "error": "You are not allowed to continue",
+                },
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+
+    # create new configuration
+    def post(self, request, *args, **kwargs):
+        try:
+            enterprise_conf = EnterpriseConfigurationModel.objects.get(
+                enterprise_id__user=request.user, )
+            serializer = self.serializer_class(enterprise_conf,
+                                               data=request.data,
+                                               context={"request": request})
+            if serializer.is_valid(raise_exception=True):
+                serializer.save()
+                data = serializer.data
+                return Response(data, status=status.HTTP_200_OK)
+            else:
+                return Response(serializer.errors,
+                                status=status.HTTP_400_BAD_REQUEST)
+
+        except EnterpriseConfigurationModel.DoesNotExist:
+            if request.user and hasattr(request.user, "enterprise"):
+                try:
+                    return self.create(request, *args, **kwargs)
+                except Exception as e:
+                    return Response(
+                        {
+                            "success": False,
+                            "error": str(e),
+                        },
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+            return Response(
+                {
+                    "success": False,
+                    "error": "You are not allowed to continue",
+                },
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+        except Exception as e:
+            return Response(
+                {
+                    "success": False,
+                    "error": str(e),
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+    # delete configuration
+    def delete(self, request, *args, **kwargs):
+        self.queryset = EnterpriseConfigurationModel.objects.get(
+            enterprise_id__user=request.user,
+            enterprise_id__elroi_id=request.data.get("elroi_id"),
+        )
+        return self.destroy(request, *args, **kwargs)
+
+
+class EnterpriseWebform(
+        GenericAPIView,
+        mixins.ListModelMixin,
+):
+    serializer_class = EnterpriseConfigurationSerializer
     permission_classes = (permissions.AllowAny, )
 
-    # parser_classes = (MultiPartParser, FormParser, FileUploadParser)
     def get(self, request, *args, **kwargs):
         try:
             self.queryset = EnterpriseConfigurationModel.objects.filter(
-                enterprise_id__id=kwargs["enterprise_id"])
+                website_launched_to=kwargs["web_id"])
             return self.list(request, *args, **kwargs)
         except EnterpriseConfigurationModel.DoesNotExist:
             return Response({"error": "Page not found"},
                             status=status.HTTP_404_NOT_FOUND)
 
     def list(self, request, *args, **kwargs):
-        response = super(EnterpriseConfiguration,
-                         self).list(request, args, kwargs)
+        response = super(EnterpriseWebform, self).list(request, args, kwargs)
         if len(response.data["results"]) == 0:
             return Response({"success": False}, status=status.HTTP_200_OK)
         return Response(
@@ -252,38 +337,124 @@ class EnterpriseConfiguration(
             status=status.HTTP_200_OK,
         )
 
-    # create new configuration
-    def post(self, request, *args, **kwargs):
-        try:
-            configuration = EnterpriseConfigurationModel.objects.get(
-                enterprise_id=request.data.get("enterprise_id"),
-                enterprise_id__user=request.user,
-            )
-            serializer = self.serializer_class(configuration,
-                                               data=request.data)
-            if serializer.is_valid():
-                serializer.save()
-                return Response(serializer.data, status=status.HTTP_200_OK)
-            else:
-                return Response(serializer.errors,
-                                status=status.HTTP_400_BAD_REQUEST)
-        except EnterpriseConfigurationModel.DoesNotExist:
-            if request.user and hasattr(request.user, "enterprise"):
-                return self.create(request, *args, **kwargs)
+
+class EnterpriseQuestionView(GenericAPIView):
+
+    serializer_class = EnterpriseQuestionSerializer
+    permission_classes = (permissions.AllowAny, )
+
+    def get(self, request, *args, **kwargs):
+        enterprise = Enterprise.objects.filter(
+            pk=kwargs["enterprise_id"]).first()
+        if enterprise == None:
             return Response(
                 {
+                    "success": False,
                     "error": "You are not allowed to continue",
                 },
                 status=status.HTTP_401_UNAUTHORIZED,
             )
-
-    # delete configuration
-    def delete(self, request, *args, **kwargs):
-        self.queryset = EnterpriseConfigurationModel.objects.get(
-            enterprise_id__user=request.user,
-            enterprise_id__elroi_id=request.data.get("elroi_id"),
+        questions = EnterpriseQuestionModel.objects.filter(
+            enterprise=enterprise).order_by("pk")
+        return Response(
+            {
+                "success": True,
+                "data": list(questions.values()),
+            },
+            status=status.HTTP_200_OK,
         )
-        return self.destroy(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        user = request.user
+        try:
+            enterprise = Enterprise.objects.filter(
+                pk=kwargs["enterprise_id"]).first()
+            if enterprise == None:
+                return Response(
+                    {
+                        "success": False,
+                        "error": "You are not allowed to continue",
+                    },
+                    status=status.HTTP_401_UNAUTHORIZED,
+                )
+            serializer = self.serializer_class(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            question = EnterpriseQuestionModel.objects.create(
+                enterprise=enterprise,
+                content=request.data["content"],
+                question_type=request.data["question_type"])
+            return Response(
+                {"success": True},
+                status=status.HTTP_200_OK,
+            )
+        except:
+            return Response(
+                {
+                    "success": False,
+                    "error": "Parameter error"
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+    def patch(self, request, *args, **kwargs):
+        user = request.user
+        try:
+            enterprise = Enterprise.objects.filter(
+                pk=kwargs["enterprise_id"]).first()
+            if enterprise == None:
+                return Response(
+                    {
+                        "success": False,
+                        "error": "You are not allowed to continue",
+                    },
+                    status=status.HTTP_401_UNAUTHORIZED,
+                )
+            question = EnterpriseQuestionModel.objects.filter(
+                enterprise=enterprise, pk=request.data["question_id"])
+            question.update(enterprise=enterprise,
+                            content=request.data["content"],
+                            question_type=request.data["question_type"])
+            return Response(
+                {"success": True},
+                status=status.HTTP_200_OK,
+            )
+        except:
+            return Response(
+                {
+                    "success": False,
+                    "error": "Parameter error"
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+    def delete(self, request, *args, **kwargs):
+        user = request.user
+        try:
+            enterprise = Enterprise.objects.filter(
+                pk=kwargs["enterprise_id"]).first()
+            if enterprise == None:
+                return Response(
+                    {
+                        "success": False,
+                        "error": "You are not allowed to continue",
+                    },
+                    status=status.HTTP_401_UNAUTHORIZED,
+                )
+            question = EnterpriseQuestionModel.objects.filter(
+                enterprise=enterprise, pk=request.data["question_id"])
+            question.delete()
+            return Response(
+                {"success": True},
+                status=status.HTTP_200_OK,
+            )
+        except:
+            return Response(
+                {
+                    "success": False,
+                    "error": "Parameter error"
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
 
 def validate_email_format(email):
@@ -365,7 +536,7 @@ class EnterpriseAssessmentShareLink(LoggingMixin, GenericAPIView):
                             status=status.HTTP_404_NOT_FOUND)
 
 
-class EnterpriseAccountSettings(GenericAPIView):
+class EnterpriseAccountSettings(LoggingMixin, GenericAPIView):
     """
     Account settings
     """
@@ -378,11 +549,12 @@ class EnterpriseAccountSettings(GenericAPIView):
         user = request.user
         if hasattr(user, "enterprise"):
             enterprise = user.enterprise
+            data = EnterpriseAccountSettingsSerializer(enterprise,
+                                                       context={
+                                                           "request": request
+                                                       }).data
             return Response(
-                EnterpriseAccountSettingsSerializer(enterprise,
-                                                    context={
-                                                        "request": request
-                                                    }).data,
+                data,
                 status=status.HTTP_200_OK,
             )
         else:
@@ -393,19 +565,27 @@ class EnterpriseAccountSettings(GenericAPIView):
 
     def post(self, request, *args, **kwargs):
         user = request.user
-        if hasattr(user, "enterprise"):
-            enterprise = user.enterprise
-            serializer = self.serializer_class(enterprise,
-                                               data=request.data,
-                                               context={"request": request})
-            if serializer.is_valid():
-                serializer.save()
-                return Response(serializer.data, status=status.HTTP_200_OK)
+        try:
+            if hasattr(user, "enterprise"):
+                enterprise = user.enterprise
+                serializer = self.serializer_class(
+                    enterprise,
+                    data=request.data,
+                    context={"request": request})
+                if serializer.is_valid():
+                    serializer.save()
+                    return Response(serializer.data, status=status.HTTP_200_OK)
+                else:
+                    return Response(serializer.errors,
+                                    status=status.HTTP_400_BAD_REQUEST)
             else:
-                return Response(serializer.errors,
+                return Response({"error": "Not allowed to continue"},
                                 status=status.HTTP_400_BAD_REQUEST)
-        else:
-            return Response({"error": "Not allowed to continue"},
+        except Exception as e:
+            return Response({
+                "success": False,
+                "error": str(e)
+            },
                             status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -423,7 +603,7 @@ class EnterpriseEmailTypeView(GenericAPIView):
         )
 
 
-class EnterpriseEmailTemplate(GenericAPIView):
+class EnterpriseEmailTemplate(LoggingMixin, GenericAPIView):
     """
     Account settings
     """
@@ -446,7 +626,7 @@ class EnterpriseEmailTemplate(GenericAPIView):
                 EnterpriseEmailTemplateModel.objects.create(
                     enterprise=enterprise,
                     email_type=email_type,
-                    content=Const_Email_Templates[kwargs["email_type"] - 1])
+                    content=Const_Email_Templates[email_type.type_name])
             emailTemp = EnterpriseEmailTemplateModel.objects.filter(
                 enterprise=enterprise,
                 email_type=kwargs["email_type"]).first()
@@ -462,34 +642,44 @@ class EnterpriseEmailTemplate(GenericAPIView):
 
     def post(self, request, *args, **kwargs):
         user = request.user
-        if hasattr(user, "enterprise"):
-            enterprise = user.enterprise
-            email_type = EnterpriseEmailType.objects.filter(
-                email_id=kwargs["email_type"]).first()
-            if email_type == None:
-                return Response({"error": "Wrong email type."},
-                                status=status.HTTP_400_BAD_REQUEST)
-            if not EnterpriseEmailTemplateModel.objects.filter(
-                    enterprise=enterprise, email_type=email_type).exists():
-                EnterpriseEmailTemplateModel.objects.create(
-                    enterprise=enterprise, email_type=email_type)
-            emailTemp = EnterpriseEmailTemplateModel.objects.filter(
-                enterprise=enterprise, email_type=email_type).first()
-            serializer = self.serializer_class(emailTemp,
-                                               data=request.data,
-                                               context={"request": request})
-            if serializer.is_valid():
-                serializer.save()
-                return Response(serializer.data, status=status.HTTP_200_OK)
+        try:
+            if hasattr(user, "enterprise"):
+                enterprise = user.enterprise
+                email_type = EnterpriseEmailType.objects.filter(
+                    email_id=kwargs["email_type"]).first()
+                if email_type == None:
+                    return Response({"error": "Wrong email type."},
+                                    status=status.HTTP_400_BAD_REQUEST)
+                if not EnterpriseEmailTemplateModel.objects.filter(
+                        enterprise=enterprise, email_type=email_type).exists():
+                    EnterpriseEmailTemplateModel.objects.create(
+                        enterprise=enterprise, email_type=email_type)
+                emailTemp = EnterpriseEmailTemplateModel.objects.filter(
+                    enterprise=enterprise, email_type=email_type).first()
+                serializer = self.serializer_class(
+                    emailTemp, data=request.data, context={"request": request})
+                if serializer.is_valid(raise_exception=True):
+                    serializer.save()
+                    return Response(serializer.data, status=status.HTTP_200_OK)
+                else:
+                    return Response(serializer.errors,
+                                    status=status.HTTP_400_BAD_REQUEST)
             else:
-                return Response(serializer.errors,
-                                status=status.HTTP_400_BAD_REQUEST)
-        else:
-            return Response({"error": "Not allowed to continue"},
+                return Response(
+                    {
+                        "success": False,
+                        "error": "Not allowed to continue"
+                    },
+                    status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({
+                "success": False,
+                "error": str(e)
+            },
                             status=status.HTTP_400_BAD_REQUEST)
 
 
-class EnterpriseInvitation(GenericAPIView):
+class EnterpriseInvitation(LoggingMixin, GenericAPIView):
     """
     Send Invitation to Customer
     """
@@ -535,30 +725,38 @@ class EnterpriseInvitation(GenericAPIView):
                             status=status.HTTP_400_BAD_REQUEST)
 
 
-class GetInvitationInfo(GenericAPIView):
+class GetInvitationInfo(LoggingMixin, GenericAPIView):
     """
     Get Invitation Info by UUID
     """
     permission_classes = (permissions.AllowAny, )
 
     def get(self, request, *args, **kwargs):
-        invite_key = force_text(urlsafe_base64_decode(kwargs.get("uidb64")))
-        invite = EnterpriseInviteModel.objects.filter(
-            invite_key=invite_key).first()
-        if invite == None:
-            raise ValidationError("Invitation isn't exist",
-                                  code=status.HTTP_400_BAD_REQUEST)
-        enterprise_data = EnterpriseAccountSettingsSerializer(
-            invite.enterprise, context={
-                "request": request
-            }).data
-        data = {
-            "enterprise": {
-                "id": invite.enterprise.pk,
-                "elroi_id": invite.enterprise.elroi_id,
-                "name": invite.enterprise.name,
-                "logo": enterprise_data["logo"]
+        try:
+            invite_key = force_text(urlsafe_base64_decode(
+                kwargs.get("uidb64")))
+            invite = EnterpriseInviteModel.objects.filter(
+                invite_key=invite_key).first()
+            if invite == None:
+                raise ValidationError("This invitation doesn't exist",
+                                      code=status.HTTP_400_BAD_REQUEST)
+            enterprise_data = EnterpriseAccountSettingsSerializer(
+                invite.enterprise, context={
+                    "request": request
+                }).data
+            data = {
+                "enterprise": {
+                    "id": invite.enterprise.pk,
+                    "elroi_id": invite.enterprise.user.elroi_id,
+                    "company_name": invite.enterprise.company_name,
+                    "logo": enterprise_data["logo"]
+                },
+                "email": invite.email
+            }
+            return Response(data, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({
+                "success": False,
+                "error": str(e)
             },
-            "email": invite.email
-        }
-        return Response(data, status=status.HTTP_200_OK)
+                            status=status.HTTP_400_BAD_REQUEST)

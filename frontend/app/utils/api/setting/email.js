@@ -1,4 +1,6 @@
 import axios from "axios";
+import "../index";
+
 import { API_ENDPOINT_URL } from "constants/defaults";
 
 export const emailApis = {

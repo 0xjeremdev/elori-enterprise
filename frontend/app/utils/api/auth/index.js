@@ -18,6 +18,7 @@ const register = ({
   newUserName,
   newUserFName,
   newUserLName,
+  companyName,
   newUserPwd,
 }) => {
   try {
@@ -29,7 +30,8 @@ const register = ({
       .post(apiUrl, {
         email: newUserEmail,
         password: newUserPwd,
-        name: newUserName,
+        username: newUserName,
+        company_name: companyName,
         first_name: newUserFName,
         last_name: newUserLName,
         enterprise_elroi_id: enterprise_elroi_id || undefined,
@@ -132,7 +134,6 @@ const setUserData = ({
   profile,
 }) => {
   try {
-    console.log(email, elroi_id, full_name, state_resident);
     localStorage.setItem("email", email);
     localStorage.setItem("elroi_id", elroi_id);
     localStorage.setItem("enterprise_id", enterprise_id);
@@ -228,6 +229,32 @@ export const validateVerifyCode = (code) => {
     .catch((err) =>
       Promise.reject({ success: false, error: err.response.data })
     );
+};
+
+export const sendPasswordReset = (email) => {
+  return axios
+    .post(`${API_ENDPOINT_URL}/password-reset/`, { email })
+    .then((res) => {
+      if (res.data.success) {
+        return Promise.resolve({ success: true, msg: res.data.message });
+      }
+      return Promise.resolve({ success: false, msg: res.data.message });
+    })
+    .catch((err) => Promise.reject({ success: false }));
+};
+
+export const resetPassword = (password, token, uidb64) => {
+  return axios
+    .post(`${API_ENDPOINT_URL}/password-confirmation/${uidb64}/${token}`, {
+      password,
+    })
+    .then((res) => {
+      if (res.data.success) {
+        return Promise.resolve({ success: true, msg: res.data.message });
+      }
+      return Promise.resolve({ success: false, msg: res.data.error });
+    })
+    .catch((err) => Promise.reject({ success: false, err }));
 };
 
 export default {

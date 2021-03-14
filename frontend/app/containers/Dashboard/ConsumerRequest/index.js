@@ -1,24 +1,29 @@
 import { map, reject } from "lodash";
-import React from "react";
+import styled from "styled-components";
+import React, { useCallback, useState } from "react";
 import {
   Button,
   Divider,
   Dropdown,
+  Form,
   Grid,
   Input,
   Menu,
+  Modal,
   Progress,
   Segment,
+  TextArea,
 } from "semantic-ui-react";
-import styled from "styled-components";
 import CircularChart from "../../../components/CircularChart";
-import MultiRadialChart from "../../../components/MultiRadialChart";
 import {
+  CCPA,
   COMPLETE,
+  GDPR,
   PROCESS,
   REJECT,
   REVIEW,
 } from "../../../constants/constants";
+import { API_ENDPOINT_URL } from "../../../constants/defaults";
 import { consumerRequestApis } from "../../../utils/api/consumer/request";
 import RequestDetailModal from "./RequestDetailModal";
 import RequestItem from "./RequestItem";
@@ -49,21 +54,66 @@ const Container = styled(Segment)`
     opacity: 0.7;
   }
 `;
+const CommentModal = ({ open, onClose, onSubmit }) => {
+  const [comment, setComment] = useState();
+  const handleChangeComment = useCallback((event, { value }) => {
+    setComment(value);
+  }, []);
+
+  const submitComment = useCallback(() => {
+    onSubmit(comment);
+    setComment("");
+  }, [comment]);
+
+  const onCancel = () => {
+    setComment("");
+    onClose();
+  };
+
+  return (
+    <Modal open={open}>
+      <Modal.Header>Add Comment</Modal.Header>
+      <Modal.Content>
+        <Grid>
+          <Grid.Row>
+            <Grid.Column>
+              <Form>
+                <TextArea
+                  rows={5}
+                  value={comment}
+                  onChange={handleChangeComment}
+                />
+              </Form>
+            </Grid.Column>
+          </Grid.Row>
+        </Grid>
+      </Modal.Content>
+      <Modal.Actions>
+        <Button onClick={onCancel}>Cancel</Button>
+        <Button onClick={submitComment}>Okay</Button>
+      </Modal.Actions>
+    </Modal>
+  );
+};
 
 class ConsumerRequest extends React.Component {
   state = {
     activeMenuItem: "processing",
+    searchKey: "",
     consumerList: [],
     count: [],
     selRequestItem: {},
     detailModal: false,
     filterStatus: REVIEW,
+    commentModal: false,
+    reportDataQuery: {},
   };
 
   handleDetailModal = (id) => {
-    const { consumerList } = this.state;
-    const selRequestItem = consumerList.find((item) => item.id === id);
-    this.setState({ selRequestItem, detailModal: true });
+    consumerRequestApis.getConsumerRequestObject(id).then((res) => {
+      const selRequestItem = res.data;
+      this.setState({ selRequestItem, detailModal: true });
+    });
   };
 
   initState = () => {
@@ -76,19 +126,66 @@ class ConsumerRequest extends React.Component {
 
   componentDidMount() {
     this.initState();
+    this.interval = setInterval(this.initState, 300000);
+  }
+
+  componentWillUnmount() {
+    clearInterval(this.interval);
   }
 
   updateRequestItem = (id, status, extend) => {
-    this.setState({ detailModal: false });
+    if (status === PROCESS || status === REJECT) {
+      this.setState({
+        commentModal: true,
+        nextStatus: status,
+        selectedId: id,
+        nextExtend: extend,
+      });
+    } else {
+      this.setState({ detailModal: false });
+      consumerRequestApis
+        .updateConsumerRequest({ id, status, extend })
+        .then((res) => {
+          this.initState();
+        });
+    }
+  };
+
+  submitComment = (comment) => {
+    const { nextStatus, selectedId, nextExtend } = this.state;
+    this.setState({ detailModal: false, commentModal: false });
     consumerRequestApis
-      .updateConsumerRequest(id, status, extend)
+      .updateConsumerRequest({
+        id: selectedId,
+        status: nextStatus,
+        extend: nextExtend,
+        comment,
+      })
       .then((res) => {
         this.initState();
       });
   };
 
+  handleFetchReport = () => {
+    const { reportDataQuery } = this.state;
+    const enterprise_id = localStorage.getItem("enterprise_id");
+    const {
+      start_date,
+      end_date,
+      report_type,
+      timeframe,
+      status,
+    } = reportDataQuery;
+    const url = `${API_ENDPOINT_URL}/consumer/report/${enterprise_id}?start_date=${start_date}&end_date=${end_date}&report_type=${report_type}&timeframe=${timeframe}&status=${status}`;
+    const tempLink = document.createElement("a");
+    tempLink.href = url;
+    tempLink.target = "_blank";
+    tempLink.download = `report.${report_type}`;
+    tempLink.click();
+  };
+
   render() {
-    const { consumerList, filterStatus } = this.state;
+    const { consumerList, filterStatus, searchKey } = this.state;
     const selectOptions = [
       { key: "1", value: "week", text: "This week" },
       { key: "2", value: "month", text: "This month" },
@@ -97,6 +194,19 @@ class ConsumerRequest extends React.Component {
     const consumerRenderList = consumerList.filter(
       (item) => item.status === filterStatus
     );
+    let updatedRenderList = [];
+    consumerRenderList.forEach((item) => {
+      let flag = false;
+      Object.entries(item).forEach(([key, value]) => {
+        if (String(value).includes(searchKey)) {
+          flag = true;
+          return;
+        }
+      });
+      if (flag) {
+        updatedRenderList.push(item);
+      }
+    });
     const totalRequestsCount = consumerList.length;
     const rejectedRequestsCount = consumerList.filter(
       (item) => item.status === REJECT
@@ -107,6 +217,21 @@ class ConsumerRequest extends React.Component {
     const completeRequestsCount = consumerList.filter(
       (item) => item.status === COMPLETE
     ).length;
+    const statusOptions = [
+      { key: 1, value: REVIEW, text: "Review" },
+      { key: 2, value: PROCESS, text: "Process" },
+      { key: 3, value: COMPLETE, text: "Complete" },
+      { key: 4, value: REJECT, text: "Reject" },
+    ];
+    const reportOptions = [
+      { key: 1, value: "pdf", text: "PDF" },
+      { key: 2, value: "csv", text: "CSV" },
+    ];
+    const timeframeOptions = [
+      { key: 1, value: CCPA, text: "CCPA" },
+      { key: 2, value: GDPR, text: "GDPR" },
+    ];
+
     return (
       <Grid>
         <Grid.Row>
@@ -133,10 +258,11 @@ class ConsumerRequest extends React.Component {
                       fluid
                       placeholder="search data subject"
                       icon="search"
+                      value={searchKey || ""}
+                      onChange={(e) =>
+                        this.setState({ searchKey: e.target.value })
+                      }
                     />
-                  </Grid.Column>
-                  <Grid.Column width={6} textAlign="right">
-                    <Button className="request-btn">Request Extension</Button>
                   </Grid.Column>
                 </Grid.Row>
                 <Grid.Row>
@@ -165,6 +291,110 @@ class ConsumerRequest extends React.Component {
                     />
                   </Grid.Column>
                 </Grid.Row>
+                <Grid.Row>
+                  <Grid.Column width={4}>
+                    <Form>
+                      <Form.Input
+                        type="date"
+                        size="mini"
+                        label="Start Date"
+                        value={this.state.reportDataQuery.start_date || ""}
+                        onChange={(e, { value }) =>
+                          this.setState({
+                            reportDataQuery: {
+                              ...this.state.reportDataQuery,
+                              start_date: value,
+                            },
+                          })
+                        }
+                      />
+                    </Form>
+                  </Grid.Column>
+                  <Grid.Column width={4}>
+                    <Form>
+                      <Form.Input
+                        type="date"
+                        size="mini"
+                        label="End Date"
+                        value={this.state.reportDataQuery.end_date || ""}
+                        onChange={(e, { value }) =>
+                          this.setState({
+                            reportDataQuery: {
+                              ...this.state.reportDataQuery,
+                              end_date: value,
+                            },
+                          })
+                        }
+                      />
+                    </Form>
+                  </Grid.Column>
+                </Grid.Row>
+                <Grid.Row>
+                  <Grid.Column width={4}>
+                    <Form>
+                      <Form.Dropdown
+                        selection
+                        label="Status"
+                        options={statusOptions}
+                        value={this.state.reportDataQuery.status}
+                        onChange={(e, { value }) =>
+                          this.setState({
+                            reportDataQuery: {
+                              ...this.state.reportDataQuery,
+                              status: value,
+                            },
+                          })
+                        }
+                      />
+                    </Form>
+                  </Grid.Column>
+                  <Grid.Column width={4}>
+                    <Form>
+                      <Form.Dropdown
+                        selection
+                        label="Report Type"
+                        options={reportOptions}
+                        value={this.state.reportDataQuery.report_type || ""}
+                        onChange={(e, { value }) =>
+                          this.setState({
+                            reportDataQuery: {
+                              ...this.state.reportDataQuery,
+                              report_type: value,
+                            },
+                          })
+                        }
+                      />
+                    </Form>
+                  </Grid.Column>
+                  <Grid.Column width={4}>
+                    <Form>
+                      <Form.Dropdown
+                        selection
+                        label="Timeframe"
+                        options={timeframeOptions}
+                        value={this.state.reportDataQuery.timeframe}
+                        onChange={(e, { value }) =>
+                          this.setState({
+                            reportDataQuery: {
+                              ...this.state.reportDataQuery,
+                              timeframe: value,
+                            },
+                          })
+                        }
+                      />
+                    </Form>
+                  </Grid.Column>
+                  <Grid.Column width={4}>
+                    <br />
+                    <Button
+                      className="request-btn"
+                      onClick={this.handleFetchReport}
+                    >
+                      Submit
+                    </Button>
+                  </Grid.Column>
+                </Grid.Row>
+                <Divider />
                 <Grid.Row>
                   <Grid.Column>
                     <Menu secondary>
@@ -208,7 +438,7 @@ class ConsumerRequest extends React.Component {
                   </Grid.Column>
                 </Grid.Row>
                 <Divider />
-                {map(consumerRenderList, (item) => (
+                {map(updatedRenderList, (item) => (
                   <Grid.Row key={item.created_at}>
                     <Grid.Column
                       onClick={() => {
@@ -219,7 +449,7 @@ class ConsumerRequest extends React.Component {
                     </Grid.Column>
                   </Grid.Row>
                 ))}
-                {consumerRenderList.length === 0 && (
+                {updatedRenderList.length === 0 && (
                   <Grid.Row textAlign="center">
                     <Grid.Column>
                       <p>No Consumer Request</p>
@@ -258,7 +488,7 @@ class ConsumerRequest extends React.Component {
                 }
               />
             </Container>
-            <Container>
+            {/* <Container>
               <MultiRadialChart
                 totalValidCount={
                   totalRequestsCount -
@@ -273,7 +503,7 @@ class ConsumerRequest extends React.Component {
                 }
                 completeCount={completeRequestsCount}
               />
-            </Container>
+            </Container> */}
           </Grid.Column>
         </Grid.Row>
         <RequestDetailModal
@@ -283,6 +513,11 @@ class ConsumerRequest extends React.Component {
             this.updateRequestItem(id, status, extend)
           }
           onClose={() => this.setState({ detailModal: false })}
+        />
+        <CommentModal
+          open={this.state.commentModal}
+          onSubmit={this.submitComment}
+          onClose={() => this.setState({ commentModal: false })}
         />
       </Grid>
     );
