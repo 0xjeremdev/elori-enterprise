@@ -8,6 +8,7 @@
   "USERS": "/users",
   "SETTING": "/setting",
   "RESOURCES": "/resources",
+  "GETDATA": "/data-return/:id",
   "LOGIN": "/login",
   "SIGNUP": "/signup",
   "EMAILCONFIRM": "/email-confirm/:id",

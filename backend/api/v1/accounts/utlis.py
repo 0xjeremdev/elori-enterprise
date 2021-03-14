@@ -24,10 +24,10 @@ class SendUserEmail:
                                 to=[data["to_email"]],
                                 body=data["email_body"])
             mail.content_subtype = "html"
-            if "attachment" in data and data["attachment"] is not None:
-                mail.attach(data["attachment"].name,
-                            data["attachment"].content,
-                            data["attachment"].file_type)
+            # if "attachment" in data and data["attachment"] is not None:
+            #     mail.attach(data["attachment"].name,
+            #                 data["attachment"].content,
+            #                 data["attachment"].file_type)
             mail.send()
         except Exception as e:
             print(e)

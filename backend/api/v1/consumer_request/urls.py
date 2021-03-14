@@ -3,7 +3,7 @@ from .views import (ConsumerRequestAPI, ConsumerRequestProgressAPI,
                     ConsumerRequestSetStatus, ConsumerRequestObject,
                     ConsumerReport, ConsumerRequestSend,
                     ConsumerRequestSendCode, ConsumerRequestValidateCode,
-                    ConsumerRequestQuestionView)
+                    ConsumerRequestQuestionView, DataReturnView)
 
 urlpatterns = [
     path('request', ConsumerRequestAPI.as_view(), name="consumer_request"),
@@ -22,6 +22,8 @@ urlpatterns = [
     path('request/send',
          ConsumerRequestSend.as_view(),
          name="consumer_request_complete"),
+    path('data-return/<link_id>', DataReturnView.as_view(),
+         name="data_return"),
     path('set-status',
          ConsumerRequestSetStatus.as_view(),
          name="consumer_request_set_status"),

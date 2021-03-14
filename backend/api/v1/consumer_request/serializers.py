@@ -119,11 +119,12 @@ class ConsumerRequestSendSerializer(serializers.Serializer):
 
     def validate(self, data):
         request = self.context.get("request")
-        if not validate_filename(request.FILES.get("attachment")):
-            raise Exception("Invalid filetype")
-        if not validate_filesize(request.FILES.get("attachment")):
-            raise Exception(
-                "Too large filesize. The file should be less than 3MB.")
+        if "attachment" in request.FILES:
+            if not validate_filename(request.FILES.get("attachment")):
+                raise Exception("Invalid filetype")
+            if not validate_filesize(request.FILES.get("attachment")):
+                raise Exception(
+                    "Too large filesize. The file should be less than 5MB.")
         if not EnterpriseEmailType.objects.filter(
                 type_name=data.get("email_type")).exists():
             raise Exception("Invalid EmailType")

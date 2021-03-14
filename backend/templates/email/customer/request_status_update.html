@@ -141,6 +141,16 @@
                                                     comment: {{comment}}.
                                                 </div>
                                             {% endif %}
+                                            {% if attachment %}
+                                                <div
+                                                    style="color:#187272;font-family:'Droid Sans', 'Helvetica Neue', Arial, sans-serif;font-size:16px;line-height:20px;text-align:center; padding:7px 0px">
+                                                    Please chick the <a href="{{attachment.link}}" target='_blank'>link</a> to download the attachment file.
+                                                    This url is available for 7 days.
+                                                </div>
+                                                <div style="color:#187272;font-family:'Droid Sans', 'Helvetica Neue', Arial, sans-serif;font-size:16px;line-height:20px;text-align:center; padding:7px 0px">
+                                                    Pass Code: {{attachment.code}}
+                                                </div>
+                                            {% endif %}
                                             <div
                                                 style="color:#187272;font-family:'Droid Sans', 'Helvetica Neue', Arial, sans-serif;font-size:16px;line-height:20px;text-align:center;padding:7px 0px">
                                                 Thank you.

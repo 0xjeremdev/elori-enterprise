@@ -19,9 +19,9 @@ import Dashboard from "../Dashboard";
 import PrivateRoute from "../../components/PrivateRoute";
 import ResetPassword from "../LoginPage/ResetPassword";
 import SetPassword from "../LoginPage/SetPassword";
+import VerifyGetData from "../LoginPage/VerifyGetData";
 
 export default function App() {
-  const launchUrl = localStorage.getItem("website_launched_to");
   return (
     <Switch>
       <Route exact path={routes.LOGIN} component={Login} />
@@ -30,7 +30,8 @@ export default function App() {
       <Route exact path={routes.SETPASSWORD} component={SetPassword} />
       <Route exact path={routes.EMAILCONFIRM} component={EmailConfirm} />
       <Route exact path={routes.STAFFINVITE} component={StaffConfirm} />
-      {launchUrl && <Route path={routes.REQUEST} component={Request} />}
+      <Route exact path={routes.GETDATA} component={VerifyGetData} />
+      <Route path={routes.REQUEST} component={Request} />
       <PrivateRoute exact path={routes.VERIFYCODE} component={VerifyCode} />
       <PrivateRoute path={routes.DASHBOARD} component={Dashboard} />
     </Switch>

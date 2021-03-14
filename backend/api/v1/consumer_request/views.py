@@ -8,6 +8,7 @@ from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.parsers import MultiPartParser, FormParser, FileUploadParser
+from django.conf import settings
 from django.template.loader import render_to_string
 from django.db.models import Q
 from django.http import HttpResponse
@@ -15,7 +16,7 @@ from django.views import View
 from api.v1.accounts.models import Enterprise
 from api.v1.accounts.utlis import SendUserEmail
 from api.v1.analytics.mixins import LoggingMixin
-from api.v1.consumer_request.models import ConsumerRequest, ConsumerReqeustCodeModel
+from api.v1.consumer_request.models import ConsumerRequest, ConsumerReqeustCodeModel, DataReturnModel
 from api.v1.consumer_request.serializers import (
     ConsumerRequestSerializer, ConsumerRequestQuestionSerializer,
     PeriodParameterSerializer, ConsumerReportSerializer,
@@ -336,6 +337,16 @@ class ConsumerRequestSend(LoggingMixin, GenericAPIView):
             serializer.is_valid(raise_exception=True)
             data = serializer.data
             consumer_request = ConsumerRequest.objects.get(id=data.get("id"))
+            mail_attachment = None
+            if "attachment" in request.FILES:
+                dataReturn_obj = DataReturnModel.create(
+                    consumer_request=consumer_request,
+                    file=request.FILES.get("attachment"))
+                mail_attachment = {
+                    "link":
+                    f"{settings.FRONTEND_URL}/data-return/{str(dataReturn_obj.link_id)}",
+                    "code": dataReturn_obj.code
+                }
             email_type = EnterpriseEmailType.objects.filter(
                 type_name=data.get("email_type")).first()
             email_template = EnterpriseEmailTemplateModel.objects.filter(
@@ -352,16 +363,20 @@ class ConsumerRequestSend(LoggingMixin, GenericAPIView):
                     Const_Email_Templates[data.get("email_type")]
                     if email_template == None else email_template.content,
                     "comment":
-                    ""
+                    "",
+                    "attachment":
+                    mail_attachment
                 },
             )
             email_data = {
-                "email_body": message_body,
-                "to_email": consumer_request.email,
-                "email_subject": "Your request was processed",
+                "email_body":
+                message_body,
+                "to_email":
+                consumer_request.email,
+                "email_subject":
+                "Your request was processed",
                 "email_template":
                 None if email_template is None else email_template,
-                "attachment": request.FILES.get("attachment")
             }
             SendUserEmail.send_email(email_data)
             return Response({
@@ -376,6 +391,59 @@ class ConsumerRequestSend(LoggingMixin, GenericAPIView):
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )
+
+
+class DataReturnView(GenericAPIView):
+    permission_classes = (permissions.AllowAny, )
+
+    def get(self, request, *args, **kwargs):
+        try:
+            dataReturn = DataReturnModel.objects.filter(
+                link_id__exact=kwargs["link_id"]).first()
+            if not dataReturn:
+                raise Exception("Invalid link")
+            if datetime.utcnow() > dataReturn.lifetime:
+                raise Exception("Expired link")
+            return Response({"success": True}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({
+                "success": False,
+                "error": str(e)
+            },
+                            status=status.HTTP_400_BAD_REQUEST)
+
+    def post(self, request, *args, **kwargs):
+        try:
+            dataReturn = DataReturnModel.objects.filter(
+                link_id__exact=kwargs["link_id"]).first()
+            if not dataReturn:
+                raise Exception("Invalid link")
+            if datetime.utcnow() > dataReturn.lifetime:
+                raise Exception("Expired link")
+            code = request.data.get("code")
+            if not code or code != dataReturn.code:
+                raise Exception("Invalid code")
+            res_data = {
+                "name":
+                dataReturn.file.name,
+                "size":
+                dataReturn.file.size,
+                "content":
+                base64.b64encode(dataReturn.file.content).decode('utf-8'),
+                "type":
+                dataReturn.file.file_type
+            }
+            return Response({
+                "success": True,
+                "data": res_data
+            },
+                            status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({
+                "success": False,
+                "error": str(e)
+            },
+                            status=status.HTTP_400_BAD_REQUEST)
 
 
 class ConsumerReport(View):

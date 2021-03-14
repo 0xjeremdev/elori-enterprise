@@ -187,7 +187,7 @@ class Enterprise(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return self.user.elroi_id
+        return self.user.email
 
     def profile(self):
         return "Enterprise"
