@@ -52,13 +52,19 @@ class ConsumerRequestAPI(
     """ overwrite the list method to add extra data """
 
     def list(self, request, *args, **kwargs):
-        response = super(ConsumerRequestAPI, self).list(request, args, kwargs)
+        # response = super(ConsumerRequestAPI, self).list(request, args, kwargs)
         """ add numbers to create progress bar with approved of total """
-        response.data["progress"] = {
-            "total": self.queryset.count(),
-            "approved": self.queryset.filter(status=1).count(),
-        }
-        return response
+        response = ConsumerRequestSerializer(self.queryset, many=True).data
+        # response.data["progress"] = {
+        #     "total": self.queryset.count(),
+        #     "approved": self.queryset.filter(status=1).count(),
+        # }
+        # return response
+        return Response({
+            "success": True,
+            "results": response
+        },
+                        status=status.HTTP_200_OK)
 
     # create new consumer request
     def post(self, request, *args, **kwargs):
