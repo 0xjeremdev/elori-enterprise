@@ -274,11 +274,16 @@ class ConsumerRequestSetStatus(LoggingMixin, GenericAPIView):
                 consumer_request.is_extended = True
                 consumer_request.extend_requested_date = datetime.utcnow()
                 timeframe = consumer_request.timeframe
-                consumer_request.extend_requested_days += 30 if timeframe == 0 else 45
+                days = 45
+                if consumer_request.enterprise.time_frame == "gdpr":
+                    days = 30
+                if timeframe == 0:  # gdpr
+                    days = 30
+                consumer_request.extend_requested_days += days
                 consumer_request.process_end_date = consumer_request.process_end_date + timedelta(
-                    days=30 if timeframe == 0 else 45)
+                    days=days)
                 consumer_request.request_date = datetime.utcnow()
-                email_type_name = "extension_GDPR" if consumer_request.timeframe == 0 else "extension_CCPA"
+                email_type_name = "extension_GDPR" if days == 30 else "extension_CCPA"
             if email_type_name == "":
                 raise Exception()
             consumer_request.save()
