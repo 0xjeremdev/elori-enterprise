@@ -54,21 +54,42 @@ class RequestDetailModal extends React.Component {
     selectedEmailType: "",
     selectFile: null,
     completeDisable: true,
+    sendEmail: false,
   };
 
   componentDidMount() {
     emailApis.getEmailTypes().then((res) => this.setState({ emailTypes: res }));
   }
 
+  componentDidUpdate(prevPros) {
+    const { open } = this.props;
+    if (!prevPros.open && open) {
+      this.initState();
+    }
+  }
+
+  initState = () => {
+    this.setState({
+      processFile: {},
+      selectedEmailType: "",
+      selectFile: null,
+      completeDisable: true,
+      sendEmail: false,
+    });
+  };
+
   handleSend = (id) => {
     const { selectedEmailType, selectFile } = this.state;
+    this.setState({ sendEmail: true });
     consumerRequestApis
       .sendProcessingEmail({
         id,
         email_type: selectedEmailType,
         file: selectFile,
       })
-      .then((res) => this.setState({ completeDisable: false }));
+      .then((res) =>
+        this.setState({ completeDisable: false, sendEmail: false })
+      );
   };
 
   onFileChange = (e) => {
@@ -88,7 +109,7 @@ class RequestDetailModal extends React.Component {
 
   render() {
     const { data } = this.props;
-    const { emailTypes, processFile, completeDisable } = this.state;
+    const { emailTypes, processFile, completeDisable, sendEmail } = this.state;
     const emailCampaignOptions = emailTypes.map((type) => ({
       key: type.email_id,
       value: type.type_name,
@@ -261,8 +282,10 @@ class RequestDetailModal extends React.Component {
                       basic
                       color="teal"
                       onClick={() => this.handleSend(data.id)}
+                      loading={sendEmail}
+                      disabled={!completeDisable}
                     >
-                      Send Email
+                      {completeDisable ? "Send Email" : "Sent Email"}
                     </Button>
                   )}
                   {data.status === PROCESS && (

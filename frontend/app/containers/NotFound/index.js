@@ -18,7 +18,7 @@ const NotFound = () => {
             <br />
             <br />
             <br />
-            <h1>We're Coming Soon</h1>
+            <h1>Feature Coming Soon</h1>
             <br />
             <br />
             <br />
