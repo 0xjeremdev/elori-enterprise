@@ -41,7 +41,7 @@ class ConsumerRequestAPI(
         try:
             enterprise = Enterprise.objects.get(id=kwargs["enterprise_id"])
             self.queryset = ConsumerRequest.objects.filter(
-                enterprise=enterprise)
+                enterprise=enterprise, status=request.GET.get("status", 0))
             return self.list(request, *args, **kwargs)
         except Enterprise.DoesNotExist:
             return Response(
@@ -52,19 +52,25 @@ class ConsumerRequestAPI(
     """ overwrite the list method to add extra data """
 
     def list(self, request, *args, **kwargs):
-        # response = super(ConsumerRequestAPI, self).list(request, args, kwargs)
+        response = super(ConsumerRequestAPI, self).list(request, args, kwargs)
         """ add numbers to create progress bar with approved of total """
-        response = ConsumerRequestSerializer(self.queryset, many=True).data
-        # response.data["progress"] = {
-        #     "total": self.queryset.count(),
-        #     "approved": self.queryset.filter(status=1).count(),
-        # }
-        # return response
-        return Response({
-            "success": True,
-            "results": response
-        },
-                        status=status.HTTP_200_OK)
+        # response = ConsumerRequestSerializer(self.queryset, many=True).data
+        enterprise = Enterprise.objects.get(id=kwargs["enterprise_id"])
+        total = ConsumerRequest.objects.filter(enterprise=enterprise)
+        del response.data["next"]
+        del response.data["previous"]
+        response.data["cur_page"] = int(request.GET.get("page", 1))
+        response.data["progress"] = {
+            "total": total.count(),
+            "review": total.filter(status=0).count(),
+            "rejected": total.filter(status=4).count(),
+        }
+        return response
+        # return Response({
+        #     "success": True,
+        #     "results": response
+        # },
+        #                 status=status.HTTP_200_OK)
 
     # create new consumer request
     def post(self, request, *args, **kwargs):
@@ -434,6 +440,8 @@ class DataReturnView(GenericAPIView):
             code = request.data.get("code")
             if not code or code != dataReturn.code:
                 raise Exception("Invalid code")
+            dataReturn.downloaded = True
+            dataReturn.save()
             res_data = {
                 "name":
                 dataReturn.file.name,

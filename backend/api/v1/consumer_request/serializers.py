@@ -15,6 +15,7 @@ class ConsumerRequestSerializer(serializers.ModelSerializer):
     status_text = serializers.SerializerMethodField()
     # request_type_text = serializers.SerializerMethodField()
     # elroi_id = serializers.SerializerMethodField()
+    data_return = serializers.SerializerMethodField()
 
     enterprise_id = serializers.IntegerField(read_only=True)
     web_id = serializers.CharField(read_only=True)
@@ -40,7 +41,20 @@ class ConsumerRequestSerializer(serializers.ModelSerializer):
     def get_status_text(self, obj):
         return settings.STATUSES[obj.status][1]
 
-    """ used to return text for request type """
+    """ used to return data return object """
+
+    def get_data_return(self, obj):
+        if hasattr(obj, "request_dataReturn"):
+            return {
+                "file_name":
+                obj.request_dataReturn.file.name,
+                "downloaded":
+                obj.request_dataReturn.downloaded,
+                "expired":
+                True if datetime.utcnow() > obj.request_dataReturn.lifetime
+                else False
+            }
+        return None
 
     def validate(self, data):
         request = self.context.get("request")

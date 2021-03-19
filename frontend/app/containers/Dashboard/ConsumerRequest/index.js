@@ -53,6 +53,8 @@ const Container = styled(Segment)`
     color: #334d6e !important;
     opacity: 0.7;
   }
+  -webkit-transition: all 0.5s !important; /* For Safari 3.1 to 6.0 */
+  transition: all 0.5s !important;
 `;
 const CommentModal = ({ open, onClose, onSubmit }) => {
   const [comment, setComment] = useState();
@@ -90,7 +92,7 @@ const CommentModal = ({ open, onClose, onSubmit }) => {
       </Modal.Content>
       <Modal.Actions>
         <Button onClick={onCancel}>Cancel</Button>
-        <Button onClick={submitComment}>Okay</Button>
+        <Button onClick={() => submitComment()}>Okay</Button>
       </Modal.Actions>
     </Modal>
   );
@@ -101,7 +103,8 @@ class ConsumerRequest extends React.Component {
     activeMenuItem: "processing",
     searchKey: "",
     consumerList: [],
-    count: [],
+    count: {},
+    curPage: 1,
     selRequestItem: {},
     detailModal: false,
     filterStatus: REVIEW,
@@ -117,9 +120,25 @@ class ConsumerRequest extends React.Component {
   };
 
   initState = () => {
-    consumerRequestApis.getConsumerRequest().then((res) => {
+    const { filterStatus, curPage } = this.state;
+    consumerRequestApis
+      .getConsumerRequest(filterStatus, curPage)
+      .then((res) => {
+        if (res) {
+          this.setState({
+            consumerList: res.results,
+            count: res.progress,
+            curPage: res.cur_page,
+          });
+        }
+      });
+  };
+
+  setFilterStatus = (status) => {
+    this.setState({ filterStatus: status });
+    consumerRequestApis.getConsumerRequest(status).then((res) => {
       if (res) {
-        this.setState({ consumerList: res.results, count: res.count });
+        this.setState({ consumerList: res.results });
       }
     });
   };
@@ -184,8 +203,23 @@ class ConsumerRequest extends React.Component {
     tempLink.click();
   };
 
+  goNextPage = () => {
+    const { curPage, count } = this.state;
+    const totalPage = Math.ceil(parseFloat(count.total / 10));
+    if (curPage < totalPage) {
+      this.setState({ curPage: curPage + 1 }, () => this.initState());
+    }
+  };
+
+  goPrevPage = () => {
+    const { curPage } = this.state;
+    if (curPage > 1) {
+      this.setState({ curPage: curPage - 1 }, () => this.initState());
+    }
+  };
+
   render() {
-    const { consumerList, filterStatus, searchKey } = this.state;
+    const { consumerList, filterStatus, searchKey, count } = this.state;
     const selectOptions = [
       { key: "1", value: "week", text: "This week" },
       { key: "2", value: "month", text: "This month" },
@@ -207,13 +241,9 @@ class ConsumerRequest extends React.Component {
         updatedRenderList.push(item);
       }
     });
-    const totalRequestsCount = consumerList.length;
-    const rejectedRequestsCount = consumerList.filter(
-      (item) => item.status === REJECT
-    ).length;
-    const reviewRequestsCount = consumerList.filter(
-      (item) => item.status === REVIEW
-    ).length;
+    const totalRequestsCount = count.total || 0;
+    const rejectedRequestsCount = count.rejected || 0;
+    const reviewRequestsCount = count.review || 0;
     const completeRequestsCount = consumerList.filter(
       (item) => item.status === COMPLETE
     ).length;
@@ -401,54 +431,42 @@ class ConsumerRequest extends React.Component {
                       <Menu.Item
                         name="For Review"
                         active={filterStatus === REVIEW}
-                        onClick={() => {
-                          this.setState({
-                            filterStatus: REVIEW,
-                          });
-                        }}
+                        onClick={() => this.setFilterStatus(REVIEW)}
                       />
                       <Menu.Item
                         name="Processing"
                         active={filterStatus === PROCESS}
-                        onClick={() => {
-                          this.setState({
-                            filterStatus: PROCESS,
-                          });
-                        }}
+                        onClick={() => this.setFilterStatus(PROCESS)}
                       />
                       <Menu.Item
                         name="Complete"
                         active={filterStatus === COMPLETE}
-                        onClick={() => {
-                          this.setState({
-                            filterStatus: COMPLETE,
-                          });
-                        }}
+                        onClick={() => this.setFilterStatus(COMPLETE)}
                       />
                       <Menu.Item
                         name="Rejected"
                         active={filterStatus === REJECT}
-                        onClick={() => {
-                          this.setState({
-                            filterStatus: REJECT,
-                          });
-                        }}
+                        onClick={() => this.setFilterStatus(REJECT)}
                       />
                     </Menu>
                   </Grid.Column>
                 </Grid.Row>
                 <Divider />
-                {map(updatedRenderList, (item) => (
-                  <Grid.Row key={item.created_at}>
-                    <Grid.Column
-                      onClick={() => {
-                        this.handleDetailModal(item.id);
-                      }}
-                    >
-                      <RequestItem status="success" data={item} />
-                    </Grid.Column>
-                  </Grid.Row>
-                ))}
+                <div
+                  style={{ transition: "all 0.5s !important", height: "auto" }}
+                >
+                  {map(updatedRenderList, (item) => (
+                    <Grid.Row key={item.created_at}>
+                      <Grid.Column
+                        onClick={() => {
+                          this.handleDetailModal(item.id);
+                        }}
+                      >
+                        <RequestItem status="success" data={item} />
+                      </Grid.Column>
+                    </Grid.Row>
+                  ))}
+                </div>
                 {updatedRenderList.length === 0 && (
                   <Grid.Row textAlign="center">
                     <Grid.Column>
@@ -456,7 +474,18 @@ class ConsumerRequest extends React.Component {
                     </Grid.Column>
                   </Grid.Row>
                 )}
-                <Button fluid attached="bottom">
+                <Button
+                  fluid
+                  attached="bottom"
+                  onClick={() => this.goPrevPage()}
+                >
+                  Previous Page
+                </Button>
+                <Button
+                  fluid
+                  attached="bottom"
+                  onClick={() => this.goNextPage()}
+                >
                   Next Page
                 </Button>
               </Grid>

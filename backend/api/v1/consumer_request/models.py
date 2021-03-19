@@ -122,11 +122,11 @@ class ConsumerReqeustCodeModel(models.Model):
 
 
 class DataReturnModel(models.Model):
-    consumer_request = models.ForeignKey(ConsumerRequest,
-                                         on_delete=models.SET_NULL,
-                                         related_name="request_dataReturn",
-                                         null=True,
-                                         blank=True)
+    consumer_request = models.OneToOneField(ConsumerRequest,
+                                            on_delete=models.SET_NULL,
+                                            related_name="request_dataReturn",
+                                            null=True,
+                                            blank=True)
     file = models.ForeignKey(Files,
                              on_delete=models.SET_NULL,
                              related_name="file_dataReturn",
@@ -137,6 +137,7 @@ class DataReturnModel(models.Model):
                                default="",
                                unique=True)
     code = models.CharField(max_length=6, blank=False, null=False, default="")
+    downloaded = models.BooleanField(default=False)
     lifetime = models.DateTimeField(blank=False, null=False, auto_now=False)
 
     class Meta:

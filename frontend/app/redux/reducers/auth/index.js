@@ -52,7 +52,7 @@ export function authReducer(state = authInitialState, action) {
       return { ...state, sentSignupRequest: action.success };
 
     case SENDING_VERIFY_CODE:
-      sendVerifyCode();
+      // sendVerifyCode();
       return { ...state };
 
     default:

@@ -67,12 +67,12 @@ function sendProcessingEmail({ id, file, email_type }) {
   });
 }
 
-function getConsumerRequest() {
+function getConsumerRequest(status, currentPage = 1) {
   const token = localStorage.getItem("access-token");
   const enterprise_id = localStorage.getItem("enterprise_id");
   return new Promise((resolve, reject) => {
     axios
-      .get(`${API_ENDPOINT_URL}/consumer/request/${enterprise_id}`, {
+      .get(`${API_ENDPOINT_URL}/consumer/request/${enterprise_id}?page=${currentPage}&status=${status}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

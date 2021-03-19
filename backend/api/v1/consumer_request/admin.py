@@ -11,4 +11,11 @@ class ConsumerRequestAdmin(admin.ModelAdmin):
 
 @admin.register(DataReturnModel)
 class DataReturnAdmin(admin.ModelAdmin):
-    list_display = ("file", "consumer_request", "link_id", "lifetime")
+    list_display = (
+        "file",
+        "consumer_request",
+        "link_id",
+        "code",
+        "downloaded",
+        "lifetime",
+    )

@@ -97,7 +97,6 @@ class RegisterStaff(LoggingMixin, GenericAPIView):
                         "two_fa_valid": account.is_2fa_on(),
                         "profile": staff_data.profile(),
                     },
-                    "token": account.tokens(),
                 },
                 status=status.HTTP_201_CREATED,
             )
@@ -141,8 +140,7 @@ class RegisterEnterprise(GenericAPIView):
                         "full_name": account.full_name(),
                         "two_fa_valid": account.is_2fa_on(),
                         "profile": enterprise.profile(),
-                    },
-                    "token": account.tokens(),
+                    }
                 },
                 status=status.HTTP_201_CREATED,
             )

@@ -179,6 +179,17 @@ class RequestDetailModal extends React.Component {
                 )}
               </Grid.Row>
               <Divider />
+              {data.data_return && <Grid.Row columns={3}>
+                <Grid.Column>
+                  <span>File Name: {data.data_return.file_name}</span>
+                </Grid.Column>
+                <Grid.Column>
+                  <span>Downloaded: {data.data_return.downloaded?'Yes':'No'}</span>
+                </Grid.Column>
+                <Grid.Column>
+                  <span>Expired: {data.data_return.expired?'Yes':'No'}</span>
+                </Grid.Column>
+              </Grid.Row>}
               {data.status === PROCESS && (
                 <Grid.Row>
                   <Grid.Column width={8}>
