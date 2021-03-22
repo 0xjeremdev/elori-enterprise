@@ -4,7 +4,11 @@ import { Button, Divider, Form, Grid, Icon, Image } from "semantic-ui-react";
 
 import ColorPicker from "../../../../components/ColorPicker";
 import noImage from "../../../../assets/images/no-img.png";
-import { formAnswerTypeOptions } from "../../../../constants/constants";
+import {
+  FILE_DESCRIPTION,
+  formAnswerTypeOptions,
+  PRIVACY_DESCRIPTION,
+} from "../../../../constants/constants";
 import { consumerRequestFormApis } from "../../../../utils/api/setting/requestform";
 import { withToastManager } from "react-toast-notifications";
 import { baseToImgSrc } from "../../../../utils/file";
@@ -47,6 +51,8 @@ class ConfigureRequest extends React.Component {
     companyName: "",
     residentState: "",
     additionalQuestions: [],
+    privacyDescription: "",
+    fileDescription: "",
   };
 
   initState = ({
@@ -57,6 +63,8 @@ class ConfigureRequest extends React.Component {
     logo_data,
     site_color,
     site_theme,
+    privacy_description,
+    file_description,
   }) => {
     const logo = baseToImgSrc(logo_data);
     const background_image = baseToImgSrc(background_image_data);
@@ -72,6 +80,8 @@ class ConfigureRequest extends React.Component {
       logoUrl: logo,
       siteColor: site_color,
       siteTheme: site_theme,
+      privacyDescription: privacy_description,
+      fileDescription: file_description,
     });
   };
 
@@ -284,7 +294,7 @@ class ConfigureRequest extends React.Component {
               />
             </Form>
           </Grid.Column>
-          <Grid.Column width={5}>
+          {/* <Grid.Column width={5}>
             <Form>
               <Form.Input
                 label="Resident State"
@@ -292,6 +302,35 @@ class ConfigureRequest extends React.Component {
                   this.setState({ residentState: value })
                 }
                 value={this.state.residentState}
+              />
+            </Form>
+          </Grid.Column> */}
+        </Grid.Row>
+        <Grid.Row>
+          <Grid.Column>
+            <Form>
+              <Form.TextArea
+                label="Privacy Description"
+                value={this.state.privacyDescription}
+                onChange={(e, { value }) =>
+                  this.setState({ privacyDescription: value })
+                }
+                placeholder={PRIVACY_DESCRIPTION}
+                rows={6}
+              />
+            </Form>
+          </Grid.Column>
+        </Grid.Row>
+        <Grid.Row>
+          <Grid.Column>
+            <Form>
+              <Form.TextArea
+                label="File Upload Description"
+                value={this.state.fileDescription}
+                onChange={(e, { value }) =>
+                  this.setState({ fileDescription: value })
+                }
+                placeholder={FILE_DESCRIPTION}
               />
             </Form>
           </Grid.Column>

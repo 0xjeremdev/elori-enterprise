@@ -74,3 +74,11 @@ export const REJECT = 4;
 
 export const CCPA = 1;
 export const GDPR = 0;
+
+export const PRIVACY_DESCRIPTION = `Your privacy is very important to us. If you would like to make
+a request to access or delete your information, please complete
+the form below. All fields marked with an asterisk (*) are
+required so we can properly verify your identity.`;
+
+export const FILE_DESCRIPTION = `Please upload any document that has been identified in this form
+as required for verification.`;

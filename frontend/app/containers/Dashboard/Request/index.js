@@ -144,6 +144,8 @@ class Request extends React.Component {
     sending: false,
     reset: false, //for dropzone
     verifyEmailModal: false,
+    privacyDescription: "",
+    fileDescription: "",
   };
 
   onCaptcha = (value) => {
@@ -184,6 +186,8 @@ class Request extends React.Component {
     logo_data,
     site_color,
     site_theme,
+    privacy_description,
+    file_description,
   }) => {
     const logo = baseToImgSrc(logo_data);
     const background_image = baseToImgSrc(background_image_data);
@@ -200,6 +204,8 @@ class Request extends React.Component {
       siteColor: site_color,
       country: "United States of America",
       siteTheme: site_theme,
+      privacyDescription: privacy_description,
+      fileDescription: file_description,
     });
     let additional_fields = [];
     additionalConfiguration.forEach((item) => {
@@ -259,11 +265,8 @@ class Request extends React.Component {
       const { id } = this.props.match.params;
       let timeframe = 0;
       this.setState({ sending: true });
-      // if (EUList.findIndex((ele) => ele === this.state.country) > -1) {
-      //   timeframe = 0;
-      // }
 
-      if(this.state.country === 'United States of America') {
+      if (this.state.country === "United States of America") {
         timeframe = 1;
       }
 
@@ -303,6 +306,8 @@ class Request extends React.Component {
       additionalQuestions,
       siteColor,
       verifyEmailModal,
+      privacyDescription,
+      fileDescription,
     } = this.state;
     const { id } = this.props.match.params;
     const requestTypeOptions = [
@@ -338,6 +343,7 @@ class Request extends React.Component {
               background: `url(${backUrl})`,
               backgroundSize: "contain",
               backgroundPosition: "center",
+              minHeight: "60vh",
             }}
           >
             <Grid.Column width="3">
@@ -355,16 +361,7 @@ class Request extends React.Component {
               <p className="title">
                 {companyName && `${companyName}'s`} Privacy Request Form
               </p>
-              <p className="desc">
-                Your privacy is very important to us. If you would like to make
-                a request to access or delete your information, please complete
-                the form below. All fields marked with an asterisk (*) are
-                required so we can properly verify your identity.
-                <br />
-                <br />
-                <br /> For enhanced user experience, use Google Chrome, the most
-                recent version of Internet Explorer or Safari
-              </p>
+              <p className="desc">{privacyDescription}</p>
               <div style={{ textAlign: "center", padding: "30px" }}>
                 <Button className="yellow" size="medium">
                   <a href="#started">Get Started</a>
@@ -554,12 +551,7 @@ class Request extends React.Component {
           </Grid.Row>
           <Grid.Row textAlign="center" centered>
             <Grid.Column width="14">
-              <p className="desc-center">
-                Please upload any document that has been identified in this form
-                as required for verification. If the required document is not
-                uploaded within 5 business days of the date of submission of
-                this request, this request will be rejected
-              </p>
+              <p className="desc-center">{fileDescription}</p>
             </Grid.Column>
           </Grid.Row>
           <Grid.Row centered>

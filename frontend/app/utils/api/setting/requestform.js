@@ -19,6 +19,8 @@ function setConsumerRequestForm(payload) {
     companyName,
     lanchUrl,
     additionalQuestions,
+    privacyDescription,
+    fileDescription,
   } = payload;
   const formData = new FormData();
   if (logoFile) {
@@ -36,6 +38,8 @@ function setConsumerRequestForm(payload) {
     JSON.stringify(additionalQuestions)
   );
   formData.append("enterprise_id", enterprise_id);
+  formData.append("privacy_description", privacyDescription);
+  formData.append("file_description", fileDescription);
   return new Promise((resolve, reject) => {
     axios
       .post(

@@ -452,21 +452,17 @@ class ConsumerRequest extends React.Component {
                   </Grid.Column>
                 </Grid.Row>
                 <Divider />
-                <div
-                  style={{ transition: "all 0.5s !important", height: "auto" }}
-                >
-                  {map(updatedRenderList, (item) => (
-                    <Grid.Row key={item.created_at}>
-                      <Grid.Column
-                        onClick={() => {
-                          this.handleDetailModal(item.id);
-                        }}
-                      >
-                        <RequestItem status="success" data={item} />
-                      </Grid.Column>
-                    </Grid.Row>
-                  ))}
-                </div>
+                {map(updatedRenderList, (item) => (
+                  <Grid.Row key={item.created_at}>
+                    <Grid.Column
+                      onClick={() => {
+                        this.handleDetailModal(item.id);
+                      }}
+                    >
+                      <RequestItem status="success" data={item} />
+                    </Grid.Column>
+                  </Grid.Row>
+                ))}
                 {updatedRenderList.length === 0 && (
                   <Grid.Row textAlign="center">
                     <Grid.Column>
