@@ -3,8 +3,8 @@ pipeline {
 
     stages {
         stage('Test') {
-            dir('frontend') {
-                steps {
+            steps {
+                dir('frontend') {
                     sh 'npm run integrationtest'
                 }
             }
