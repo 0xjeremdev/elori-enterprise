@@ -2,9 +2,11 @@ pipeline {
     agent any
 
     stages {
-        stage('Do nothing') {
-            steps {
-                sh '/bin/true'
+        stage('Test') {
+            dir('frontend') {
+                steps {
+                    sh 'npm run integrationtest'
+                }
             }
         }
     }
