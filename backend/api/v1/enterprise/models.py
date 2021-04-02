@@ -136,8 +136,18 @@ class EnterpriseConfigurationModel(models.Model):
         related_name="enterprise_conf_background",
         null=True,
         blank=True)
-    privacy_description = models.TextField(null=True, blank=True, default="")
-    file_description = models.TextField(null=True, blank=True, default="")
+    privacy_description = models.TextField(
+        null=True,
+        blank=True,
+        default=
+        "Your Privacy is very important to us. If you would like to make a request to access your information, please complete the form below. All fields marked with an asterisk (*) are required so we can properly verify your identity."
+    )
+    file_description = models.TextField(
+        null=True,
+        blank=True,
+        default=
+        "Please upload verification document to help with your verification. Examples of verification documents include: Drivers License, Passport, State ID. If the required document is not uploaded within 5 business days of the date of submission of this request this request will be rejected."
+    )
     website_launched_to = models.CharField(
         max_length=255,
         null=True,

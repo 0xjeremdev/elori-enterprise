@@ -36,7 +36,9 @@ class VerifyEmailModal extends React.Component {
         this.props.onVerifySuccess();
         this.props.onClose();
       })
-      .catch((e) => this.setState({ validationFailed: true }));
+      .catch((e) => {
+        this.setState({ validationFailed: true });
+      });
   };
 
   sendCode = () => {

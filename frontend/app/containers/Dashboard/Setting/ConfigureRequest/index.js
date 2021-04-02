@@ -290,6 +290,7 @@ class ConfigureRequest extends React.Component {
                 onChange={(e, { value }) =>
                   this.setState({ companyName: value })
                 }
+                disabled
                 value={this.state.companyName}
               />
             </Form>

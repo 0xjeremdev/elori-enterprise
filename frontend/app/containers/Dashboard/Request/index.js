@@ -137,6 +137,7 @@ class Request extends React.Component {
     request_type_valid: true,
     country: "",
     country_valid: true,
+    state_valid: true,
     state: "",
     file: null,
     additional_fields: [],
@@ -154,9 +155,20 @@ class Request extends React.Component {
 
   inputValid = () => {
     let isValid = true;
-    const { first_name, last_name, email, request_type, country } = this.state;
+    const {
+      first_name,
+      last_name,
+      email,
+      request_type,
+      country,
+      state,
+    } = this.state;
     if (country === "") {
       this.setState({ country_valid: false });
+      isValid = false;
+    }
+    if (country === "United States of America" && state === "") {
+      this.setState({ state_valid: false });
       isValid = false;
     }
     if (first_name === "") {
@@ -251,13 +263,15 @@ class Request extends React.Component {
   };
 
   sendCodeToEmail = () => {
-    const { id } = this.props.match.params;
-    const { email } = this.state;
-    this.setState({ verifyEmailModal: true });
-    consumerRequestApis
-      .sendOneCodeEmail(id, email)
-      .then((res) => console.log(res))
-      .catch((e) => alert(e));
+    if (this.inputValid()) {
+      const { id } = this.props.match.params;
+      const { email } = this.state;
+      this.setState({ verifyEmailModal: true });
+      consumerRequestApis
+        .sendOneCodeEmail(id, email)
+        .then((res) => console.log(res))
+        .catch((e) => alert(e));
+    }
   };
 
   handleUpload = () => {
@@ -382,6 +396,9 @@ class Request extends React.Component {
               {!this.state.country_valid && (
                 <label className="error-msg">Country is required</label>
               )}
+              {!this.state.state_valid && (
+                <label className="error-msg">State is required</label>
+              )}
               <Dropdown
                 className="form-select"
                 fluid
@@ -405,8 +422,9 @@ class Request extends React.Component {
                   options={stateOptions}
                   selectOnBlur={false}
                   search
+                  error={!this.state.state_valid}
                   onChange={(e, { value }) => {
-                    this.setState({ state: value });
+                    this.setState({ state: value, state_valid: true });
                   }}
                 />
               )}
