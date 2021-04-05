@@ -25,6 +25,8 @@ def get_env_value(env_variable):
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = "nw34t1ljtpz0q+c08&#80ihi%if$9wslxn&g1ad60fj3mdpamr"
 
+ELROI_TOKEN = "GSewgy43Dw00Y2RhLTkwZjktNjVhNjRjZGUxMmUwOmE5NGEyYzI3LWU3NjItNDhiZC1iNDRjLTU4OGU1MWFhZTBkYzp0YVhYRVRGR2NOcVlrZkFKeHVZZ2RtaGRuM3czelF0SDZVYXRETWgzcWpKYmJUQ0NQNExRUmVKZ05CblU3WWt3RkZHV2cz"
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = get_env_value("DEBUG")
 
@@ -164,7 +166,8 @@ REST_FRAMEWORK = {
     "NON_FIELD_ERRORS_KEY":
     "error",
     "DEFAULT_AUTHENTICATION_CLASSES":
-    ("rest_framework_simplejwt.authentication.JWTAuthentication", ),
+    ("api.v1.accounts.authentication.CustomAuthentication",
+     "rest_framework_simplejwt.authentication.JWTAuthentication"),
 }
 
 SIMPLE_JWT = {
