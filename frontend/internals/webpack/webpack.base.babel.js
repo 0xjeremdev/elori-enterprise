@@ -111,11 +111,15 @@ module.exports = (options) => ({
     // Always expose NODE_ENV to webpack, in order to use `process.env.NODE_ENV`
     // inside your code for any environment checks; Terser will automatically
     // drop any unreachable code.
+
+    // Note that "127.0.0.1:8000" is set here for the integration tests.
+    // If you change this value, you will need to change something else
+    // as well to avoid breaking them.
     new webpack.EnvironmentPlugin({
       NODE_ENV: "development",
       API_ENDPOINT:
         options.mode === "development"
-          ? "http://192.168.0.148:8082/api/v1"
+          ? "http://127.0.0.1:8000/api/v1"
           : "http://10.209.18.180:8082/api/v1",
     }),
   ]),
